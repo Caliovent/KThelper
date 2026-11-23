@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: #1e293b;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Custom scrollbar and subtle HUD styling */
+body {
+  background-color: #0b0f17;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection inside inputs, textareas and AI coach explanations */
+input,
+textarea,
+.selectable-text {
+  user-select: text;
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 2px;
+}
+
+@media (min-width: 640px) {
+  .matrix-grid {
+    gap: 3px;
+  }
+}
+
+.hand-cell {
+  aspect-ratio: 1 / 1;
+  transition: transform 0.08s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.hand-cell:hover {
+  transform: scale(1.08);
+  z-index: 20;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.hand-cell.selected-inspect {
+  box-shadow: 0 0 0 2px #38bdf8, 0 0 12px rgba(56, 189, 248, 0.5);
+  z-index: 15;
+}
+
+/* Card suit visual polish */
+.poker-card {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom thin scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
