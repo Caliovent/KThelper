@@ -2,5 +2,7 @@
   "name": "Kill Tilt Poker Suite",
   "description": "Suite complète de poker Cash Game NL2/NL5 6-Max : Ranges Préflop, Quiz XP, Décodeur HUD, Tableur Bankroll, Solver GTO et Coach IA Poker.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
