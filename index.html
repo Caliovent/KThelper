@@ -56,6 +56,9 @@
         <button id="tab-btn-coach" onclick="switchSuiteTab('coach')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
           🤖 Coach IA Poker
         </button>
+        <button id="nav-btn-videos" type="button" onclick="openCoachVideosModal('all')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-rose-300 hover:text-white hover:bg-rose-600/20 border border-rose-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5" title="Ouvrir le parcours séquentiel des 30 vidéos Kill Tilt">
+          📺 Vidéos <span id="nav-videos-progress" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-mono text-[10px]">0/30</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -1286,11 +1289,32 @@
           </button>
         </div>
 
-        <!-- Theme Filters & Search -->
+        <!-- Progress Banner -->
+        <div class="px-4 sm:px-6 py-2.5 border-b border-slate-800/80 bg-slate-950/50 space-y-2 shrink-0">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs">
+              <span id="coach-videos-progress-label" class="font-bold text-slate-200">0 / 30 vidéos vues (0%)</span>
+              <button type="button" onclick="resetWatchedVideos()" class="text-[11px] text-slate-500 hover:text-slate-300 underline" title="Réinitialiser la progression vidéo">
+                Réinitialiser
+              </button>
+            </div>
+            <button id="coach-videos-next-btn" type="button" onclick="playNextUnwatchedVideo()" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow-sm">
+              ▶ Continuer : #1
+            </button>
+          </div>
+          <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div id="coach-videos-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Theme Filters, Watch Status & Search -->
         <div class="px-4 sm:px-6 py-3 border-b border-slate-800/80 bg-slate-900/95 space-y-2.5 shrink-0">
           <div id="coach-videos-filters" class="flex flex-wrap items-center gap-1.5"></div>
-          <div class="relative">
-            <input id="coach-videos-search" type="search" oninput="renderCoachVideosList()" placeholder="Rechercher une vidéo Kill Tilt (ex: 3-bet, cbet, tracker, variance, NL2)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1">
+              <input id="coach-videos-search" type="search" oninput="renderCoachVideosList()" placeholder="Rechercher une vidéo Kill Tilt (ex: 3-bet, cbet, tracker, variance, NL2)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div id="coach-videos-watch-filters" class="flex items-center gap-1 shrink-0"></div>
           </div>
         </div>
 
@@ -1302,7 +1326,13 @@
                 <h3 id="coach-videos-player-title" class="text-xs sm:text-sm font-extrabold text-white truncate"></h3>
                 <p id="coach-videos-player-meta" class="text-[11px] text-slate-400"></p>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button id="coach-videos-player-watched-btn" type="button" onclick="toggleCurrentPlayerVideoWatched()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition">
+                  ☐ Marquer comme vue
+                </button>
+                <button id="coach-videos-player-next-btn" type="button" onclick="playNextSequentialVideo()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                  Suivante →
+                </button>
                 <a id="coach-videos-player-ext" href="#" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-200 text-xs font-bold transition">
                   ↗ Ouvrir sur YouTube
                 </a>
@@ -1314,6 +1344,9 @@
             <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-slate-800">
               <iframe id="coach-videos-iframe" class="w-full h-full" title="Lecteur vidéo Kill Tilt" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
+            <p class="text-[11px] text-slate-500">
+              Astuce : si l’ouverture directe en fichier local (<code class="text-slate-400">file://</code>) bloque le lecteur YouTube intégré, lancez l’application avec <code class="text-slate-400">npm run dev</code> ou utilisez « ↗ Ouvrir sur YouTube ».
+            </p>
           </div>
 
           <div id="coach-videos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -2352,54 +2385,49 @@
       },
     };
 
+    const COACH_VIDEO_STAGES = {
+      1: {
+        stage: 1,
+        icon: '🌱',
+        title: 'Étape 1 — Fondations absolues & Démarrage NL2',
+        levelLabel: 'Niveau 1',
+        badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      },
+      2: {
+        stage: 2,
+        icon: '🛡️',
+        title: 'Étape 2 — Jeu Préflop solide, Big Blind & Outils',
+        levelLabel: 'Niveau 2',
+        badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+      },
+      3: {
+        stage: 3,
+        icon: '🔥',
+        title: 'Étape 3 — Cotes, Maîtrise du Flop & Anti-Tilt',
+        levelLabel: 'Niveau 2–3',
+        badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      },
+      4: {
+        stage: 4,
+        icon: '⚔️',
+        title: 'Étape 4 — 3-Bet, Défense vs 3-Bet & Variance',
+        levelLabel: 'Niveau 3–4',
+        badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+      },
+      5: {
+        stage: 5,
+        icon: '🦈',
+        title: 'Étape 5 — Pots 3-Bet avancés, Turn & Adaptations',
+        levelLabel: 'Niveau 4–5',
+        badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+      },
+    };
+
     const COACH_VIDEOS = [
-      // --- PRÉFLOP & BASES NL2 ---
+      // --- ÉTAPE 1 : FONDATIONS ABSOLUES & DÉMARRAGE NL2 ---
       {
-        videoId: 'ba8aJzFIWy4',
-        title: 'Les Bases du cash Game #2 - Avec quelles mains miser préflop !',
-        url: 'https://www.youtube.com/watch?v=ba8aJzFIWy4',
-        duration: '25:24',
-        theme: 'preflop',
-        summary: 'Comprendre la sélection de mains, la position à la table et éviter les mains dominées dès la NL2.',
-        tags: ['preflop', 'ranges', 'open raise', 'position', 'nl2'],
-      },
-      {
-        videoId: 'bjrgiLLHkis',
-        title: 'Les Bases du Cash Game #5 - Comment défendre sa Big Blind ?',
-        url: 'https://www.youtube.com/watch?v=bjrgiLLHkis',
-        duration: '29:12',
-        theme: 'preflop',
-        summary: 'Cotes du pot en BB, ajustements vs UTG ou Bouton et défense cohérente hors de position.',
-        tags: ['bb', 'defense', 'cotes', 'preflop', 'cash game'],
-      },
-      {
-        videoId: 'WSKznvxb4kg',
-        title: 'Les ranges en Cash Game : Fondamentaux et adaptations',
-        url: 'https://www.youtube.com/watch?v=WSKznvxb4kg',
-        duration: '1:51:09',
-        theme: 'preflop',
-        summary: 'Construction complète des ranges préflop en Cash Game 6-max et adaptations selon le field.',
-        tags: ['ranges', 'preflop', 'adaptation', '6-max'],
-      },
-      {
-        videoId: 'OXsdlYj5Ivs',
-        title: '7 erreurs préflop que vous faites TOUS en microlimites (et comment les corriger)',
-        url: 'https://www.youtube.com/watch?v=OXsdlYj5Ivs',
-        duration: '1:13:34',
-        theme: 'preflop',
-        summary: 'Open-limp, mauvais sizings, calls trop larges OOP et pièges classiques des micro-limites.',
-        tags: ['erreurs', 'microlimites', 'limp', 'sizing', 'preflop'],
-      },
-      {
-        videoId: 'aZcRgjzRj7s',
-        title: 'Cash Game Live en NL2 - Isoler les fish et jouer en position',
-        url: 'https://www.youtube.com/watch?v=aZcRgjzRj7s',
-        duration: '46:30',
-        theme: 'preflop',
-        summary: 'Application concrète en NL2 : punir les limpers avec l’iso-raise (3bb + 1bb/limper) et jouer IP.',
-        tags: ['nl2', 'iso-raise', 'limp', 'position', 'fish'],
-      },
-      {
+        order: 1,
+        stage: 1,
         videoId: 'NgKM6HrJKSs',
         title: 'Les Bases pour Débuter au Poker en Cash Game NL2',
         url: 'https://www.youtube.com/watch?v=NgKM6HrJKSs',
@@ -2408,177 +2436,9 @@
         summary: 'Les fondamentaux indispensables pour bâtir un jeu solide et gagnant dès la NL2.',
         tags: ['bases', 'debuter', 'nl2', 'tag'],
       },
-
-      // --- 3-BET, 4-BET & SQUEEZE ---
       {
-        videoId: 'W_tvs9AVcyY',
-        title: 'Les Bases du Cash Game #4 - Le 3bet',
-        url: 'https://www.youtube.com/watch?v=W_tvs9AVcyY',
-        duration: '32:30',
-        theme: 'threebet',
-        summary: 'Pourquoi 3-bet en value ou light, sizings IP vs OOP et construction de ranges polarisées/linéaires.',
-        tags: ['3-bet', 'sizing', 'value', 'bluff'],
-      },
-      {
-        videoId: '8CNioOWy1fQ',
-        title: 'Les Bases du cash Game #3 - Comment se défendre Vs 3BET ?',
-        url: 'https://www.youtube.com/watch?v=8CNioOWy1fQ',
-        duration: '34:05',
-        theme: 'threebet',
-        summary: 'Quand fold, call ou 4-bet face à un 3-bet selon les positions et le profil de l’adversaire.',
-        tags: ['defense', 'vs 3-bet', '4-bet', 'fold'],
-      },
-      {
-        videoId: 'i1h3XQcdfV4',
-        title: 'Arrêtez de jouer les pots 3bet comme un fish !',
-        url: 'https://www.youtube.com/watch?v=i1h3XQcdfV4',
-        duration: '39:14',
-        theme: 'threebet',
-        summary: 'Éviter de s’envoyer en l’air avec des mains dominées et maîtriser le SPR en pot 3-bet.',
-        tags: ['pot 3-bet', 'spr', 'erreurs', 'postflop'],
-      },
-      {
-        videoId: '4vLMM9d3QvY',
-        title: 'COACHING POKER: Progresser en pot 3bet !',
-        url: 'https://www.youtube.com/watch?v=4vLMM9d3QvY',
-        duration: '29:15',
-        theme: 'threebet',
-        summary: 'Revue de mains commentée pour corriger les leaks récurrents dans les pots sur-relancés.',
-        tags: ['coaching', 'pot 3-bet', 'review'],
-      },
-      {
-        videoId: 'H2xcnEaGv6I',
-        title: 'THÉORIE POKER - Le 3bet en Small Blind',
-        url: 'https://www.youtube.com/watch?v=H2xcnEaGv6I',
-        duration: '1:36:24',
-        theme: 'threebet',
-        summary: 'Stratégie de 3-bet ou fold en SB, sizings OOP (+1 à 2bb) et gestion du squeeze.',
-        tags: ['small blind', '3-bet', 'oop', 'squeeze'],
-      },
-      {
-        videoId: 'CKdJx--jRuU',
-        title: 'Le 3bet pour value',
-        url: 'https://www.youtube.com/watch?v=CKdJx--jRuU',
-        duration: '31:51',
-        theme: 'threebet',
-        summary: 'Identifier les meilleurs spots de 3-bet en value contre les joueurs récréatifs et réguliers.',
-        tags: ['3-bet', 'value', 'exploit'],
-      },
-
-      // --- C-BET, POSTFLOP & COTES ---
-      {
-        videoId: 'Aiwi4Np_LOY',
-        title: 'LE CONTINUATION BET au Poker : Tout ce qu\'il faut savoir sur le CBET',
-        url: 'https://www.youtube.com/watch?v=Aiwi4Np_LOY',
-        duration: '9:30',
-        theme: 'cbet',
-        summary: 'Synthèse claire sur la fréquence de C-Bet, textures dry vs drawy et pots multiway.',
-        tags: ['c-bet', 'texture', 'dry', 'drawy', 'multiway'],
-      },
-      {
-        videoId: 'X3Z-JuxwUJo',
-        title: 'Work your basics - Le Cbet au poker #1',
-        url: 'https://www.youtube.com/watch?v=X3Z-JuxwUJo',
-        duration: '47:07',
-        theme: 'cbet',
-        summary: 'Analyse détaillée du C-Bet au flop : avantage de range, sizings et sélection des bluffs.',
-        tags: ['c-bet', 'flop', 'sizing', 'range advantage'],
-      },
-      {
-        videoId: 'R-E20DsclJ0',
-        title: 'Work Your Basics - Le 2nd Barrel au Poker #6',
-        url: 'https://www.youtube.com/watch?v=R-E20DsclJ0',
-        duration: '1:01:30',
-        theme: 'cbet',
-        summary: 'Quand poursuivre l’agression à la Turn (scare cards, équité, fold equity) ou ralentir.',
-        tags: ['2nd barrel', 'turn', 'semi-bluff', 'scare card'],
-      },
-      {
-        videoId: 'CKQ5nPTmhJY',
-        title: 'Les 3 raisons de miser au poker',
-        url: 'https://www.youtube.com/watch?v=CKQ5nPTmhJY',
-        duration: '19:43',
-        theme: 'cbet',
-        summary: 'Miser en value, en bluff ou pour collecter la dead money / protéger son équité.',
-        tags: ['value', 'bluff', 'dead money', 'postflop'],
-      },
-      {
-        videoId: 'NX6VPRsaToE',
-        title: 'Quand faut-il CHECK le FLOP au POKER ?',
-        url: 'https://www.youtube.com/watch?v=NX6VPRsaToE',
-        duration: '19:18',
-        theme: 'cbet',
-        summary: 'Maîtriser le pot control avec ses mains à showdown value et éviter le C-Bet automatique.',
-        tags: ['check', 'pot control', 'showdown value', 'flop'],
-      },
-      {
-        videoId: '2NkmKs80idk',
-        title: 'LES BASES DU POKER #2 : LES COTES',
-        url: 'https://www.youtube.com/watch?v=2NkmKs80idk',
-        duration: '42:46',
-        theme: 'cbet',
-        summary: 'Calculer les outs, les cotes du pot, les cotes implicites et la rentabilité d’un call ou bluff.',
-        tags: ['cotes', 'outs', 'equite', 'ev', 'math'],
-      },
-
-      // --- PROFILING HUD & TRACKERS ---
-      {
-        videoId: 'yVOZ6MEn63I',
-        title: '[TUTO] UTILISER UN TRACKER AU POKER',
-        url: 'https://www.youtube.com/watch?v=yVOZ6MEn63I',
-        duration: '33:12',
-        theme: 'hud',
-        summary: 'Configurer son HUD et comprendre les statistiques clés : VPIP, PFR, 3-Bet, AF et C-Bet.',
-        tags: ['tracker', 'hud', 'vpip', 'pfr', 'af'],
-      },
-      {
-        videoId: 'Wt01pB7TDtI',
-        title: '5 conseils pour utiliser au mieux votre tracker poker !',
-        url: 'https://www.youtube.com/watch?v=Wt01pB7TDtI',
-        duration: '14:42',
-        theme: 'hud',
-        summary: 'Fiabilité des échantillons (hands), ne pas sur-interpréter le HUD et exploiter les stats postflop.',
-        tags: ['tracker', 'sample', 'hud', 'conseils'],
-      },
-      {
-        videoId: 'MHIqPUJQ91o',
-        title: 'Comment améliorer son profiling au Poker ?',
-        url: 'https://www.youtube.com/watch?v=MHIqPUJQ91o',
-        duration: '1:00:20',
-        theme: 'hud',
-        summary: 'Adapter précisément ses sizings et lignes d’attaque selon les profils adverses en micro-limites.',
-        tags: ['profiling', 'adaptation', 'exploit', 'hud'],
-      },
-      {
-        videoId: 'Y8aW4xUbAVY',
-        title: 'Les différents types de joueurs de poker (TAG, LAG, NIT, FISH...)',
-        url: 'https://www.youtube.com/watch?v=Y8aW4xUbAVY',
-        duration: '12:45',
-        theme: 'hud',
-        summary: 'Identifier rapidement TAG, LAG, Nit, Calling Station et Maniac pour appliquer le bon plan de jeu.',
-        tags: ['tag', 'lag', 'nit', 'fish', 'calling station'],
-      },
-      {
-        videoId: 'PdSEVTwAlqo',
-        title: 'La prise de notes au poker',
-        url: 'https://www.youtube.com/watch?v=PdSEVTwAlqo',
-        duration: '25:14',
-        theme: 'hud',
-        summary: 'Pastillage couleur et prise de notes efficaces sur les showdowns pour exploiter les déviations.',
-        tags: ['notes', 'pastillage', 'showdown', 'profiling'],
-      },
-      {
-        videoId: 'Y68SCLgKntw',
-        title: 'LES BASES DU POKER #3 : POSITION, PROFILING, ÉQUITÉ',
-        url: 'https://www.youtube.com/watch?v=Y68SCLgKntw',
-        duration: '1:05:36',
-        theme: 'hud',
-        summary: 'Croiser sélection de table (être à gauche du récréatif), position, profiling et équité.',
-        tags: ['table selection', 'position', 'profiling', 'equite'],
-      },
-
-      // --- MENTAL & BANKROLL ---
-      {
+        order: 2,
+        stage: 1,
         videoId: 'nCb6HiyMpCo',
         title: 'Les Bases du cash Game #1 - Objectifs, sessions, Bankroll et Variance',
         url: 'https://www.youtube.com/watch?v=nCb6HiyMpCo',
@@ -2588,24 +2448,177 @@
         tags: ['objectifs', 'sessions', 'bankroll', 'variance'],
       },
       {
-        videoId: 'kkJanFyO5gM',
-        title: '[Théorie Poker] Variance, winrate, breakeven & downswing',
-        url: 'https://www.youtube.com/watch?v=kkJanFyO5gM',
-        duration: '25:39',
-        theme: 'mental',
-        summary: 'Pourquoi le winrate ne se juge qu’au long terme (300k+ mains) et comment traverser les downswings.',
-        tags: ['variance', 'winrate', 'breakeven', 'downswing'],
+        order: 3,
+        stage: 1,
+        videoId: 'ba8aJzFIWy4',
+        title: 'Les Bases du cash Game #2 - Avec quelles mains miser préflop !',
+        url: 'https://www.youtube.com/watch?v=ba8aJzFIWy4',
+        duration: '25:24',
+        theme: 'preflop',
+        summary: 'Comprendre la sélection de mains, la position à la table et éviter les mains dominées dès la NL2.',
+        tags: ['preflop', 'ranges', 'open raise', 'position', 'nl2'],
       },
       {
-        videoId: 'MIXRsjfXkQE',
-        title: 'LES BASES DU POKER #5 - Le Bankroll Management (théorie avancée)',
-        url: 'https://www.youtube.com/watch?v=MIXRsjfXkQE',
-        duration: '51:22',
-        theme: 'mental',
-        summary: 'Règle des 50+ caves, critères pour monter de limite (NL2 → NL5) et savoir redescendre à temps.',
-        tags: ['bankroll', 'caves', 'move up', 'move down'],
+        order: 4,
+        stage: 1,
+        videoId: 'CKQ5nPTmhJY',
+        title: 'Les 3 raisons de miser au poker',
+        url: 'https://www.youtube.com/watch?v=CKQ5nPTmhJY',
+        duration: '19:43',
+        theme: 'cbet',
+        summary: 'Miser en value, en bluff ou pour collecter la dead money / protéger son équité.',
+        tags: ['value', 'bluff', 'dead money', 'postflop'],
       },
       {
+        order: 5,
+        stage: 1,
+        videoId: 'Y8aW4xUbAVY',
+        title: 'Les différents types de joueurs de poker (TAG, LAG, NIT, FISH...)',
+        url: 'https://www.youtube.com/watch?v=Y8aW4xUbAVY',
+        duration: '12:45',
+        theme: 'hud',
+        summary: 'Identifier rapidement TAG, LAG, Nit, Calling Station et Maniac pour appliquer le bon plan de jeu.',
+        tags: ['tag', 'lag', 'nit', 'fish', 'calling station'],
+      },
+      {
+        order: 6,
+        stage: 1,
+        videoId: 'Y68SCLgKntw',
+        title: 'LES BASES DU POKER #3 : POSITION, PROFILING, ÉQUITÉ',
+        url: 'https://www.youtube.com/watch?v=Y68SCLgKntw',
+        duration: '1:05:36',
+        theme: 'hud',
+        summary: 'Croiser sélection de table (être à gauche du récréatif), position, profiling et équité.',
+        tags: ['table selection', 'position', 'profiling', 'equite'],
+      },
+
+      // --- ÉTAPE 2 : JEU PRÉFLOP SOLIDE, BIG BLIND & OUTILS ---
+      {
+        order: 7,
+        stage: 2,
+        videoId: 'aZcRgjzRj7s',
+        title: 'Cash Game Live en NL2 - Isoler les fish et jouer en position',
+        url: 'https://www.youtube.com/watch?v=aZcRgjzRj7s',
+        duration: '46:30',
+        theme: 'preflop',
+        summary: 'Application concrète en NL2 : punir les limpers avec l’iso-raise (3bb + 1bb/limper) et jouer IP.',
+        tags: ['nl2', 'iso-raise', 'limp', 'position', 'fish'],
+      },
+      {
+        order: 8,
+        stage: 2,
+        videoId: 'OXsdlYj5Ivs',
+        title: '7 erreurs préflop que vous faites TOUS en microlimites (et comment les corriger)',
+        url: 'https://www.youtube.com/watch?v=OXsdlYj5Ivs',
+        duration: '1:13:34',
+        theme: 'preflop',
+        summary: 'Open-limp, mauvais sizings, calls trop larges OOP et pièges classiques des micro-limites.',
+        tags: ['erreurs', 'microlimites', 'limp', 'sizing', 'preflop'],
+      },
+      {
+        order: 9,
+        stage: 2,
+        videoId: 'bjrgiLLHkis',
+        title: 'Les Bases du Cash Game #5 - Comment défendre sa Big Blind ?',
+        url: 'https://www.youtube.com/watch?v=bjrgiLLHkis',
+        duration: '29:12',
+        theme: 'preflop',
+        summary: 'Cotes du pot en BB, ajustements vs UTG ou Bouton et défense cohérente hors de position.',
+        tags: ['bb', 'defense', 'cotes', 'preflop', 'cash game'],
+      },
+      {
+        order: 10,
+        stage: 2,
+        videoId: 'PdSEVTwAlqo',
+        title: 'La prise de notes au poker',
+        url: 'https://www.youtube.com/watch?v=PdSEVTwAlqo',
+        duration: '25:14',
+        theme: 'hud',
+        summary: 'Pastillage couleur et prise de notes efficaces sur les showdowns pour exploiter les déviations.',
+        tags: ['notes', 'pastillage', 'showdown', 'profiling'],
+      },
+      {
+        order: 11,
+        stage: 2,
+        videoId: 'yVOZ6MEn63I',
+        title: '[TUTO] UTILISER UN TRACKER AU POKER',
+        url: 'https://www.youtube.com/watch?v=yVOZ6MEn63I',
+        duration: '33:12',
+        theme: 'hud',
+        summary: 'Configurer son HUD et comprendre les statistiques clés : VPIP, PFR, 3-Bet, AF et C-Bet.',
+        tags: ['tracker', 'hud', 'vpip', 'pfr', 'af'],
+      },
+      {
+        order: 12,
+        stage: 2,
+        videoId: 'Wt01pB7TDtI',
+        title: '5 conseils pour utiliser au mieux votre tracker poker !',
+        url: 'https://www.youtube.com/watch?v=Wt01pB7TDtI',
+        duration: '14:42',
+        theme: 'hud',
+        summary: 'Fiabilité des échantillons (hands), ne pas sur-interpréter le HUD et exploiter les stats postflop.',
+        tags: ['tracker', 'sample', 'hud', 'conseils'],
+      },
+
+      // --- ÉTAPE 3 : COTES, MAÎTRISE DU FLOP & ANTI-TILT ---
+      {
+        order: 13,
+        stage: 3,
+        videoId: '2NkmKs80idk',
+        title: 'LES BASES DU POKER #2 : LES COTES',
+        url: 'https://www.youtube.com/watch?v=2NkmKs80idk',
+        duration: '42:46',
+        theme: 'cbet',
+        summary: 'Calculer les outs, les cotes du pot, les cotes implicites et la rentabilité d’un call ou bluff.',
+        tags: ['cotes', 'outs', 'equite', 'ev', 'math'],
+      },
+      {
+        order: 14,
+        stage: 3,
+        videoId: 'Aiwi4Np_LOY',
+        title: 'LE CONTINUATION BET au Poker : Tout ce qu\'il faut savoir sur le CBET',
+        url: 'https://www.youtube.com/watch?v=Aiwi4Np_LOY',
+        duration: '9:30',
+        theme: 'cbet',
+        summary: 'Synthèse claire sur la fréquence de C-Bet, textures dry vs drawy et pots multiway.',
+        tags: ['c-bet', 'texture', 'dry', 'drawy', 'multiway'],
+      },
+      {
+        order: 15,
+        stage: 3,
+        videoId: 'NX6VPRsaToE',
+        title: 'Quand faut-il CHECK le FLOP au POKER ?',
+        url: 'https://www.youtube.com/watch?v=NX6VPRsaToE',
+        duration: '19:18',
+        theme: 'cbet',
+        summary: 'Maîtriser le pot control avec ses mains à showdown value et éviter le C-Bet automatique.',
+        tags: ['check', 'pot control', 'showdown value', 'flop'],
+      },
+      {
+        order: 16,
+        stage: 3,
+        videoId: 'X3Z-JuxwUJo',
+        title: 'Work your basics - Le Cbet au poker #1',
+        url: 'https://www.youtube.com/watch?v=X3Z-JuxwUJo',
+        duration: '47:07',
+        theme: 'cbet',
+        summary: 'Analyse détaillée du C-Bet au flop : avantage de range, sizings et sélection des bluffs.',
+        tags: ['c-bet', 'flop', 'sizing', 'range advantage'],
+      },
+      {
+        order: 17,
+        stage: 3,
+        videoId: 'XUFEoov-FYE',
+        title: 'La vraie raison à l\'origine du tilt - MENTAL AU POKER #6',
+        url: 'https://www.youtube.com/watch?v=XUFEoov-FYE',
+        duration: '22:44',
+        theme: 'mental',
+        summary: 'Comprendre le mécanisme psychologique du tilt (ego, sentiment d’injustice) pour l’anticiper.',
+        tags: ['tilt', 'ego', 'psychologie', 'mental'],
+      },
+      {
+        order: 18,
+        stage: 3,
         videoId: 'qx3Q2SpP0cg',
         title: '5 solutions pour gérer le TILT en pleine session - MENTAL AU POKER #9',
         url: 'https://www.youtube.com/watch?v=qx3Q2SpP0cg',
@@ -2614,7 +2627,44 @@
         summary: 'Stop-loss, respiration, détection du C-Game et techniques concrètes pour stopper le tilt à chaud.',
         tags: ['tilt', 'stop-loss', 'session', 'c-game'],
       },
+
+      // --- ÉTAPE 4 : 3-BET, DÉFENSE VS 3-BET & VARIANCE ---
       {
+        order: 19,
+        stage: 4,
+        videoId: 'W_tvs9AVcyY',
+        title: 'Les Bases du Cash Game #4 - Le 3bet',
+        url: 'https://www.youtube.com/watch?v=W_tvs9AVcyY',
+        duration: '32:30',
+        theme: 'threebet',
+        summary: 'Pourquoi 3-bet en value ou light, sizings IP vs OOP et construction de ranges polarisées/linéaires.',
+        tags: ['3-bet', 'sizing', 'value', 'bluff'],
+      },
+      {
+        order: 20,
+        stage: 4,
+        videoId: 'CKdJx--jRuU',
+        title: 'Le 3bet pour value',
+        url: 'https://www.youtube.com/watch?v=CKdJx--jRuU',
+        duration: '31:51',
+        theme: 'threebet',
+        summary: 'Identifier les meilleurs spots de 3-bet en value pour isoler et faire grossir les pots.',
+        tags: ['3-bet', 'value', 'exploit'],
+      },
+      {
+        order: 21,
+        stage: 4,
+        videoId: '8CNioOWy1fQ',
+        title: 'Les Bases du cash Game #3 - Comment se défendre Vs 3BET ?',
+        url: 'https://www.youtube.com/watch?v=8CNioOWy1fQ',
+        duration: '34:05',
+        theme: 'threebet',
+        summary: 'Quand fold, call ou 4-bet face à un 3-bet selon les positions et le profil de l’adversaire.',
+        tags: ['defense', 'vs 3-bet', '4-bet', 'fold'],
+      },
+      {
+        order: 22,
+        stage: 4,
         videoId: '3R83YGyRMNY',
         title: 'Mauvais résultats au Poker: BAD RUN ou BAD PLAY?',
         url: 'https://www.youtube.com/watch?v=3R83YGyRMNY',
@@ -2624,13 +2674,94 @@
         tags: ['bad run', 'bad play', 'review', 'ev'],
       },
       {
-        videoId: 'XUFEoov-FYE',
-        title: 'La vraie raison à l\'origine du tilt - MENTAL AU POKER #6',
-        url: 'https://www.youtube.com/watch?v=XUFEoov-FYE',
-        duration: '22:44',
+        order: 23,
+        stage: 4,
+        videoId: 'kkJanFyO5gM',
+        title: '[Théorie Poker] Variance, winrate, breakeven & downswing',
+        url: 'https://www.youtube.com/watch?v=kkJanFyO5gM',
+        duration: '25:39',
         theme: 'mental',
-        summary: 'Comprendre le mécanisme psychologique du tilt (ego, sentiment d’injustice) pour l’anticiper.',
-        tags: ['tilt', 'ego', 'psychologie', 'mental'],
+        summary: 'Pourquoi le winrate ne se juge qu’au long terme (300k+ mains) et comment traverser les downswings.',
+        tags: ['variance', 'winrate', 'breakeven', 'downswing'],
+      },
+      {
+        order: 24,
+        stage: 4,
+        videoId: 'MIXRsjfXkQE',
+        title: 'LES BASES DU POKER #5 - Le Bankroll Management (théorie avancée)',
+        url: 'https://www.youtube.com/watch?v=MIXRsjfXkQE',
+        duration: '51:22',
+        theme: 'mental',
+        summary: 'Règle des 50+ caves, critères pour monter de limite (NL2 → NL5) et savoir redescendre à temps.',
+        tags: ['bankroll', 'caves', 'move up', 'move down'],
+      },
+
+      // --- ÉTAPE 5 : POTS 3-BET AVANCÉS, TURN & ADAPTATIONS ---
+      {
+        order: 25,
+        stage: 5,
+        videoId: 'i1h3XQcdfV4',
+        title: 'Arrêtez de jouer les pots 3bet comme un fish !',
+        url: 'https://www.youtube.com/watch?v=i1h3XQcdfV4',
+        duration: '39:14',
+        theme: 'threebet',
+        summary: 'Éviter de s’envoyer en l’air avec des mains dominées et maîtriser le SPR en pot 3-bet.',
+        tags: ['pot 3-bet', 'spr', 'erreurs', 'postflop'],
+      },
+      {
+        order: 26,
+        stage: 5,
+        videoId: '4vLMM9d3QvY',
+        title: 'COACHING POKER: Progresser en pot 3bet !',
+        url: 'https://www.youtube.com/watch?v=4vLMM9d3QvY',
+        duration: '29:15',
+        theme: 'threebet',
+        summary: 'Revue de mains commentée pour corriger les leaks récurrents dans les pots sur-relancés.',
+        tags: ['coaching', 'pot 3-bet', 'review'],
+      },
+      {
+        order: 27,
+        stage: 5,
+        videoId: 'R-E20DsclJ0',
+        title: 'Work Your Basics - Le 2nd Barrel au Poker #6',
+        url: 'https://www.youtube.com/watch?v=R-E20DsclJ0',
+        duration: '1:01:30',
+        theme: 'cbet',
+        summary: 'Quand poursuivre l’agression à la Turn (scare cards, équité, fold equity) ou ralentir.',
+        tags: ['2nd barrel', 'turn', 'semi-bluff', 'scare card'],
+      },
+      {
+        order: 28,
+        stage: 5,
+        videoId: 'MHIqPUJQ91o',
+        title: 'Comment améliorer son profiling au Poker ?',
+        url: 'https://www.youtube.com/watch?v=MHIqPUJQ91o',
+        duration: '1:00:20',
+        theme: 'hud',
+        summary: 'Adapter précisément ses sizings et lignes d’attaque selon les profils adverses en micro-limites.',
+        tags: ['profiling', 'adaptation', 'exploit', 'hud'],
+      },
+      {
+        order: 29,
+        stage: 5,
+        videoId: 'H2xcnEaGv6I',
+        title: 'THÉORIE POKER - Le 3bet en Small Blind',
+        url: 'https://www.youtube.com/watch?v=H2xcnEaGv6I',
+        duration: '1:36:24',
+        theme: 'threebet',
+        summary: 'Stratégie de 3-bet ou fold en SB, sizings OOP (+1 à 2bb) et gestion du squeeze.',
+        tags: ['small blind', '3-bet', 'oop', 'squeeze'],
+      },
+      {
+        order: 30,
+        stage: 5,
+        videoId: 'WSKznvxb4kg',
+        title: 'Les ranges en Cash Game : Fondamentaux et adaptations',
+        url: 'https://www.youtube.com/watch?v=WSKznvxb4kg',
+        duration: '1:51:09',
+        theme: 'preflop',
+        summary: 'Construction complète des ranges préflop en Cash Game 6-max et adaptations selon le field.',
+        tags: ['ranges', 'preflop', 'adaptation', '6-max'],
       },
     ];
 
@@ -3586,10 +3717,155 @@
       updateQuizCoachVideoUI();
     }
 
+    const COACH_WATCHED_KEY = 'killtilt_watched_videos_v1';
+
     const coachVideosState = {
       filter: 'all',
+      watchFilter: 'all',
       linkedVideoId: null,
+      currentVideoId: null,
+      watched: new Set(),
     };
+
+    function loadWatchedVideos() {
+      try {
+        const raw = localStorage.getItem(COACH_WATCHED_KEY);
+        if (!raw) return new Set();
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+        const validIds = new Set(COACH_VIDEOS.map(v => v.videoId));
+        return new Set(parsed.filter(id => typeof id === 'string' && validIds.has(id)));
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function saveWatchedVideos() {
+      try {
+        localStorage.setItem(COACH_WATCHED_KEY, JSON.stringify([...coachVideosState.watched]));
+      } catch (e) {}
+    }
+
+    function updateCoachVideosProgressUI() {
+      const total = COACH_VIDEOS.length;
+      const done = coachVideosState.watched.size;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      const navBadge = document.getElementById('nav-videos-progress');
+      if (navBadge) {
+        navBadge.textContent = `${done}/${total}`;
+      }
+
+      const labelEl = document.getElementById('coach-videos-progress-label');
+      if (labelEl) {
+        labelEl.textContent = `${done} / ${total} vidéos vues (${pct}%)`;
+      }
+
+      const barEl = document.getElementById('coach-videos-progress-bar');
+      if (barEl) {
+        barEl.style.width = `${pct}%`;
+      }
+
+      const nextBtn = document.getElementById('coach-videos-next-btn');
+      if (nextBtn) {
+        const nextUnwatched = [...COACH_VIDEOS]
+          .sort((a, b) => a.order - b.order)
+          .find(v => !coachVideosState.watched.has(v.videoId));
+        nextBtn.textContent = nextUnwatched
+          ? `▶ Continuer : #${nextUnwatched.order}`
+          : `🏆 Parcours ${total}/${total} terminé !`;
+      }
+    }
+
+    function toggleVideoWatched(videoId) {
+      const video = COACH_VIDEOS.find(v => v.videoId === videoId);
+      if (!video) return;
+
+      if (coachVideosState.watched.has(videoId)) {
+        coachVideosState.watched.delete(videoId);
+        showToast(`↩️ Vidéo #${video.order} remise dans « À voir ».`, 'info');
+      } else {
+        coachVideosState.watched.add(videoId);
+        showToast(`✅ Vidéo #${video.order} marquée comme vue !`, 'success');
+      }
+
+      saveWatchedVideos();
+      updateCoachVideosProgressUI();
+      updateCoachPlayerControls();
+      renderCoachVideosFilters();
+      renderCoachVideosWatchFilters();
+      renderCoachVideosList();
+    }
+
+    function toggleCurrentPlayerVideoWatched() {
+      if (!coachVideosState.currentVideoId) return;
+      toggleVideoWatched(coachVideosState.currentVideoId);
+    }
+
+    function resetWatchedVideos() {
+      coachVideosState.watched.clear();
+      saveWatchedVideos();
+      updateCoachVideosProgressUI();
+      updateCoachPlayerControls();
+      renderCoachVideosFilters();
+      renderCoachVideosWatchFilters();
+      renderCoachVideosList();
+      showToast('Progression vidéo réinitialisée (0/30).', 'info');
+    }
+
+    function playNextUnwatchedVideo() {
+      const next = [...COACH_VIDEOS]
+        .sort((a, b) => a.order - b.order)
+        .find(v => !coachVideosState.watched.has(v.videoId));
+      if (!next) {
+        showToast('🏆 Bravo ! Vous avez visionné les 30 vidéos du parcours Kill Tilt !', 'success');
+        return;
+      }
+
+      let filtersChanged = false;
+      if (coachVideosState.watchFilter === 'watched') {
+        coachVideosState.watchFilter = 'all';
+        filtersChanged = true;
+      }
+      if (coachVideosState.filter !== 'all' && coachVideosState.filter !== next.theme) {
+        coachVideosState.filter = 'all';
+        filtersChanged = true;
+      }
+      if (filtersChanged) {
+        renderCoachVideosFilters();
+        renderCoachVideosWatchFilters();
+      }
+      playCoachVideo(next.videoId);
+    }
+
+    function playNextSequentialVideo() {
+      if (!coachVideosState.currentVideoId) return;
+      const current = COACH_VIDEOS.find(v => v.videoId === coachVideosState.currentVideoId);
+      if (!current) return;
+      const next = COACH_VIDEOS.find(v => v.order === current.order + 1);
+      if (!next) {
+        showToast('Vous êtes déjà sur la dernière vidéo (#30) du parcours !', 'info');
+        return;
+      }
+
+      let filtersChanged = false;
+      if (coachVideosState.filter !== 'all' && coachVideosState.filter !== next.theme) {
+        coachVideosState.filter = 'all';
+        filtersChanged = true;
+      }
+      if (coachVideosState.watchFilter === 'watched' && !coachVideosState.watched.has(next.videoId)) {
+        coachVideosState.watchFilter = 'all';
+        filtersChanged = true;
+      } else if (coachVideosState.watchFilter === 'unwatched' && coachVideosState.watched.has(next.videoId)) {
+        coachVideosState.watchFilter = 'all';
+        filtersChanged = true;
+      }
+      if (filtersChanged) {
+        renderCoachVideosFilters();
+        renderCoachVideosWatchFilters();
+      }
+      playCoachVideo(next.videoId);
+    }
 
     function getActiveQuizVideoTheme() {
       const cq = state.quiz.currentQuestion;
@@ -3665,11 +3941,14 @@
         ? forcedTheme
         : activeTheme;
 
-      const linkedId = state.quiz.currentQuestion?.type === 'concept'
-        ? (state.quiz.currentQuestion.data?.videoId || null)
-        : null;
+      const linkedId = forcedTheme === 'all'
+        ? null
+        : (state.quiz.currentQuestion?.type === 'concept'
+          ? (state.quiz.currentQuestion.data?.videoId || null)
+          : null);
 
       coachVideosState.filter = chosenTheme;
+      coachVideosState.watchFilter = 'all';
       coachVideosState.linkedVideoId = linkedId && COACH_VIDEOS.some(v => v.videoId === linkedId) ? linkedId : null;
 
       const searchEl = document.getElementById('coach-videos-search');
@@ -3678,11 +3957,15 @@
       const themeInfo = COACH_VIDEO_THEMES[activeTheme] || COACH_VIDEO_THEMES.preflop;
       const subtitleEl = document.getElementById('coach-videos-context-subtitle');
       if (subtitleEl) {
-        subtitleEl.textContent = `Thème actuel du Quiz : ${themeInfo.icon} ${themeInfo.label} • ${COACH_VIDEOS.length} vidéos Cash Game / NL2 vérifiées`;
+        subtitleEl.textContent = chosenTheme === 'all'
+          ? 'Parcours progressif du débutant NL2 au joueur avancé • Cochez chaque vidéo terminée'
+          : `Thème actuel du Quiz : ${themeInfo.icon} ${themeInfo.label} • ${COACH_VIDEOS.length} vidéos Cash Game / NL2 vérifiées`;
       }
 
       closeCoachVideoPlayer();
+      updateCoachVideosProgressUI();
       renderCoachVideosFilters();
+      renderCoachVideosWatchFilters();
       renderCoachVideosList();
 
       modal.classList.remove('hidden');
@@ -3711,6 +3994,12 @@
       renderCoachVideosList();
     }
 
+    function setCoachVideosWatchFilter(mode) {
+      coachVideosState.watchFilter = ['all', 'unwatched', 'watched'].includes(mode) ? mode : 'all';
+      renderCoachVideosWatchFilters();
+      renderCoachVideosList();
+    }
+
     function renderCoachVideosFilters() {
       const container = document.getElementById('coach-videos-filters');
       if (!container) return;
@@ -3721,21 +4010,45 @@
         : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600';
 
       const parts = [
-        `<button type="button" onclick="setCoachVideosFilter('all')" class="${allBtnClass}">Toutes (${COACH_VIDEOS.length})</button>`,
+        `<button type="button" onclick="setCoachVideosFilter('all')" class="${allBtnClass}">🎓 Parcours #1→#30 (${COACH_VIDEOS.length})</button>`,
       ];
 
       Object.values(COACH_VIDEO_THEMES).forEach(th => {
-        const count = COACH_VIDEOS.filter(v => v.theme === th.id).length;
+        const themeVideos = COACH_VIDEOS.filter(v => v.theme === th.id);
+        const watchedCount = themeVideos.filter(v => coachVideosState.watched.has(v.videoId)).length;
         const isActive = coachVideosState.filter === th.id;
         const cls = isActive
           ? `px-2.5 py-1.5 rounded-xl text-xs font-bold border transition ${th.activeBtnClass}`
           : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600';
         parts.push(
-          `<button type="button" onclick="setCoachVideosFilter('${th.id}')" class="${cls}">${th.icon} ${escapeHtml(th.shortLabel)} (${count})</button>`
+          `<button type="button" onclick="setCoachVideosFilter('${th.id}')" class="${cls}">${th.icon} ${escapeHtml(th.shortLabel)} (${watchedCount}/${themeVideos.length})</button>`
         );
       });
 
       container.innerHTML = parts.join('');
+    }
+
+    function renderCoachVideosWatchFilters() {
+      const container = document.getElementById('coach-videos-watch-filters');
+      if (!container) return;
+
+      const total = COACH_VIDEOS.length;
+      const watchedCount = coachVideosState.watched.size;
+      const unwatchedCount = Math.max(0, total - watchedCount);
+
+      const options = [
+        { id: 'all', label: `Toutes (${total})` },
+        { id: 'unwatched', label: `À voir (${unwatchedCount})` },
+        { id: 'watched', label: `Vues (${watchedCount})` },
+      ];
+
+      container.innerHTML = options.map(opt => {
+        const isActive = coachVideosState.watchFilter === opt.id;
+        const cls = isActive
+          ? 'px-2.5 py-2 rounded-xl text-xs font-bold border transition bg-emerald-600 text-white border-emerald-400/50 shadow whitespace-nowrap'
+          : 'px-2.5 py-2 rounded-xl text-xs font-bold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600 whitespace-nowrap';
+        return `<button type="button" onclick="setCoachVideosWatchFilter('${opt.id}')" class="${cls}">${escapeHtml(opt.label)}</button>`;
+      }).join('');
     }
 
     function renderCoachVideosList() {
@@ -3744,74 +4057,167 @@
 
       const query = normalizeSearchText(document.getElementById('coach-videos-search')?.value || '').trim();
       const selectedFilter = coachVideosState.filter;
+      const watchFilter = coachVideosState.watchFilter;
       const linkedId = coachVideosState.linkedVideoId;
 
       const filtered = COACH_VIDEOS.filter(v => {
         if (selectedFilter !== 'all' && v.theme !== selectedFilter) return false;
+        const isWatched = coachVideosState.watched.has(v.videoId);
+        if (watchFilter === 'watched' && !isWatched) return false;
+        if (watchFilter === 'unwatched' && isWatched) return false;
         if (!query) return true;
         const themeLabel = COACH_VIDEO_THEMES[v.theme]?.label || '';
-        const haystack = normalizeSearchText(`${v.title} ${v.summary} ${(v.tags || []).join(' ')} ${themeLabel}`);
+        const stageTitle = COACH_VIDEO_STAGES[v.stage]?.title || '';
+        const haystack = normalizeSearchText(`${v.title} ${v.summary} ${(v.tags || []).join(' ')} ${themeLabel} ${stageTitle} #${v.order}`);
         return haystack.includes(query);
       });
 
-      if (linkedId) {
-        filtered.sort((a, b) => (a.videoId === linkedId ? -1 : b.videoId === linkedId ? 1 : 0));
-      }
+      filtered.sort((a, b) => {
+        if (linkedId && selectedFilter !== 'all') {
+          if (a.videoId === linkedId) return -1;
+          if (b.videoId === linkedId) return 1;
+        }
+        return a.order - b.order;
+      });
 
       if (filtered.length === 0) {
         grid.innerHTML = `
           <div class="col-span-full text-center py-8 px-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs sm:text-sm text-slate-400">
-            Aucune vidéo ne correspond à cette recherche dans le thème sélectionné.
+            Aucune vidéo ne correspond à ces filtres.
           </div>
         `;
         return;
       }
 
-      grid.innerHTML = filtered.map(v => {
-        const th = COACH_VIDEO_THEMES[v.theme] || COACH_VIDEO_THEMES.preflop;
-        const isLinked = linkedId && v.videoId === linkedId;
-        const cardBorder = isLinked
-          ? 'border-amber-400/70 bg-amber-950/20 ring-1 ring-amber-400/30'
-          : 'border-slate-800 bg-slate-950/80 hover:border-slate-700';
+      const showStageDividers = selectedFilter === 'all' && !query && !linkedId;
+      let lastStage = null;
+      const htmlParts = [];
 
-        return `
+      filtered.forEach(v => {
+        if (showStageDividers && v.stage !== lastStage) {
+          lastStage = v.stage;
+          const st = COACH_VIDEO_STAGES[v.stage];
+          if (st) {
+            const stageVideos = COACH_VIDEOS.filter(item => item.stage === v.stage);
+            const stageWatched = stageVideos.filter(item => coachVideosState.watched.has(item.videoId)).length;
+            htmlParts.push(`
+              <div class="col-span-full flex flex-wrap items-center justify-between gap-2 pt-2 pb-1 border-b border-slate-800/90">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full border text-[11px] font-extrabold ${st.badgeClass}">
+                    ${st.icon} ${escapeHtml(st.levelLabel)}
+                  </span>
+                  <h3 class="text-xs sm:text-sm font-extrabold text-white">${escapeHtml(st.title)}</h3>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">${stageWatched}/${stageVideos.length} vues</span>
+              </div>
+            `);
+          }
+        }
+
+        const th = COACH_VIDEO_THEMES[v.theme] || COACH_VIDEO_THEMES.preflop;
+        const st = COACH_VIDEO_STAGES[v.stage];
+        const isWatched = coachVideosState.watched.has(v.videoId);
+        const isLinked = linkedId && v.videoId === linkedId;
+        const isPlaying = coachVideosState.currentVideoId === v.videoId;
+
+        const cardBorder = isPlaying
+          ? 'border-rose-400/80 bg-rose-950/20 ring-1 ring-rose-400/40'
+          : isLinked
+            ? 'border-amber-400/70 bg-amber-950/20 ring-1 ring-amber-400/30'
+            : isWatched
+              ? 'border-emerald-500/40 bg-emerald-950/15 hover:border-emerald-500/60'
+              : 'border-slate-800 bg-slate-950/80 hover:border-slate-700';
+
+        const watchToggleClass = isWatched
+          ? 'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-emerald-500/50 bg-emerald-500/15 text-emerald-300 text-xs font-bold cursor-pointer select-none transition hover:bg-emerald-500/25'
+          : 'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 text-xs font-bold cursor-pointer select-none transition hover:border-slate-500';
+
+        const safeId = escapeHtml(v.videoId);
+
+        htmlParts.push(`
           <article class="rounded-2xl border ${cardBorder} overflow-hidden flex flex-col transition">
-            <div class="relative aspect-video bg-slate-950 overflow-hidden group">
-              <img src="https://i.ytimg.com/vi/${escapeHtml(v.videoId)}/hqdefault.jpg" alt="${escapeHtml(v.title)}" loading="lazy" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-[1.02] transition duration-200" />
+            <button type="button" onclick="playCoachVideo('${safeId}')" class="relative aspect-video w-full bg-slate-950 overflow-hidden group text-left" aria-label="Lire la vidéo #${v.order} : ${escapeHtml(v.title)}">
+              <img src="https://i.ytimg.com/vi/${safeId}/hqdefault.jpg" alt="${escapeHtml(v.title)}" loading="lazy" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-[1.02] transition duration-200" />
+              <span class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition">
+                <span class="w-11 h-11 rounded-full bg-rose-600/90 group-hover:bg-rose-500 text-white flex items-center justify-center text-sm shadow-lg transition transform group-hover:scale-110">
+                  ▶
+                </span>
+              </span>
+              <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-950/90 border border-slate-700/80 text-white font-mono text-[11px] font-extrabold shadow">
+                #${v.order}
+              </span>
               <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/85 text-white font-mono text-[11px] font-bold">
                 ${escapeHtml(v.duration)}
               </span>
-              ${isLinked ? '<span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[10px] font-extrabold shadow">⭐ Vidéo liée à cette question</span>' : ''}
-            </div>
+              ${isPlaying ? '<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-extrabold shadow">▶ En lecture</span>' : ''}
+              ${isLinked && !isPlaying ? '<span class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[10px] font-extrabold shadow">⭐ Liée au Quiz</span>' : ''}
+              ${isWatched && !isLinked && !isPlaying ? '<span class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-emerald-600/95 text-white text-[10px] font-extrabold shadow">✅ Vue</span>' : ''}
+            </button>
             <div class="p-3.5 flex-1 flex flex-col justify-between gap-3">
               <div class="space-y-1.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${th.badgeClass}">
-                  ${th.icon} ${escapeHtml(th.shortLabel)}
-                </span>
-                <h3 class="text-xs sm:text-sm font-extrabold text-white leading-snug line-clamp-2">
-                  ${escapeHtml(v.title)}
-                </h3>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${th.badgeClass}">
+                    ${th.icon} ${escapeHtml(th.shortLabel)}
+                  </span>
+                  ${st ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${st.badgeClass}">${st.icon} ${escapeHtml(st.levelLabel)}</span>` : ''}
+                </div>
+                <h4 class="text-xs sm:text-sm font-extrabold text-white leading-snug line-clamp-2">
+                  #${v.order} — ${escapeHtml(v.title)}
+                </h4>
                 <p class="text-[11px] text-slate-400 leading-relaxed">
                   ${escapeHtml(v.summary)}
                 </p>
               </div>
               <div class="flex items-center gap-2 pt-1">
-                <button type="button" onclick="playCoachVideo('${escapeHtml(v.videoId)}')" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">
-                  ▶ Lire ici
+                <label class="${watchToggleClass}" title="Cocher cette vidéo comme vue">
+                  <input type="checkbox" ${isWatched ? 'checked' : ''} onchange="toggleVideoWatched('${safeId}')" class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer" />
+                  <span>${isWatched ? 'Vue' : 'À voir'}</span>
+                </label>
+                <button type="button" onclick="playCoachVideo('${safeId}')" class="flex-1 py-1.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">
+                  ▶ Regarder
                 </button>
-                <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition">
-                  ↗ YouTube
+                <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer" title="Ouvrir sur YouTube" class="py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition">
+                  ↗
                 </a>
               </div>
             </div>
           </article>
-        `;
-      }).join('');
+        `);
+      });
+
+      grid.innerHTML = htmlParts.join('');
+    }
+
+    function updateCoachPlayerControls() {
+      const videoId = coachVideosState.currentVideoId;
+      const watchedBtn = document.getElementById('coach-videos-player-watched-btn');
+      const nextBtn = document.getElementById('coach-videos-player-next-btn');
+
+      if (watchedBtn) {
+        const isWatched = Boolean(videoId && coachVideosState.watched.has(videoId));
+        watchedBtn.textContent = isWatched ? '✅ Vue' : '☐ Marquer comme vue';
+        watchedBtn.className = isWatched
+          ? 'px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition'
+          : 'px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition';
+      }
+
+      if (nextBtn) {
+        const current = videoId ? COACH_VIDEOS.find(v => v.videoId === videoId) : null;
+        const next = current ? COACH_VIDEOS.find(v => v.order === current.order + 1) : null;
+        if (next) {
+          nextBtn.classList.remove('hidden');
+          nextBtn.textContent = `Suivante (#${next.order}) →`;
+        } else {
+          nextBtn.classList.add('hidden');
+        }
+      }
     }
 
     function playCoachVideo(videoId) {
       const video = COACH_VIDEOS.find(v => v.videoId === videoId);
       if (!video) return;
+
+      coachVideosState.currentVideoId = video.videoId;
 
       const playerEl = document.getElementById('coach-videos-player');
       const iframeEl = document.getElementById('coach-videos-iframe');
@@ -3820,22 +4226,28 @@
       const extEl = document.getElementById('coach-videos-player-ext');
       const scrollBody = document.getElementById('coach-videos-scroll-body');
       const th = COACH_VIDEO_THEMES[video.theme] || COACH_VIDEO_THEMES.preflop;
+      const st = COACH_VIDEO_STAGES[video.stage];
 
-      if (titleEl) titleEl.textContent = video.title;
-      if (metaEl) metaEl.textContent = `${th.icon} ${th.label} • Durée : ${video.duration}`;
+      if (titleEl) titleEl.textContent = `#${video.order} — ${video.title}`;
+      if (metaEl) metaEl.textContent = `${st ? `${st.icon} ${st.levelLabel} • ` : ''}${th.icon} ${th.label} • Durée : ${video.duration}`;
       if (extEl) extEl.href = video.url;
       if (iframeEl) {
         iframeEl.src = `https://www.youtube.com/embed/${encodeURIComponent(video.videoId)}?autoplay=1&rel=0`;
       }
       if (playerEl) playerEl.classList.remove('hidden');
       if (scrollBody) scrollBody.scrollTop = 0;
+
+      updateCoachPlayerControls();
+      renderCoachVideosList();
     }
 
     function closeCoachVideoPlayer() {
+      coachVideosState.currentVideoId = null;
       const playerEl = document.getElementById('coach-videos-player');
       const iframeEl = document.getElementById('coach-videos-iframe');
       if (iframeEl) iframeEl.src = '';
       if (playerEl) playerEl.classList.add('hidden');
+      renderCoachVideosList();
     }
 
     function awardQuizXp(isCorrect) {
@@ -5399,6 +5811,9 @@
       state.quiz.xp = loadQuizXp();
       updateQuizLevelUI();
       updateQuizCoachVideoUI();
+
+      coachVideosState.watched = loadWatchedVideos();
+      updateCoachVideosProgressUI();
 
       evaluateHudProfile();
       updateOutsCalculator(9);
