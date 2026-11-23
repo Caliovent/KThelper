@@ -89,6 +89,9 @@
           <button id="btn-mode-quiz" onclick="setAppMode('quiz')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
             🎯 Quiz <span id="quiz-streak-badge" class="hidden px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded text-[10px] font-mono">0</span>
           </button>
+          <button id="btn-mode-games" onclick="setAppMode('games')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+            🎮 Jeux Ranges <span id="games-mastery-badge" class="hidden px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">0%</span>
+          </button>
         </div>
       </div>
 
@@ -457,6 +460,402 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- RANGE MEMORIZATION GAMES ARENA (Hidden by default) -->
+      <section id="range-games-workspace" class="hidden space-y-5">
+
+        <!-- Arena Header -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-base sm:text-lg font-extrabold text-white">🎮 Jeux de Ranges — Gammes Préflop par Position & Profondeur</h2>
+              <span id="games-global-mastery-text" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                Maîtrise : 0%
+              </span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Inspiré de Pe4nuts (Erreur #1 du Top 1%) : « Travaillez vos ranges comme un musicien travaille ses gammes » — selon la position, la profondeur (<span class="text-slate-200 font-semibold">40bb / 100bb / 200bb</span>) et la dynamique de table.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a href="https://www.youtube.com/watch?v=hru2la1GAB4" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-200 text-xs font-bold transition inline-flex items-center gap-1.5">
+              📺 Vidéo Pe4nuts : Erreur #1 Ranges ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- 4-Game Selector Bar -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-slate-950/90 border border-slate-800 rounded-2xl p-1.5">
+          <button id="rg-tab-recall" type="button" onclick="setRangeGameTab('recall')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow">
+            🎨 Peins la Range
+          </button>
+          <button id="rg-tab-blitz" type="button" onclick="setRangeGameTab('blitz')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            ⚡ Chrono Blitz 60s
+          </button>
+          <button id="rg-tab-depth" type="button" onclick="setRangeGameTab('depth')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            📏 Défi Profondeur (40/100/200bb)
+          </button>
+          <button id="rg-tab-mastery" type="button" onclick="setRangeGameTab('mastery')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white inline-flex items-center gap-1.5">
+            🧠 Maîtrise & Leaks <span id="rg-leaks-count-pill" class="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono text-[10px]">0</span>
+          </button>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME 1: PEINS LA RANGE DE MÉMOIRE (ACTIVE RECALL 13x13)         -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-recall" class="space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div>
+                <label for="rg-recall-preset" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Position / Spot</label>
+                <select id="rg-recall-preset" onchange="loadRecallSpot()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                  <option value="UTG">UTG — Open Raise</option>
+                  <option value="MP">MP — Open Raise</option>
+                  <option value="CO">CO — Open Raise</option>
+                  <option value="BTN">BU — Open Raise</option>
+                  <option value="SB">SB — Open Raise vs BB</option>
+                  <option value="BB_ISO_SB">BB — Iso vs SB Limp</option>
+                  <option value="BB_VS_BTN">BB vs Open CO/BU</option>
+                  <option value="BB_VS_UTG">BB vs Open UTG/MP</option>
+                  <option value="3BET_IP">BU vs Open CO (3-Bet IP)</option>
+                  <option value="VS_3BET">Face à un 3-Bet (4-Bet/Call)</option>
+                </select>
+              </div>
+              <div>
+                <label for="rg-recall-depth" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Profondeur (Stack)</label>
+                <select id="rg-recall-depth" onchange="loadRecallSpot()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                  <option value="100bb">🎯 100 bb (Standard NL2)</option>
+                  <option value="40bb">⚡ 40–50 bb (Short/Mid)</option>
+                  <option value="200bb">🌊 150–200 bb (Deep Stack)</option>
+                </select>
+              </div>
+              <div>
+                <label for="rg-recall-profile" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Dynamique de Table</label>
+                <select id="rg-recall-profile" onchange="loadRecallSpot()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                  <option value="standard">⚖️ Table Standard</option>
+                  <option value="fish_bb">🐟 Fish Passif en BB</option>
+                  <option value="nit_behind">🪨 Nits derrière</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button type="button" onclick="randomizeRecallSpot()" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-white transition">
+                  🎲 Spot aléatoire
+                </button>
+              </div>
+            </div>
+            <p id="rg-recall-brief" class="text-xs text-slate-300 bg-slate-950/70 border border-slate-800/80 rounded-xl px-3 py-2 leading-relaxed"></p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <!-- Matrix Column -->
+            <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div id="rg-recall-brushes" class="flex flex-wrap items-center gap-1.5"></div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" onclick="toggleRecallHint()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold transition">
+                    💡 Indice
+                  </button>
+                  <button type="button" onclick="clearRecallGrid()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold transition">
+                    Vider
+                  </button>
+                  <button type="button" onclick="revealRecallSolution()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 text-xs font-bold transition">
+                    👁️ Solution
+                  </button>
+                  <button type="button" onclick="checkRecallRange()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow transition">
+                    ✅ Vérifier ma Range
+                  </button>
+                </div>
+              </div>
+
+              <div id="rg-recall-matrix" class="matrix-grid w-full"></div>
+
+              <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 pt-1">
+                <span>Cliquez ou glissez pour peindre votre range de mémoire (recliquez pour inspecter après vérification).</span>
+                <span id="rg-recall-painted-stat" class="font-mono font-bold text-slate-200">Peintes : 0.0% (0 / 1326)</span>
+              </div>
+            </div>
+
+            <!-- Feedback & Diff Column -->
+            <div class="lg:col-span-5 space-y-4">
+              <div id="rg-recall-hint-box" class="hidden rounded-2xl bg-amber-950/40 border border-amber-500/30 p-3.5 text-xs text-amber-200 leading-relaxed"></div>
+
+              <div id="rg-recall-result-box" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+                <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Évaluation de Mémoire</span>
+                  <span id="rg-recall-score-pct" class="font-mono text-xl font-extrabold text-slate-400">—</span>
+                </div>
+                <div id="rg-recall-metrics" class="text-xs text-slate-400 leading-relaxed">
+                  Peignez les mains de la matrice de mémoire, puis cliquez sur <strong class="text-emerald-300">« ✅ Vérifier ma Range »</strong> pour voir vos oublis, vos sur-extensions et gagner de l’XP.
+                </div>
+                <div class="flex flex-wrap gap-2 text-[11px] pt-1">
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-semibold">✓ Exact</span>
+                  <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-400/60 text-amber-200 font-semibold">⚠ Oubli (manquante)</span>
+                  <span class="px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/60 text-rose-200 font-semibold">✕ Erreur / Trop large</span>
+                </div>
+                <div id="rg-recall-rationale" class="text-xs text-slate-300 bg-slate-950/80 border border-slate-800 rounded-xl p-3 leading-relaxed"></div>
+              </div>
+
+              <div id="rg-recall-cell-inspector" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 leading-relaxed">
+                Cliquez sur n’importe quelle main après vérification (ou pendant la solution) pour comprendre pourquoi elle est jouée ou foldée à cette profondeur.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME 2: CHRONO BLITZ 60s (RÉFLEXES SOUS PRESSION)               -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-blitz" class="hidden max-w-2xl mx-auto space-y-4">
+          <div id="rg-blitz-setup" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-white">⚡ Chrono Blitz — Réflexes Multi-Tables</h3>
+                <p class="text-xs text-slate-400">65% de mains frontières (les plus dures à mémoriser). Combo ×1→×4, erreur = -2s !</p>
+              </div>
+              <span id="rg-blitz-best" class="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold">
+                Record : 0 pts
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label for="rg-blitz-scope" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Programme</label>
+                <select id="rg-blitz-scope" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                  <option value="ALL_DEPTHS">🌐 Mix Complet (Positions + Profondeurs)</option>
+                  <option value="RFI_100">📍 Open Raise 100bb (UTG → BB Iso)</option>
+                  <option value="DEFENSE_100">🛡️ Défenses & 3-Bet/4-Bet 100bb</option>
+                  <option value="DEPTH_40_200">📏 Pièges 40bb vs 200bb</option>
+                  <option value="DYNAMICS">🐟 Dynamiques Fish BB / Nits</option>
+                </select>
+              </div>
+              <div>
+                <label for="rg-blitz-duration" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Durée</label>
+                <select id="rg-blitz-duration" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                  <option value="30">30 secondes (Sprint)</option>
+                  <option value="60" selected>60 secondes (Standard)</option>
+                  <option value="90">90 secondes (Endurance)</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button type="button" onclick="startBlitzGame()" class="w-full py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-extrabold shadow-lg transition">
+                  🚀 Démarrer le Blitz
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="rg-blitz-hud" class="hidden bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-xs">
+              <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-extrabold">
+                ⏱️ <strong id="rg-blitz-timer" class="text-rose-400">60s</strong>
+              </span>
+              <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
+                Score : <strong id="rg-blitz-score" class="text-emerald-400">0</strong>
+              </span>
+              <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
+                Combo : <strong id="rg-blitz-combo" class="text-amber-400">×1</strong>
+              </span>
+              <span class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300">
+                Précision : <strong id="rg-blitz-acc" class="text-sky-400">100%</strong>
+              </span>
+            </div>
+            <button type="button" onclick="stopBlitzGame(true)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              ⏹ Stop
+            </button>
+          </div>
+
+          <div id="rg-blitz-stage" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 text-center">
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <span id="rg-blitz-pos-badge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">UTG</span>
+              <span id="rg-blitz-depth-badge" class="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">🎯 100 bb</span>
+              <span id="rg-blitz-profile-badge" class="px-2.5 py-1 rounded-full text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700">⚖️ Standard</span>
+            </div>
+            <p id="rg-blitz-context" class="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto"></p>
+            <div class="flex flex-col items-center gap-2 py-1">
+              <div id="rg-blitz-cards" class="flex items-center justify-center gap-3"></div>
+              <div id="rg-blitz-hand-label" class="font-mono text-2xl font-extrabold text-white">AKs</div>
+            </div>
+            <div id="rg-blitz-flash" class="min-h-[1.5rem] text-xs font-extrabold"></div>
+            <div id="rg-blitz-actions" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <button type="button" onclick="submitBlitzAnswer('fold')" class="py-3 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-extrabold text-slate-200 transition">
+                <span class="opacity-60 font-mono text-[10px] mr-1">[1]</span>Fold
+              </button>
+              <button type="button" onclick="submitBlitzAnswer('opencall')" class="py-3 px-2 rounded-xl bg-sky-600 hover:bg-sky-500 border border-sky-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+                <span class="opacity-75 font-mono text-[10px] mr-1">[2]</span>Open Call
+              </button>
+              <button type="button" onclick="submitBlitzAnswer('raise')" class="py-3 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+                <span class="opacity-75 font-mono text-[10px] mr-1">[3]</span>Open Raise
+              </button>
+              <button type="button" onclick="submitBlitzAnswer('threebet')" class="py-3 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 border border-rose-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+                <span class="opacity-75 font-mono text-[10px] mr-1">[4]</span>3-Bet
+              </button>
+              <button type="button" onclick="submitBlitzAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-3 px-2 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+                <span class="opacity-75 font-mono text-[10px] mr-1">[5]</span>4-Bet
+              </button>
+            </div>
+          </div>
+
+          <div id="rg-blitz-summary" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div id="rg-blitz-summary-stats" class="space-y-2"></div>
+            <div id="rg-blitz-mistakes-list" class="space-y-2"></div>
+            <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
+              <button type="button" onclick="setRangeGameTab('mastery')" class="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-200 text-xs font-bold transition">
+                🎯 Réviser mes leaks
+              </button>
+              <button type="button" onclick="startBlitzGame()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">
+                🔄 Rejouer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME 3: DÉFI PROFONDEUR (40bb vs 100bb vs 200bb)                -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-depth" class="hidden max-w-3xl mx-auto space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-white">📏 Défi Profondeur — Même main, 3 profondeurs !</h3>
+                <p class="text-xs text-slate-400">Choisissez l’action optimale à 40bb, 100bb et 200bb pour maîtriser l’impact de la profondeur.</p>
+              </div>
+              <div class="flex items-center gap-2 font-mono text-xs">
+                <span class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">Score : <strong id="rg-depth-score" class="text-white">0 / 0</strong></span>
+                <span class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">Série : <strong id="rg-depth-streak" class="text-amber-400">0 🔥</strong></span>
+              </div>
+            </div>
+
+            <div class="text-center space-y-3">
+              <span id="rg-depth-pos-badge" class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Spot : UTG
+              </span>
+              <p id="rg-depth-context" class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto"></p>
+              <div class="flex flex-col items-center gap-2">
+                <div id="rg-depth-cards" class="flex items-center justify-center gap-3"></div>
+                <div id="rg-depth-hand-label" class="font-mono text-xl font-extrabold text-white">44</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div id="rg-depth-col-40bb" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border bg-amber-500/15 text-amber-300 border-amber-500/30">⚡ 40–50 bb</span>
+                  <span class="text-[10px] text-slate-500">Short / Mid</span>
+                </div>
+                <div id="rg-depth-opts-40bb" class="grid grid-cols-1 gap-1.5"></div>
+                <div id="rg-depth-verdict-40bb" class="text-[11px] min-h-[1rem]"></div>
+              </div>
+
+              <div id="rg-depth-col-100bb" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">🎯 100 bb</span>
+                  <span class="text-[10px] text-slate-500">Standard NL2</span>
+                </div>
+                <div id="rg-depth-opts-100bb" class="grid grid-cols-1 gap-1.5"></div>
+                <div id="rg-depth-verdict-100bb" class="text-[11px] min-h-[1rem]"></div>
+              </div>
+
+              <div id="rg-depth-col-200bb" class="rounded-2xl bg-slate-950/90 border border-slate-800 p-3.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border bg-sky-500/15 text-sky-300 border-sky-500/30">🌊 150–200 bb</span>
+                  <span class="text-[10px] text-slate-500">Deep Stack</span>
+                </div>
+                <div id="rg-depth-opts-200bb" class="grid grid-cols-1 gap-1.5"></div>
+                <div id="rg-depth-verdict-200bb" class="text-[11px] min-h-[1rem]"></div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <button id="rg-depth-submit-btn" type="button" onclick="submitDepthChallenge()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">
+                ✅ Valider les 3 profondeurs
+              </button>
+              <button id="rg-depth-next-btn" type="button" onclick="nextDepthChallenge()" class="hidden px-4 py-2 rounded-xl bg-white text-slate-950 hover:bg-slate-200 text-xs font-extrabold transition">
+                Spot suivant →
+              </button>
+            </div>
+
+            <div id="rg-depth-feedback" class="hidden rounded-2xl p-4 border border-slate-700 bg-slate-950/80 text-xs text-slate-200 leading-relaxed space-y-1.5"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME 4: MAÎTRISE & LEAKS (HEATMAP 10x3 + DRILL SRS)             -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-mastery" class="hidden space-y-5">
+          <!-- Global Stats + Heatmap -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-white">🧠 Matrice de Maîtrise (Position × Profondeur)</h3>
+                <p class="text-xs text-slate-400">Cliquez sur n’importe quelle case pour lancer « 🎨 Peins la Range » exactement sur ce spot.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <span class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">Maîtrise : <strong id="rg-mastery-pct" class="text-emerald-400">0%</strong></span>
+                <span class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">Mains travaillées : <strong id="rg-mastery-drilled" class="text-sky-400">0</strong></span>
+                <span class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800">Leaks actifs : <strong id="rg-mastery-leaks-total" class="text-rose-400">0</strong></span>
+                <button type="button" onclick="resetRangeMastery()" class="text-[11px] font-sans text-slate-500 hover:text-slate-300 underline ml-1">
+                  ↻ Réinitialiser stats
+                </button>
+              </div>
+            </div>
+
+            <div id="rg-mastery-heatmap" class="overflow-x-auto"></div>
+          </div>
+
+          <!-- Spaced Repetition Leaks Drill -->
+          <div id="rg-leaks-section" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-white">🎯 Drill Anti-Leaks (Répétition Espacée)</h3>
+                <p class="text-xs text-slate-400">Réussissez une main oubliée <strong class="text-slate-200">2 fois d’affilée</strong> pour la corriger définitivement.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="startLeaksDrill()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">
+                  🎯 Démarrer le Drill Anti-Leaks
+                </button>
+                <button type="button" onclick="startFrontierDrill()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition">
+                  🎲 Drill Mains Frontières
+                </button>
+              </div>
+            </div>
+
+            <div id="rg-leaks-list" class="flex flex-wrap gap-1.5"></div>
+
+            <div id="rg-leaks-drill-box" class="hidden max-w-xl mx-auto bg-slate-950/90 border border-slate-800 rounded-2xl p-5 space-y-4 text-center">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span id="rg-leaks-progress" class="text-xs font-mono text-slate-400">Main 1 / 5</span>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span id="rg-leaks-pos-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">UTG</span>
+                  <span id="rg-leaks-depth-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-emerald-500/15 text-emerald-300 border-emerald-500/30">🎯 100 bb</span>
+                  <span id="rg-leaks-profile-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-slate-800 text-slate-300 border-slate-700">⚖️ Standard</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center gap-2">
+                <div id="rg-leaks-cards" class="flex items-center justify-center gap-3"></div>
+                <div id="rg-leaks-hand-label" class="font-mono text-2xl font-extrabold text-white">44</div>
+              </div>
+
+              <div id="rg-leaks-actions" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <button type="button" onclick="submitLeaksDrillAnswer('fold')" class="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-slate-200 transition">[1] Fold</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('opencall')" class="py-2.5 px-2 rounded-xl bg-sky-600 hover:bg-sky-500 border border-sky-400/40 text-xs font-extrabold text-white transition">[2] Call</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('raise')" class="py-2.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-xs font-extrabold text-white transition">[3] Raise</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('threebet')" class="py-2.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 border border-rose-400/40 text-xs font-extrabold text-white transition">[4] 3-Bet</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-2.5 px-2 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-400/40 text-xs font-extrabold text-white transition">[5] 4-Bet</button>
+              </div>
+
+              <div id="rg-leaks-feedback" class="hidden rounded-xl p-3.5 border text-left text-xs space-y-2"></div>
+
+              <div class="text-right">
+                <button id="rg-leaks-next-btn" type="button" onclick="nextLeaksDrillHand()" class="hidden px-4 py-2 rounded-xl bg-white text-slate-950 hover:bg-slate-200 text-xs font-extrabold transition">
+                  Main suivante →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
     </div>
 
@@ -1660,6 +2059,9 @@
       if (tabName === 'bankroll') {
         requestAnimationFrame(() => renderBankrollChart());
       }
+      if (tabName !== 'ranges' && typeof stopBlitzTimer === 'function') {
+        stopBlitzTimer();
+      }
       window.dispatchEvent(new CustomEvent('killtilt-tab-changed', { detail: { tab: tabName } }));
     }
 
@@ -2082,9 +2484,10 @@
     function setAppMode(newMode) {
       state.mode = newMode;
 
-      const modes = ['explore', 'edit', 'quiz'];
+      const modes = ['explore', 'edit', 'quiz', 'games'];
       modes.forEach(m => {
         const btn = document.getElementById(`btn-mode-${m}`);
+        if (!btn) return;
         if (m === newMode) {
           btn.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-emerald-600 text-white shadow flex items-center gap-1.5';
         } else {
@@ -2096,18 +2499,33 @@
       const matrixWorkspace = document.getElementById('matrix-workspace');
       const editToolbar = document.getElementById('edit-toolbar');
       const quizWorkspace = document.getElementById('quiz-workspace');
+      const rangeGamesWorkspace = document.getElementById('range-games-workspace');
+
+      if (newMode !== 'games' && typeof stopBlitzTimer === 'function') {
+        stopBlitzTimer();
+      }
 
       if (newMode === 'quiz') {
         presetBar.classList.add('hidden');
         matrixWorkspace.classList.add('hidden');
+        if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
         quizWorkspace.classList.remove('hidden');
         if (!state.quiz.currentQuestion) {
           nextQuizQuestion();
+        }
+      } else if (newMode === 'games') {
+        presetBar.classList.add('hidden');
+        matrixWorkspace.classList.add('hidden');
+        quizWorkspace.classList.add('hidden');
+        if (rangeGamesWorkspace) rangeGamesWorkspace.classList.remove('hidden');
+        if (typeof initRangeGamesUI === 'function') {
+          initRangeGamesUI();
         }
       } else {
         presetBar.classList.remove('hidden');
         matrixWorkspace.classList.remove('hidden');
         quizWorkspace.classList.add('hidden');
+        if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
 
         if (newMode === 'edit') {
           editToolbar.classList.remove('hidden');
@@ -5802,6 +6220,1467 @@
       });
     }
 
+    /**
+     * =========================================================================
+     * 5B. RANGE MEMORIZATION GAMES MODULE (POSITION x PROFONDEUR x DYNAMIQUE)
+     * =========================================================================
+     */
+    const RANGE_MASTERY_KEY = 'killtilt_range_mastery_v1';
+
+    const RANGE_PRESET_META = {
+      UTG: { short: 'UTG', label: 'UTG — Open Raise', type: 'rfi', validActions: ['raise', 'fold'] },
+      MP: { short: 'MP', label: 'MP — Open Raise', type: 'rfi', validActions: ['raise', 'fold'] },
+      CO: { short: 'CO', label: 'CO — Open Raise', type: 'rfi', validActions: ['raise', 'fold'] },
+      BTN: { short: 'BU', label: 'BU — Open Raise', type: 'rfi', validActions: ['raise', 'fold'] },
+      SB: { short: 'SB', label: 'SB — Open Raise vs BB', type: 'rfi', validActions: ['raise', 'fold'] },
+      BB_ISO_SB: { short: 'BB Iso', label: 'BB — Iso vs SB Limp', type: 'rfi', validActions: ['raise', 'fold'] },
+      BB_VS_BTN: { short: 'BB vs BU', label: 'BB vs Open CO/BU', type: 'defense', validActions: ['threebet', 'opencall', 'fold'] },
+      BB_VS_UTG: { short: 'BB vs UTG', label: 'BB vs Open UTG/MP', type: 'defense', validActions: ['threebet', 'opencall', 'fold'] },
+      '3BET_IP': { short: 'BU vs CO', label: 'BU vs Open CO', type: 'defense', validActions: ['threebet', 'opencall', 'fold'] },
+      VS_3BET: { short: 'Vs 3-Bet', label: 'Face à un 3-Bet', type: 'defense', validActions: ['fourbet', 'opencall', 'fold'] },
+    };
+
+    const RANGE_STACK_DEPTHS = {
+      '40bb': {
+        id: '40bb',
+        label: '40–50 bb (Short/Mid)',
+        short: '40 bb',
+        icon: '⚡',
+        badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        note: 'À 40–50bb, les cotes implicites baissent : on coupe les petites paires/connecteurs spéculatifs et on privilégie les grosses cartes et 3-Bet/4-Bet directs.',
+      },
+      '100bb': {
+        id: '100bb',
+        label: '100 bb (Standard NL2)',
+        short: '100 bb',
+        icon: '🎯',
+        badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        note: 'Profondeur de référence du Guide Kill Tilt : équilibre entre set mining (22+), broadways et connecteurs assortis.',
+      },
+      '200bb': {
+        id: '200bb',
+        label: '150–200 bb (Deep Stack)',
+        short: '200 bb',
+        icon: '🌊',
+        badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        note: 'Deep (150–200bb), les cotes implicites explosent : connecteurs assortis, As assortis et paires montent en valeur ; on évite les broadways offsuit dominés et on 4-Bet plus serré.',
+      },
+    };
+
+    const RANGE_TABLE_PROFILES = {
+      standard: {
+        id: 'standard',
+        label: 'Table Standard',
+        short: 'Standard',
+        icon: '⚖️',
+        badgeClass: 'bg-slate-800 text-slate-300 border-slate-700',
+        note: 'Table équilibrée de micro-limites sans ajustement extrême.',
+      },
+      fish_bb: {
+        id: 'fish_bb',
+        label: 'Fish Passif en BB',
+        short: 'Fish BB',
+        icon: '🐟',
+        badgeClass: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+        note: 'Récréatif passif (VPIP 50%+) dans les blindes : on élargit nos opens jouables et 3-Bets en value pour l’isoler en position.',
+      },
+      nit_behind: {
+        id: 'nit_behind',
+        label: 'Nits derrière',
+        short: 'Nits derrière',
+        icon: '🪨',
+        badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+        note: 'Joueurs très serrés derrière : on vole plus large en RFI, mais on resserre fortement face à leurs 3-Bets.',
+      },
+    };
+
+    const RANGE_ACTION_SEVERITY = { fold: 0, opencall: 1, raise: 2, threebet: 3, fourbet: 4 };
+
+    function getContextualRange(presetKey, depthKey = '100bb', profileKey = 'standard') {
+      const preset = DEFAULT_PRESETS[presetKey] || DEFAULT_PRESETS.UTG;
+      const metaInfo = RANGE_PRESET_META[presetKey] || RANGE_PRESET_META.UTG;
+      const rawMap = preset.build();
+      const base100 = {};
+
+      ALL_HANDS.forEach(h => {
+        let act = rawMap[h.name] || 'fold';
+        if (act === 'mixed') {
+          act = metaInfo.type === 'defense' ? 'opencall' : 'raise';
+        }
+        base100[h.name] = act;
+      });
+
+      const map = { ...base100 };
+
+      // 1. Stack Depth Adjustments
+      if (depthKey === '40bb') {
+        if (presetKey === 'UTG') {
+          parseNotationToMap('44-22, A9s, T9s', 'fold', map);
+        } else if (presetKey === 'MP') {
+          parseNotationToMap('33-22, 54s, 65s, 87s, 98s, A5s', 'fold', map);
+        } else if (presetKey === 'CO') {
+          parseNotationToMap('33-22, 54s, 65s, 75s, 86s, 97s, 76s', 'fold', map);
+          parseNotationToMap('KTo, QTo', 'raise', map);
+        } else if (presetKey === 'BTN' || presetKey === 'BB_ISO_SB') {
+          parseNotationToMap('43s, 53s, 64s, 75s, 85s, 96s, 54s, Q3s-Q2s, J5s, 87o', 'fold', map);
+        } else if (presetKey === 'SB') {
+          parseNotationToMap('54s, 65s, 76s, 87s, 97s, K5s-K4s, Q7s', 'fold', map);
+        } else if (presetKey === 'BB_VS_BTN') {
+          parseNotationToMap('33-22, 65s, 76s, 87s', 'fold', map);
+          parseNotationToMap('TT, AJs, AJo, KQs, KQo', 'threebet', map);
+        } else if (presetKey === 'BB_VS_UTG') {
+          parseNotationToMap('55-22, T9s, 98s, 87s', 'fold', map);
+        } else if (presetKey === '3BET_IP') {
+          parseNotationToMap('55-22, A5s, T9s', 'fold', map);
+          parseNotationToMap('JJ, AQs', 'threebet', map);
+        } else if (presetKey === 'VS_3BET') {
+          parseNotationToMap('99, AQo, AJs, ATs, QJs, JTs, T9s', 'fold', map);
+          parseNotationToMap('JJ', 'fourbet', map);
+          parseNotationToMap('TT, AQs, KQs', 'opencall', map);
+        }
+      } else if (depthKey === '200bb') {
+        if (presetKey === 'UTG') {
+          parseNotationToMap('A5s, A4s, 98s, 87s, 76s', 'raise', map);
+          parseNotationToMap('AJo', 'fold', map);
+        } else if (presetKey === 'MP') {
+          parseNotationToMap('A4s-A2s, 76s', 'raise', map);
+          parseNotationToMap('QJo', 'fold', map);
+        } else if (presetKey === 'CO') {
+          parseNotationToMap('K7s, J8s, 43s, 53s, 64s', 'raise', map);
+          parseNotationToMap('A8o, K9o, Q9o, J9o, T9o, A7o', 'fold', map);
+        } else if (presetKey === 'BTN' || presetKey === 'BB_ISO_SB') {
+          parseNotationToMap('J4s, T5s, 95s, 84s', 'raise', map);
+          parseNotationToMap('K7o, K6o, Q8o, J8o, T8o, 98o', 'fold', map);
+        } else if (presetKey === 'SB') {
+          parseNotationToMap('J7s, T7s, 86s, 75s, 53s', 'raise', map);
+          parseNotationToMap('A7o, A5o, K9o, Q9o, J9o, T9o', 'fold', map);
+        } else if (presetKey === 'BB_VS_BTN') {
+          parseNotationToMap('54s, 64s, 75s, 86s, 97s, K7s-K6s, Q8s', 'opencall', map);
+          parseNotationToMap('A5s, A4s', 'threebet', map);
+          parseNotationToMap('ATo, KJo, QJo, KTo, JTo', 'fold', map);
+        } else if (presetKey === 'BB_VS_UTG') {
+          parseNotationToMap('76s, 65s, A5s-A2s', 'opencall', map);
+        } else if (presetKey === '3BET_IP') {
+          parseNotationToMap('98s, 87s, 76s, 65s, A4s-A2s', 'opencall', map);
+          parseNotationToMap('A5s', 'threebet', map);
+          parseNotationToMap('KQo', 'fold', map);
+        } else if (presetKey === 'VS_3BET') {
+          parseNotationToMap('QQ, AKo, 88-66, KJs, QJs, JTs, T9s, 98s', 'opencall', map);
+          parseNotationToMap('KK+, AKs', 'fourbet', map);
+        }
+      }
+
+      // 2. Table Dynamics / Opponent Profile Adjustments
+      if (profileKey === 'fish_bb') {
+        if (presetKey === 'UTG') {
+          parseNotationToMap('98s, 87s, K9s, Q9s', 'raise', map);
+        } else if (presetKey === 'MP') {
+          parseNotationToMap('K9s, Q9s, J9s, 76s', 'raise', map);
+        } else if (presetKey === 'CO') {
+          parseNotationToMap('K7s, Q7s, J8s, A6o', 'raise', map);
+        } else if (presetKey === 'BTN' || presetKey === 'SB' || presetKey === 'BB_ISO_SB') {
+          parseNotationToMap('K5s-K4s, Q7s-Q6s, J7s', 'raise', map);
+        } else if (presetKey === '3BET_IP' || presetKey === 'BB_VS_BTN') {
+          parseNotationToMap('AJs, KQs, TT', 'threebet', map);
+        }
+      } else if (profileKey === 'nit_behind') {
+        if (presetKey === 'UTG') {
+          parseNotationToMap('A8s-A7s, K9s, Q9s, J9s, 98s', 'raise', map);
+        } else if (presetKey === 'MP') {
+          parseNotationToMap('A8s-A6s, K9s, Q9s, J9s, ATo, KJo', 'raise', map);
+        } else if (presetKey === 'CO') {
+          parseNotationToMap('K7s-K6s, Q7s, J8s, A6o-A5o, K8o', 'raise', map);
+        } else if (presetKey === 'BTN' || presetKey === 'SB' || presetKey === 'BB_ISO_SB') {
+          parseNotationToMap('Q5s-Q2s, J5s-J4s, T5s, 95s, 84s, K5o', 'raise', map);
+        } else if (presetKey === 'VS_3BET') {
+          parseNotationToMap('QQ, AKo', 'opencall', map);
+          parseNotationToMap('TT, 99, AQo, KQs, AJs, ATs, QJs, JTs, T9s', 'fold', map);
+          parseNotationToMap('AA, KK', 'fourbet', map);
+        }
+      }
+
+      let combosActive = 0;
+      const deltaAdded = [];
+      const deltaRemoved = [];
+
+      ALL_HANDS.forEach(h => {
+        const act = map[h.name] || 'fold';
+        const baseAct = base100[h.name] || 'fold';
+        if (act !== 'fold') combosActive += h.combos;
+        if (act !== baseAct) {
+          if (RANGE_ACTION_SEVERITY[act] > RANGE_ACTION_SEVERITY[baseAct]) {
+            deltaAdded.push(h.name);
+          } else {
+            deltaRemoved.push(h.name);
+          }
+        }
+      });
+
+      const totalPct = ((combosActive / 1326) * 100).toFixed(1);
+      return { map, base100, combosActive, totalPct, deltaAdded, deltaRemoved };
+    }
+
+    function getBoundaryHands(presetKey, depthKey = '100bb', profileKey = 'standard') {
+      const ctx = getContextualRange(presetKey, depthKey, profileKey);
+      const map = ctx.map;
+      const grid = Array.from({ length: 13 }, () => Array(13).fill('fold'));
+      ALL_HANDS.forEach(h => {
+        grid[h.row][h.col] = map[h.name] || 'fold';
+      });
+
+      const boundarySet = new Set([...ctx.deltaAdded, ...ctx.deltaRemoved]);
+      const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+      ALL_HANDS.forEach(h => {
+        const act = grid[h.row][h.col];
+        for (const [dr, dc] of dirs) {
+          const nr = h.row + dr;
+          const nc = h.col + dc;
+          if (nr >= 0 && nr < 13 && nc >= 0 && nc < 13 && grid[nr][nc] !== act) {
+            boundarySet.add(h.name);
+            break;
+          }
+        }
+      });
+
+      return [...boundarySet];
+    }
+
+    function getHandContextExplanation(presetKey, depthKey, profileKey, handName, expectedAction) {
+      const depthInfo = RANGE_STACK_DEPTHS[depthKey] || RANGE_STACK_DEPTHS['100bb'];
+      const profileInfo = RANGE_TABLE_PROFILES[profileKey] || RANGE_TABLE_PROFILES.standard;
+      const baseAdvice = getStrategicAdvice(presetKey, handName, expectedAction);
+      const parts = [baseAdvice];
+      if (depthKey !== '100bb') {
+        parts.push(`${depthInfo.icon} ${depthInfo.short} : ${depthInfo.note}`);
+      }
+      if (profileKey !== 'standard') {
+        parts.push(`${profileInfo.icon} ${profileInfo.short} : ${profileInfo.note}`);
+      }
+      return parts.join(' ');
+    }
+
+    // --- MASTERY & SPACED REPETITION PERSISTENCE ---
+    const rgState = {
+      initialized: false,
+      tab: 'recall',
+      recall: {
+        matrixBuilt: false,
+        presetKey: 'UTG',
+        depthKey: '100bb',
+        profileKey: 'standard',
+        brush: 'raise',
+        isDragging: false,
+        painted: {},
+        checked: false,
+        revealed: false,
+        xpAwardedForSpot: false,
+      },
+      blitz: {
+        running: false,
+        timerId: null,
+        timeLeft: 60,
+        score: 0,
+        combo: 0,
+        answered: 0,
+        correct: 0,
+        mistakes: [],
+        current: null,
+      },
+      depth: {
+        pool: null,
+        score: 0,
+        total: 0,
+        streak: 0,
+        answered: false,
+        current: null,
+        picks: { '40bb': null, '100bb': null, '200bb': null },
+      },
+      leaksDrill: {
+        active: false,
+        queue: [],
+        index: 0,
+        answered: false,
+        modeLabel: 'Leaks',
+      },
+      mastery: {
+        bestRecall: {},
+        bestBlitz: 0,
+        spotStats: {},
+        weakHands: {},
+      },
+    };
+
+    function loadRangeMastery() {
+      const empty = { bestRecall: {}, bestBlitz: 0, spotStats: {}, weakHands: {} };
+      try {
+        const raw = localStorage.getItem(RANGE_MASTERY_KEY);
+        if (!raw) return empty;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return empty;
+        return {
+          bestRecall: parsed.bestRecall && typeof parsed.bestRecall === 'object' ? parsed.bestRecall : {},
+          bestBlitz: Number(parsed.bestBlitz) || 0,
+          spotStats: parsed.spotStats && typeof parsed.spotStats === 'object' ? parsed.spotStats : {},
+          weakHands: parsed.weakHands && typeof parsed.weakHands === 'object' ? parsed.weakHands : {},
+        };
+      } catch (e) {
+        return empty;
+      }
+    }
+
+    function saveRangeMastery() {
+      try {
+        localStorage.setItem(RANGE_MASTERY_KEY, JSON.stringify(rgState.mastery));
+      } catch (e) {}
+    }
+
+    function computeOverallMasteryPct() {
+      const presets = Object.keys(RANGE_PRESET_META);
+      const depths = ['40bb', '100bb', '200bb'];
+      let sum = 0;
+      const totalCells = presets.length * depths.length;
+
+      presets.forEach(pk => {
+        depths.forEach(dk => {
+          const key = `${pk}|${dk}`;
+          const recallPct = rgState.mastery.bestRecall[key];
+          const st = rgState.mastery.spotStats[key];
+          const drillPct = st && st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : null;
+          let cellScore = 0;
+          if (typeof recallPct === 'number' && typeof drillPct === 'number') {
+            cellScore = Math.round((recallPct + drillPct) / 2);
+          } else if (typeof recallPct === 'number') {
+            cellScore = recallPct;
+          } else if (typeof drillPct === 'number') {
+            cellScore = drillPct;
+          }
+          sum += cellScore;
+        });
+      });
+
+      return Math.round(sum / Math.max(1, totalCells));
+    }
+
+    function updateGamesMasteryBadges() {
+      const pct = computeOverallMasteryPct();
+      const leakCount = Object.keys(rgState.mastery.weakHands).length;
+
+      const navBadge = document.getElementById('games-mastery-badge');
+      if (navBadge) {
+        navBadge.textContent = `${pct}%`;
+        if (pct > 0) navBadge.classList.remove('hidden');
+        else navBadge.classList.add('hidden');
+      }
+
+      const globalBadge = document.getElementById('games-global-mastery-text');
+      if (globalBadge) {
+        globalBadge.textContent = `Maîtrise : ${pct}%`;
+      }
+
+      const leaksPill = document.getElementById('rg-leaks-count-pill');
+      if (leaksPill) {
+        leaksPill.textContent = String(leakCount);
+      }
+
+      const blitzBest = document.getElementById('rg-blitz-best');
+      if (blitzBest) {
+        blitzBest.textContent = `Record : ${rgState.mastery.bestBlitz || 0} pts`;
+      }
+    }
+
+    function recordRangeAnswer(presetKey, depthKey, profileKey, handName, expectedAction, isCorrect, suppressToast = false) {
+      const spotKey = `${presetKey}|${depthKey}`;
+      if (!rgState.mastery.spotStats[spotKey]) {
+        rgState.mastery.spotStats[spotKey] = { attempts: 0, correct: 0 };
+      }
+      rgState.mastery.spotStats[spotKey].attempts += 1;
+      if (isCorrect) rgState.mastery.spotStats[spotKey].correct += 1;
+
+      const leakKey = `${presetKey}|${depthKey}|${profileKey}|${handName}`;
+      let graduated = false;
+
+      if (!isCorrect) {
+        const existing = rgState.mastery.weakHands[leakKey];
+        rgState.mastery.weakHands[leakKey] = {
+          presetKey,
+          depthKey,
+          profileKey,
+          handName,
+          expectedAction,
+          misses: (existing ? existing.misses : 0) + 1,
+          streakRight: 0,
+        };
+      } else if (rgState.mastery.weakHands[leakKey]) {
+        rgState.mastery.weakHands[leakKey].streakRight += 1;
+        if (rgState.mastery.weakHands[leakKey].streakRight >= 2) {
+          delete rgState.mastery.weakHands[leakKey];
+          graduated = true;
+          if (!suppressToast) {
+            const pShort = RANGE_PRESET_META[presetKey]?.short || presetKey;
+            showToast(`🎉 Leak corrigé : ${pShort} • ${depthKey} • ${handName} !`, 'success');
+          }
+        }
+      }
+
+      saveRangeMastery();
+      updateGamesMasteryBadges();
+      return graduated;
+    }
+
+    function resetRangeMastery() {
+      rgState.mastery = { bestRecall: {}, bestBlitz: 0, spotStats: {}, weakHands: {} };
+      saveRangeMastery();
+      updateGamesMasteryBadges();
+      renderMasteryDashboard();
+      showToast('Statistiques de maîtrise réinitialisées.', 'info');
+    }
+
+    // --- INIT & TAB NAVIGATION ---
+    function initRangeGamesUI() {
+      if (!rgState.initialized) {
+        rgState.initialized = true;
+        buildRecallMatrixDOM();
+        loadRecallSpot();
+        nextDepthChallenge();
+      }
+      updateGamesMasteryBadges();
+      if (rgState.tab === 'mastery') {
+        renderMasteryDashboard();
+      }
+    }
+
+    function setRangeGameTab(tabName) {
+      rgState.tab = tabName;
+      if (tabName !== 'blitz') {
+        stopBlitzTimer();
+      }
+
+      const tabs = ['recall', 'blitz', 'depth', 'mastery'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`rg-tab-${t}`);
+        const panel = document.getElementById(`rg-panel-${t}`);
+        if (btn) {
+          btn.className = t === tabName
+            ? 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow inline-flex items-center gap-1.5'
+            : 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white inline-flex items-center gap-1.5';
+        }
+        if (panel) {
+          if (t === tabName) panel.classList.remove('hidden');
+          else panel.classList.add('hidden');
+        }
+      });
+
+      if (tabName === 'depth' && !rgState.depth.current) {
+        nextDepthChallenge();
+      } else if (tabName === 'mastery') {
+        renderMasteryDashboard();
+      }
+    }
+
+    // --- GAME 1: PEINS LA RANGE DE MÉMOIRE ---
+    function buildRecallMatrixDOM() {
+      if (rgState.recall.matrixBuilt) return;
+      const container = document.getElementById('rg-recall-matrix');
+      if (!container) return;
+      rgState.recall.matrixBuilt = true;
+      container.innerHTML = '';
+
+      ALL_HANDS.forEach(hand => {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.id = `rg-cell-${hand.name}`;
+        cell.dataset.hand = hand.name;
+        cell.className = 'rg-recall-cell aspect-square rounded sm:rounded-md border flex flex-col items-center justify-center font-mono text-[10px] sm:text-xs md:text-[13px] font-bold leading-none focus:outline-none relative transition-transform hover:scale-105 hover:z-20';
+        cell.textContent = hand.name;
+
+        cell.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          if (rgState.recall.checked || rgState.recall.revealed) {
+            inspectRecallCell(hand.name);
+            return;
+          }
+          rgState.recall.isDragging = true;
+          paintRecallHand(hand.name, rgState.recall.brush);
+        });
+
+        cell.addEventListener('mouseenter', () => {
+          if (rgState.recall.isDragging && !rgState.recall.checked && !rgState.recall.revealed) {
+            paintRecallHand(hand.name, rgState.recall.brush);
+          }
+        });
+
+        cell.addEventListener('touchstart', (e) => {
+          if (rgState.recall.checked || rgState.recall.revealed) {
+            inspectRecallCell(hand.name);
+            return;
+          }
+          e.preventDefault();
+          rgState.recall.isDragging = true;
+          paintRecallHand(hand.name, rgState.recall.brush);
+        }, { passive: false });
+
+        container.appendChild(cell);
+      });
+
+      container.addEventListener('touchmove', (e) => {
+        if (!rgState.recall.isDragging || rgState.recall.checked || rgState.recall.revealed) return;
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (el && el.dataset && el.dataset.hand) {
+          paintRecallHand(el.dataset.hand, rgState.recall.brush);
+        }
+      }, { passive: true });
+
+      window.addEventListener('mouseup', () => { rgState.recall.isDragging = false; });
+      window.addEventListener('touchend', () => { rgState.recall.isDragging = false; });
+    }
+
+    function renderRecallBrushes() {
+      const container = document.getElementById('rg-recall-brushes');
+      if (!container) return;
+      const metaInfo = RANGE_PRESET_META[rgState.recall.presetKey] || RANGE_PRESET_META.UTG;
+      if (!metaInfo.validActions.includes(rgState.recall.brush)) {
+        rgState.recall.brush = metaInfo.validActions[0];
+      }
+
+      const brushColors = {
+        raise: 'bg-emerald-500',
+        opencall: 'bg-sky-500',
+        threebet: 'bg-rose-500',
+        fourbet: 'bg-purple-600',
+        fold: 'bg-slate-600',
+      };
+
+      container.innerHTML = metaInfo.validActions.map(act => {
+        const cfg = ACTIONS[act];
+        const isSel = rgState.recall.brush === act;
+        const cls = isSel
+          ? 'px-2.5 py-1.5 rounded-xl text-xs font-extrabold border-2 border-white bg-slate-800 text-white shadow inline-flex items-center gap-1.5 transition'
+          : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950 text-slate-400 hover:text-white inline-flex items-center gap-1.5 transition';
+        return `<button type="button" onclick="setRecallBrush('${act}')" class="${cls}"><span class="w-2.5 h-2.5 rounded-sm ${brushColors[act] || 'bg-slate-600'}"></span>${escapeHtml(cfg.short)}</button>`;
+      }).join('');
+    }
+
+    function setRecallBrush(action) {
+      rgState.recall.brush = action;
+      renderRecallBrushes();
+    }
+
+    function loadRecallSpot() {
+      const presetEl = document.getElementById('rg-recall-preset');
+      const depthEl = document.getElementById('rg-recall-depth');
+      const profileEl = document.getElementById('rg-recall-profile');
+
+      rgState.recall.presetKey = presetEl ? presetEl.value : 'UTG';
+      rgState.recall.depthKey = depthEl ? depthEl.value : '100bb';
+      rgState.recall.profileKey = profileEl ? profileEl.value : 'standard';
+      rgState.recall.painted = {};
+      rgState.recall.checked = false;
+      rgState.recall.revealed = false;
+      rgState.recall.xpAwardedForSpot = false;
+
+      const preset = DEFAULT_PRESETS[rgState.recall.presetKey];
+      const depthInfo = RANGE_STACK_DEPTHS[rgState.recall.depthKey];
+      const profInfo = RANGE_TABLE_PROFILES[rgState.recall.profileKey];
+      const briefEl = document.getElementById('rg-recall-brief');
+      if (briefEl) {
+        briefEl.textContent = `${preset.context} • ${depthInfo.icon} ${depthInfo.label} • ${profInfo.icon} ${profInfo.label}`;
+      }
+
+      const hintBox = document.getElementById('rg-recall-hint-box');
+      if (hintBox) hintBox.classList.add('hidden');
+
+      const scorePct = document.getElementById('rg-recall-score-pct');
+      if (scorePct) {
+        scorePct.textContent = '—';
+        scorePct.className = 'font-mono text-xl font-extrabold text-slate-400';
+      }
+      const metricsEl = document.getElementById('rg-recall-metrics');
+      if (metricsEl) {
+        metricsEl.innerHTML = 'Peignez les mains de la matrice de mémoire, puis cliquez sur <strong class="text-emerald-300">« ✅ Vérifier ma Range »</strong> pour voir vos oublis, vos sur-extensions et gagner de l’XP.';
+      }
+      const rationaleEl = document.getElementById('rg-recall-rationale');
+      if (rationaleEl) {
+        rationaleEl.textContent = `${depthInfo.note} ${rgState.recall.profileKey !== 'standard' ? profInfo.note : ''}`;
+      }
+      const inspectorEl = document.getElementById('rg-recall-cell-inspector');
+      if (inspectorEl) {
+        inspectorEl.textContent = 'Cliquez sur n’importe quelle main après vérification (ou pendant la solution) pour comprendre pourquoi elle est jouée ou foldée.';
+      }
+
+      renderRecallBrushes();
+      renderRecallMatrix();
+    }
+
+    function randomizeRecallSpot() {
+      const presets = Object.keys(RANGE_PRESET_META);
+      const depths = ['40bb', '100bb', '200bb'];
+      const profiles = ['standard', 'fish_bb', 'nit_behind'];
+
+      const p = presets[Math.floor(Math.random() * presets.length)];
+      const d = depths[Math.floor(Math.random() * depths.length)];
+      const pr = profiles[Math.floor(Math.random() * profiles.length)];
+
+      const presetEl = document.getElementById('rg-recall-preset');
+      const depthEl = document.getElementById('rg-recall-depth');
+      const profileEl = document.getElementById('rg-recall-profile');
+      if (presetEl) presetEl.value = p;
+      if (depthEl) depthEl.value = d;
+      if (profileEl) profileEl.value = pr;
+
+      loadRecallSpot();
+    }
+
+    function paintRecallHand(handName, action) {
+      if (action === 'fold') delete rgState.recall.painted[handName];
+      else rgState.recall.painted[handName] = action;
+      renderRecallMatrix();
+    }
+
+    function clearRecallGrid() {
+      rgState.recall.painted = {};
+      rgState.recall.checked = false;
+      rgState.recall.revealed = false;
+      renderRecallMatrix();
+    }
+
+    function toggleRecallHint() {
+      const box = document.getElementById('rg-recall-hint-box');
+      if (!box) return;
+      if (!box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+        return;
+      }
+      const ctx = getContextualRange(rgState.recall.presetKey, rgState.recall.depthKey, rgState.recall.profileKey);
+      const activeList = ALL_HANDS.filter(h => ctx.map[h.name] !== 'fold');
+      const pairs = activeList.filter(h => h.type === 'pair').map(h => h.name);
+      const lowestPair = pairs.length ? pairs[pairs.length - 1] : 'aucune';
+      const deltaStr = ctx.deltaAdded.length || ctx.deltaRemoved.length
+        ? ` Écarts vs 100bb Standard : +${ctx.deltaAdded.length} mains ajoutées/upgradées, -${ctx.deltaRemoved.length} mains retirées.`
+        : '';
+      box.innerHTML = `<strong>💡 Indice du Coach :</strong> Visez environ <strong>${ctx.totalPct}%</strong> (${ctx.combosActive} combos). Plus petite paire servie jouée : <strong>${escapeHtml(lowestPair)}</strong>.${escapeHtml(deltaStr)}`;
+      box.classList.remove('hidden');
+    }
+
+    function renderRecallMatrix(diffMap = null) {
+      let paintedCombos = 0;
+      const baseClasses = 'rg-recall-cell aspect-square rounded sm:rounded-md border flex flex-col items-center justify-center font-mono text-[10px] sm:text-xs md:text-[13px] font-bold leading-none focus:outline-none relative transition-transform hover:scale-105 hover:z-20';
+
+      ALL_HANDS.forEach(hand => {
+        const cell = document.getElementById(`rg-cell-${hand.name}`);
+        if (!cell) return;
+        const paintedAct = rgState.recall.painted[hand.name] || 'fold';
+        if (paintedAct !== 'fold') paintedCombos += hand.combos;
+
+        let displayAct = paintedAct;
+        let diffClass = '';
+
+        if (diffMap) {
+          const d = diffMap[hand.name];
+          displayAct = d.expected !== 'fold' ? d.expected : paintedAct;
+          if (d.status === 'exact' && d.expected !== 'fold') {
+            diffClass = ' ring-2 ring-emerald-300';
+          } else if (d.status === 'missed') {
+            displayAct = d.expected;
+            diffClass = ' ring-2 ring-amber-400 border-dashed opacity-95';
+          } else if (d.status === 'wrong') {
+            diffClass = ' ring-2 ring-rose-500 opacity-90';
+          }
+        }
+
+        const cfg = ACTIONS[displayAct] || ACTIONS.fold;
+        cell.className = `${baseClasses} ${cfg.cellClass}${diffClass}`;
+      });
+
+      const statEl = document.getElementById('rg-recall-painted-stat');
+      if (statEl) {
+        const pct = ((paintedCombos / 1326) * 100).toFixed(1);
+        statEl.textContent = `Peintes : ${pct}% (${paintedCombos} / 1326)`;
+      }
+    }
+
+    function checkRecallRange() {
+      const { presetKey, depthKey, profileKey, painted } = rgState.recall;
+      const ctx = getContextualRange(presetKey, depthKey, profileKey);
+      const expectedMap = ctx.map;
+
+      let totalActiveExpectedCombos = 0;
+      let matchedActiveCombos = 0;
+      let totalGridCorrectCombos = 0;
+      let missedHands = [];
+      let wrongHands = [];
+      const diffMap = {};
+
+      ALL_HANDS.forEach(h => {
+        const exp = expectedMap[h.name] || 'fold';
+        const got = painted[h.name] || 'fold';
+        if (exp !== 'fold') totalActiveExpectedCombos += h.combos;
+
+        if (got === exp) {
+          totalGridCorrectCombos += h.combos;
+          if (exp !== 'fold') matchedActiveCombos += h.combos;
+          diffMap[h.name] = { status: 'exact', expected: exp, got };
+        } else if (got === 'fold' && exp !== 'fold') {
+          missedHands.push({ handName: h.name, expected: exp, combos: h.combos });
+          diffMap[h.name] = { status: 'missed', expected: exp, got };
+        } else {
+          wrongHands.push({ handName: h.name, expected: exp, got, combos: h.combos });
+          diffMap[h.name] = { status: 'wrong', expected: exp, got };
+        }
+      });
+
+      // Score combines active-range recall & overall grid discipline
+      const activeRecallPct = totalActiveExpectedCombos > 0
+        ? (matchedActiveCombos / totalActiveExpectedCombos) * 100
+        : 100;
+      const globalGridPct = (totalGridCorrectCombos / 1326) * 100;
+      const hasAnyPaint = Object.keys(painted).length > 0;
+      const finalScore = hasAnyPaint
+        ? Math.max(0, Math.min(100, Math.round(activeRecallPct * 0.6 + globalGridPct * 0.4)))
+        : 0;
+
+      rgState.recall.checked = true;
+      rgState.recall.revealed = false;
+      renderRecallMatrix(diffMap);
+
+      const spotKey = `${presetKey}|${depthKey}`;
+      const prevBest = rgState.mastery.bestRecall[spotKey] || 0;
+      if (finalScore > prevBest) {
+        rgState.mastery.bestRecall[spotKey] = finalScore;
+      }
+
+      // Log up to 6 key boundary misses into SRS weakHands
+      const boundarySet = new Set(getBoundaryHands(presetKey, depthKey, profileKey));
+      const priorityMisses = [
+        ...missedHands.filter(m => boundarySet.has(m.handName)).map(m => ({ handName: m.handName, expected: m.expected })),
+        ...wrongHands.filter(w => boundarySet.has(w.handName)).map(w => ({ handName: w.handName, expected: w.expected })),
+        ...missedHands.map(m => ({ handName: m.handName, expected: m.expected })),
+        ...wrongHands.map(w => ({ handName: w.handName, expected: w.expected })),
+      ];
+      const logged = new Set();
+      priorityMisses.forEach(item => {
+        if (logged.size >= 6 || logged.has(item.handName)) return;
+        logged.add(item.handName);
+        recordRangeAnswer(presetKey, depthKey, profileKey, item.handName, item.expected, false, true);
+      });
+      if (logged.size === 0) {
+        saveRangeMastery();
+        updateGamesMasteryBadges();
+      }
+
+      const scoreEl = document.getElementById('rg-recall-score-pct');
+      if (scoreEl) {
+        scoreEl.textContent = `${finalScore}%`;
+        scoreEl.className = finalScore >= 85
+          ? 'font-mono text-xl font-extrabold text-emerald-400'
+          : (finalScore >= 60
+            ? 'font-mono text-xl font-extrabold text-amber-400'
+            : 'font-mono text-xl font-extrabold text-rose-400');
+      }
+
+      const metricsEl = document.getElementById('rg-recall-metrics');
+      if (metricsEl) {
+        metricsEl.innerHTML = `
+          <div class="grid grid-cols-3 gap-2 text-center font-mono">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+              <div class="text-[10px] text-slate-400">Cible</div>
+              <div class="text-xs font-extrabold text-white">${ctx.totalPct}%</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+              <div class="text-[10px] text-amber-300">Oublis</div>
+              <div class="text-xs font-extrabold text-amber-300">${missedHands.length} cases</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2">
+              <div class="text-[10px] text-rose-300">Erreurs</div>
+              <div class="text-xs font-extrabold text-rose-300">${wrongHands.length} cases</div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (!rgState.recall.xpAwardedForSpot && finalScore >= 50) {
+        rgState.recall.xpAwardedForSpot = true;
+        const xp = finalScore >= 90 ? 45 : (finalScore >= 75 ? 25 : 15);
+        creditKillTiltCoachXp(xp);
+        showToast(`🎨 Range évaluée (${finalScore}%) : +${xp} XP !`, 'success');
+      }
+    }
+
+    function revealRecallSolution() {
+      const { presetKey, depthKey, profileKey } = rgState.recall;
+      const ctx = getContextualRange(presetKey, depthKey, profileKey);
+      rgState.recall.painted = { ...ctx.map };
+      rgState.recall.revealed = true;
+      rgState.recall.checked = false;
+      renderRecallMatrix();
+
+      const scoreEl = document.getElementById('rg-recall-score-pct');
+      if (scoreEl) {
+        scoreEl.textContent = `${ctx.totalPct}%`;
+        scoreEl.className = 'font-mono text-xl font-extrabold text-sky-400';
+      }
+      const metricsEl = document.getElementById('rg-recall-metrics');
+      if (metricsEl) {
+        metricsEl.innerHTML = `Solution affichée (<strong class="text-white">${ctx.combosActive} combos</strong>). Cliquez sur n’importe quelle case pour lire son explication stratégique.`;
+      }
+    }
+
+    function inspectRecallCell(handName) {
+      const { presetKey, depthKey, profileKey } = rgState.recall;
+      const ctx = getContextualRange(presetKey, depthKey, profileKey);
+      const expected = ctx.map[handName] || 'fold';
+      const cfg = ACTIONS[expected] || ACTIONS.fold;
+      const explanation = getHandContextExplanation(presetKey, depthKey, profileKey, handName, expected);
+
+      const inspectorEl = document.getElementById('rg-recall-cell-inspector');
+      if (inspectorEl) {
+        inspectorEl.innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="font-mono text-sm font-extrabold text-white">${escapeHtml(handName)}</span>
+            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold border ${cfg.badgeClass}">${escapeHtml(cfg.label)}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(explanation)}</p>
+        `;
+      }
+    }
+
+    // --- GAME 2: CHRONO BLITZ 60s ---
+    function stopBlitzTimer() {
+      if (rgState.blitz.timerId) {
+        clearInterval(rgState.blitz.timerId);
+        rgState.blitz.timerId = null;
+      }
+      rgState.blitz.running = false;
+    }
+
+    function getBlitzSpotConfig(scope) {
+      const rfiPresets = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB_ISO_SB'];
+      const defPresets = ['BB_VS_BTN', 'BB_VS_UTG', '3BET_IP', 'VS_3BET'];
+      const allPresets = Object.keys(RANGE_PRESET_META);
+
+      if (scope === 'RFI_100') {
+        return {
+          presetKey: rfiPresets[Math.floor(Math.random() * rfiPresets.length)],
+          depthKey: '100bb',
+          profileKey: 'standard',
+        };
+      }
+      if (scope === 'DEFENSE_100') {
+        return {
+          presetKey: defPresets[Math.floor(Math.random() * defPresets.length)],
+          depthKey: '100bb',
+          profileKey: 'standard',
+        };
+      }
+      if (scope === 'DEPTH_40_200') {
+        const depths = ['40bb', '200bb'];
+        return {
+          presetKey: allPresets[Math.floor(Math.random() * allPresets.length)],
+          depthKey: depths[Math.floor(Math.random() * depths.length)],
+          profileKey: 'standard',
+        };
+      }
+      if (scope === 'DYNAMICS') {
+        const profiles = ['fish_bb', 'nit_behind'];
+        return {
+          presetKey: allPresets[Math.floor(Math.random() * allPresets.length)],
+          depthKey: '100bb',
+          profileKey: profiles[Math.floor(Math.random() * profiles.length)],
+        };
+      }
+      const depths = ['40bb', '100bb', '200bb'];
+      const profiles = ['standard', 'standard', 'fish_bb', 'nit_behind'];
+      return {
+        presetKey: allPresets[Math.floor(Math.random() * allPresets.length)],
+        depthKey: depths[Math.floor(Math.random() * depths.length)],
+        profileKey: profiles[Math.floor(Math.random() * profiles.length)],
+      };
+    }
+
+    function startBlitzGame() {
+      stopBlitzTimer();
+      const dur = parseInt(document.getElementById('rg-blitz-duration')?.value, 10) || 60;
+
+      rgState.blitz.running = true;
+      rgState.blitz.timeLeft = dur;
+      rgState.blitz.score = 0;
+      rgState.blitz.combo = 0;
+      rgState.blitz.answered = 0;
+      rgState.blitz.correct = 0;
+      rgState.blitz.mistakes = [];
+
+      document.getElementById('rg-blitz-setup')?.classList.add('hidden');
+      document.getElementById('rg-blitz-summary')?.classList.add('hidden');
+      document.getElementById('rg-blitz-hud')?.classList.remove('hidden');
+      document.getElementById('rg-blitz-stage')?.classList.remove('hidden');
+      const flashEl = document.getElementById('rg-blitz-flash');
+      if (flashEl) flashEl.textContent = '';
+
+      updateBlitzHUD();
+      nextBlitzHand();
+
+      rgState.blitz.timerId = setInterval(() => {
+        if (!rgState.blitz.running) return;
+        rgState.blitz.timeLeft = Math.max(0, rgState.blitz.timeLeft - 1);
+        updateBlitzHUD();
+        if (rgState.blitz.timeLeft <= 0) {
+          stopBlitzGame(true);
+        }
+      }, 1000);
+    }
+
+    function updateBlitzHUD() {
+      const b = rgState.blitz;
+      const mult = Math.min(4, 1 + Math.floor(b.combo / 3));
+      const acc = b.answered > 0 ? Math.round((b.correct / b.answered) * 100) : 100;
+
+      const timerEl = document.getElementById('rg-blitz-timer');
+      const scoreEl = document.getElementById('rg-blitz-score');
+      const comboEl = document.getElementById('rg-blitz-combo');
+      const accEl = document.getElementById('rg-blitz-acc');
+
+      if (timerEl) timerEl.textContent = `${b.timeLeft}s`;
+      if (scoreEl) scoreEl.textContent = String(b.score);
+      if (comboEl) comboEl.textContent = `×${mult}`;
+      if (accEl) accEl.textContent = `${acc}%`;
+    }
+
+    function nextBlitzHand() {
+      const scope = document.getElementById('rg-blitz-scope')?.value || 'ALL_DEPTHS';
+      const spot = getBlitzSpotConfig(scope);
+      const ctx = getContextualRange(spot.presetKey, spot.depthKey, spot.profileKey);
+      const boundaries = getBoundaryHands(spot.presetKey, spot.depthKey, spot.profileKey);
+
+      let hand;
+      if (boundaries.length > 0 && Math.random() < 0.65) {
+        const pick = boundaries[Math.floor(Math.random() * boundaries.length)];
+        hand = HAND_META[pick] || ALL_HANDS[0];
+      } else {
+        hand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)];
+      }
+
+      const expectedAction = ctx.map[hand.name] || 'fold';
+      rgState.blitz.current = { ...spot, handName: hand.name, expectedAction };
+
+      const preset = DEFAULT_PRESETS[spot.presetKey];
+      const metaInfo = RANGE_PRESET_META[spot.presetKey];
+      const depthInfo = RANGE_STACK_DEPTHS[spot.depthKey];
+      const profInfo = RANGE_TABLE_PROFILES[spot.profileKey];
+
+      const posBadge = document.getElementById('rg-blitz-pos-badge');
+      const depthBadge = document.getElementById('rg-blitz-depth-badge');
+      const profBadge = document.getElementById('rg-blitz-profile-badge');
+      const contextEl = document.getElementById('rg-blitz-context');
+      const labelEl = document.getElementById('rg-blitz-hand-label');
+
+      if (posBadge) posBadge.textContent = metaInfo.label;
+      if (depthBadge) {
+        depthBadge.textContent = `${depthInfo.icon} ${depthInfo.short}`;
+        depthBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold border ${depthInfo.badgeClass}`;
+      }
+      if (profBadge) {
+        profBadge.textContent = `${profInfo.icon} ${profInfo.short}`;
+        profBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold border ${profInfo.badgeClass}`;
+      }
+      if (contextEl) contextEl.textContent = preset.context;
+      if (labelEl) labelEl.textContent = hand.name;
+      renderMiniCards('rg-blitz-cards', hand.name, 'lg');
+    }
+
+    function submitBlitzAnswer(userAction) {
+      if (!rgState.blitz.running || !rgState.blitz.current) return;
+      const cur = rgState.blitz.current;
+      const isCorrect = userAction === cur.expectedAction;
+
+      rgState.blitz.answered += 1;
+      recordRangeAnswer(cur.presetKey, cur.depthKey, cur.profileKey, cur.handName, cur.expectedAction, isCorrect, true);
+
+      const flashEl = document.getElementById('rg-blitz-flash');
+      if (isCorrect) {
+        rgState.blitz.correct += 1;
+        rgState.blitz.combo += 1;
+        const mult = Math.min(4, 1 + Math.floor((rgState.blitz.combo - 1) / 3));
+        const pts = 10 * mult;
+        rgState.blitz.score += pts;
+        if (flashEl) {
+          flashEl.className = 'min-h-[1.5rem] text-xs font-extrabold text-emerald-400';
+          flashEl.textContent = `✅ +${pts} pts (${cur.handName} → ${ACTIONS[cur.expectedAction].short})`;
+        }
+      } else {
+        rgState.blitz.combo = 0;
+        rgState.blitz.timeLeft = Math.max(0, rgState.blitz.timeLeft - 2);
+        rgState.blitz.mistakes.push({
+          ...cur,
+          got: userAction,
+        });
+        if (flashEl) {
+          flashEl.className = 'min-h-[1.5rem] text-xs font-extrabold text-rose-400';
+          flashEl.textContent = `❌ -2s ! ${cur.handName} (${cur.presetKey} ${cur.depthKey}) = ${ACTIONS[cur.expectedAction].short}`;
+        }
+      }
+
+      updateBlitzHUD();
+      if (rgState.blitz.timeLeft <= 0) {
+        stopBlitzGame(true);
+      } else {
+        nextBlitzHand();
+      }
+    }
+
+    function stopBlitzGame(showSummary = false) {
+      const wasRunning = rgState.blitz.running;
+      stopBlitzTimer();
+      if (!showSummary) return;
+
+      document.getElementById('rg-blitz-hud')?.classList.add('hidden');
+      document.getElementById('rg-blitz-stage')?.classList.add('hidden');
+      document.getElementById('rg-blitz-setup')?.classList.remove('hidden');
+      document.getElementById('rg-blitz-summary')?.classList.remove('hidden');
+
+      const b = rgState.blitz;
+      const acc = b.answered > 0 ? Math.round((b.correct / b.answered) * 100) : 0;
+      const isNewRecord = b.score > (rgState.mastery.bestBlitz || 0);
+      if (isNewRecord) {
+        rgState.mastery.bestBlitz = b.score;
+        saveRangeMastery();
+      }
+      updateGamesMasteryBadges();
+
+      let xpGained = 0;
+      if (wasRunning && b.correct > 0) {
+        xpGained = Math.min(40, Math.max(10, Math.round(b.correct * 2)));
+        creditKillTiltCoachXp(xpGained);
+      }
+
+      const statsEl = document.getElementById('rg-blitz-summary-stats');
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h4 class="text-sm sm:text-base font-extrabold text-white">⚡ Fin du Chrono Blitz ${isNewRecord ? '🏆 Nouveau Record !' : ''}</h4>
+            ${xpGained > 0 ? `<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-xs font-extrabold">+${xpGained} XP</span>` : ''}
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center font-mono pt-1">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+              <div class="text-[10px] text-slate-400">Score</div>
+              <div class="text-base font-extrabold text-emerald-400">${b.score}</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+              <div class="text-[10px] text-slate-400">Bonnes réponses</div>
+              <div class="text-base font-extrabold text-white">${b.correct} / ${b.answered}</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+              <div class="text-[10px] text-slate-400">Précision</div>
+              <div class="text-base font-extrabold text-sky-400">${acc}%</div>
+            </div>
+          </div>
+        `;
+      }
+
+      const mistakesEl = document.getElementById('rg-blitz-mistakes-list');
+      if (mistakesEl) {
+        if (b.mistakes.length === 0) {
+          mistakesEl.innerHTML = '<p class="text-xs text-emerald-300 font-semibold">Zéro erreur sur ce round ! Vos réflexes sont affûtés.</p>';
+        } else {
+          mistakesEl.innerHTML = `<div class="text-xs font-bold text-rose-300">Erreurs à retenir (${b.mistakes.length}) :</div>` + b.mistakes.slice(0, 8).map(m => `
+            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              <span><strong class="font-mono text-white">${escapeHtml(m.handName)}</strong> • ${escapeHtml(m.presetKey)} (${escapeHtml(m.depthKey)}, ${escapeHtml(m.profileKey)})</span>
+              <span class="font-mono"><span class="text-rose-400 line-through">${escapeHtml(ACTIONS[m.got].short)}</span> → <strong class="text-emerald-400">${escapeHtml(ACTIONS[m.expectedAction].short)}</strong></span>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    // --- GAME 3: DÉFI PROFONDEUR (40bb vs 100bb vs 200bb) ---
+    function getDepthShiftPool() {
+      if (rgState.depth.pool) return rgState.depth.pool;
+      const pool = [];
+      Object.keys(RANGE_PRESET_META).forEach(presetKey => {
+        const m40 = getContextualRange(presetKey, '40bb', 'standard').map;
+        const m100 = getContextualRange(presetKey, '100bb', 'standard').map;
+        const m200 = getContextualRange(presetKey, '200bb', 'standard').map;
+        ALL_HANDS.forEach(h => {
+          const a40 = m40[h.name] || 'fold';
+          const a100 = m100[h.name] || 'fold';
+          const a200 = m200[h.name] || 'fold';
+          if (!(a40 === a100 && a100 === a200)) {
+            pool.push({ presetKey, handName: h.name, a40, a100, a200 });
+          }
+        });
+      });
+      rgState.depth.pool = pool;
+      return pool;
+    }
+
+    function nextDepthChallenge() {
+      const pool = getDepthShiftPool();
+      if (pool.length === 0) return;
+
+      let filtered = pool;
+      if (pool.length > 1 && rgState.depth.current) {
+        filtered = pool.filter(item => !(item.presetKey === rgState.depth.current.presetKey && item.handName === rgState.depth.current.handName));
+        if (filtered.length === 0) filtered = pool;
+      }
+
+      const item = filtered[Math.floor(Math.random() * filtered.length)];
+      rgState.depth.current = item;
+      rgState.depth.answered = false;
+      rgState.depth.picks = { '40bb': null, '100bb': null, '200bb': null };
+
+      const preset = DEFAULT_PRESETS[item.presetKey];
+      const metaInfo = RANGE_PRESET_META[item.presetKey];
+
+      const posBadge = document.getElementById('rg-depth-pos-badge');
+      const ctxEl = document.getElementById('rg-depth-context');
+      const labelEl = document.getElementById('rg-depth-hand-label');
+      if (posBadge) posBadge.textContent = `Spot : ${metaInfo.label}`;
+      if (ctxEl) ctxEl.textContent = preset.context;
+      if (labelEl) labelEl.textContent = item.handName;
+      renderMiniCards('rg-depth-cards', item.handName, 'lg');
+
+      ['40bb', '100bb', '200bb'].forEach(dk => {
+        const col = document.getElementById(`rg-depth-col-${dk}`);
+        if (col) col.className = 'rounded-2xl bg-slate-950/90 border border-slate-800 p-3.5 space-y-2.5';
+        const vEl = document.getElementById(`rg-depth-verdict-${dk}`);
+        if (vEl) vEl.textContent = '';
+      });
+
+      renderDepthColumnButtons();
+      document.getElementById('rg-depth-submit-btn')?.classList.remove('hidden');
+      document.getElementById('rg-depth-next-btn')?.classList.add('hidden');
+      document.getElementById('rg-depth-feedback')?.classList.add('hidden');
+    }
+
+    function renderDepthColumnButtons() {
+      const cur = rgState.depth.current;
+      if (!cur) return;
+      const validActions = RANGE_PRESET_META[cur.presetKey].validActions;
+
+      ['40bb', '100bb', '200bb'].forEach(dk => {
+        const container = document.getElementById(`rg-depth-opts-${dk}`);
+        if (!container) return;
+        const picked = rgState.depth.picks[dk];
+
+        container.innerHTML = validActions.map(act => {
+          const cfg = ACTIONS[act];
+          const isPicked = picked === act;
+          const cls = isPicked
+            ? 'w-full py-2 px-3 rounded-xl text-xs font-extrabold border-2 border-white bg-emerald-600/30 text-white transition'
+            : 'w-full py-2 px-3 rounded-xl text-xs font-bold border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600 transition';
+          return `<button type="button" ${rgState.depth.answered ? 'disabled' : ''} onclick="selectDepthOption('${dk}', '${act}')" class="${cls}">${escapeHtml(cfg.short)}</button>`;
+        }).join('');
+      });
+    }
+
+    function selectDepthOption(depthKey, action) {
+      if (rgState.depth.answered) return;
+      rgState.depth.picks[depthKey] = action;
+      renderDepthColumnButtons();
+    }
+
+    function submitDepthChallenge() {
+      if (rgState.depth.answered || !rgState.depth.current) return;
+      const { '40bb': p40, '100bb': p100, '200bb': p200 } = rgState.depth.picks;
+      if (!p40 || !p100 || !p200) {
+        showToast('Sélectionnez une action pour chacune des 3 profondeurs !', 'info');
+        return;
+      }
+
+      rgState.depth.answered = true;
+      const cur = rgState.depth.current;
+      const checks = [
+        { dk: '40bb', pick: p40, expected: cur.a40 },
+        { dk: '100bb', pick: p100, expected: cur.a100 },
+        { dk: '200bb', pick: p200, expected: cur.a200 },
+      ];
+
+      let hits = 0;
+      checks.forEach(c => {
+        const ok = c.pick === c.expected;
+        if (ok) hits += 1;
+        recordRangeAnswer(cur.presetKey, c.dk, 'standard', cur.handName, c.expected, ok, true);
+
+        const col = document.getElementById(`rg-depth-col-${c.dk}`);
+        const vEl = document.getElementById(`rg-depth-verdict-${c.dk}`);
+        if (col) {
+          col.className = ok
+            ? 'rounded-2xl bg-emerald-950/25 border border-emerald-500/60 p-3.5 space-y-2.5'
+            : 'rounded-2xl bg-rose-950/25 border border-rose-500/60 p-3.5 space-y-2.5';
+        }
+        if (vEl) {
+          vEl.innerHTML = ok
+            ? `<span class="text-emerald-400 font-bold">✅ Exact (${escapeHtml(ACTIONS[c.expected].short)})</span>`
+            : `<span class="text-rose-400 font-bold">❌ Attendu : ${escapeHtml(ACTIONS[c.expected].short)}</span>`;
+        }
+      });
+
+      rgState.depth.total += 1;
+      if (hits === 3) {
+        rgState.depth.score += 1;
+        rgState.depth.streak += 1;
+        creditKillTiltCoachXp(25);
+      } else {
+        rgState.depth.streak = 0;
+        if (hits === 2) creditKillTiltCoachXp(10);
+      }
+
+      const scoreEl = document.getElementById('rg-depth-score');
+      const streakEl = document.getElementById('rg-depth-streak');
+      if (scoreEl) scoreEl.textContent = `${rgState.depth.score} / ${rgState.depth.total}`;
+      if (streakEl) streakEl.textContent = `${rgState.depth.streak} 🔥`;
+
+      renderDepthColumnButtons();
+      document.getElementById('rg-depth-submit-btn')?.classList.add('hidden');
+      document.getElementById('rg-depth-next-btn')?.classList.remove('hidden');
+
+      const fb = document.getElementById('rg-depth-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.innerHTML = `
+          <div class="font-extrabold ${hits === 3 ? 'text-emerald-400' : 'text-amber-300'}">
+            ${hits === 3 ? '🎯 Parfait 3/3 (+25 XP) !' : `Résultat : ${hits}/3 (${hits === 2 ? '+10 XP' : 'à retravailler'})`}
+          </div>
+          <p><strong>⚡ 40bb :</strong> ${escapeHtml(ACTIONS[cur.a40].short)} — ${escapeHtml(RANGE_STACK_DEPTHS['40bb'].note)}</p>
+          <p><strong>🎯 100bb :</strong> ${escapeHtml(ACTIONS[cur.a100].short)} — ${escapeHtml(RANGE_STACK_DEPTHS['100bb'].note)}</p>
+          <p><strong>🌊 200bb :</strong> ${escapeHtml(ACTIONS[cur.a200].short)} — ${escapeHtml(RANGE_STACK_DEPTHS['200bb'].note)}</p>
+        `;
+      }
+    }
+
+    // --- GAME 4: MAÎTRISE & LEAKS (HEATMAP 10x3 + DRILL SRS) ---
+    function renderMasteryDashboard() {
+      const pct = computeOverallMasteryPct();
+      const weakEntries = Object.values(rgState.mastery.weakHands).sort((a, b) => b.misses - a.misses);
+
+      let totalDrilled = 0;
+      Object.values(rgState.mastery.spotStats).forEach(s => { totalDrilled += s.attempts || 0; });
+
+      const pctEl = document.getElementById('rg-mastery-pct');
+      const drilledEl = document.getElementById('rg-mastery-drilled');
+      const leaksEl = document.getElementById('rg-mastery-leaks-total');
+      if (pctEl) pctEl.textContent = `${pct}%`;
+      if (drilledEl) drilledEl.textContent = String(totalDrilled);
+      if (leaksEl) leaksEl.textContent = String(weakEntries.length);
+
+      const heatmapEl = document.getElementById('rg-mastery-heatmap');
+      if (heatmapEl) {
+        const depths = ['40bb', '100bb', '200bb'];
+        const rowsHtml = Object.keys(RANGE_PRESET_META).map(pk => {
+          const metaInfo = RANGE_PRESET_META[pk];
+          const cells = depths.map(dk => {
+            const key = `${pk}|${dk}`;
+            const recallPct = rgState.mastery.bestRecall[key];
+            const st = rgState.mastery.spotStats[key];
+            const drillPct = st && st.attempts > 0 ? Math.round((st.correct / st.attempts) * 100) : null;
+            let val = null;
+            if (typeof recallPct === 'number' && typeof drillPct === 'number') val = Math.round((recallPct + drillPct) / 2);
+            else if (typeof recallPct === 'number') val = recallPct;
+            else if (typeof drillPct === 'number') val = drillPct;
+
+            let btnCls = 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600';
+            let label = '—';
+            if (val !== null) {
+              label = `${val}%`;
+              if (val >= 85) btnCls = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30';
+              else if (val >= 60) btnCls = 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30';
+              else btnCls = 'bg-rose-500/20 border-rose-500/50 text-rose-300 hover:bg-rose-500/30';
+            }
+            return `
+              <td class="p-1">
+                <button type="button" onclick="openRecallFromMastery('${pk}', '${dk}')" class="w-full py-2 px-2 rounded-xl border font-mono text-xs font-extrabold transition ${btnCls}">
+                  ${label}
+                </button>
+              </td>
+            `;
+          }).join('');
+
+          return `
+            <tr class="border-t border-slate-800/70">
+              <td class="py-1.5 pr-3 text-xs font-bold text-slate-200 whitespace-nowrap">${escapeHtml(metaInfo.label)}</td>
+              ${cells}
+            </tr>
+          `;
+        }).join('');
+
+        heatmapEl.innerHTML = `
+          <table class="w-full text-left border-collapse min-w-[460px]">
+            <thead>
+              <tr class="text-[11px] uppercase tracking-wider text-slate-400">
+                <th class="pb-2 pr-3">Spot / Position</th>
+                <th class="pb-2 text-center">⚡ 40 bb</th>
+                <th class="pb-2 text-center">🎯 100 bb</th>
+                <th class="pb-2 text-center">🌊 200 bb</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        `;
+      }
+
+      const listEl = document.getElementById('rg-leaks-list');
+      if (listEl) {
+        if (weakEntries.length === 0) {
+          listEl.innerHTML = '<span class="text-xs text-emerald-300 font-semibold">Aucun leak enregistré pour le moment. Lancez « 🎲 Drill Mains Frontières » ou jouez aux autres modes !</span>';
+        } else {
+          listEl.innerHTML = weakEntries.slice(0, 24).map(w => {
+            const pShort = RANGE_PRESET_META[w.presetKey]?.short || w.presetKey;
+            return `
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs text-rose-200">
+                <strong class="font-mono text-white">${escapeHtml(w.handName)}</strong>
+                <span>${escapeHtml(pShort)} • ${escapeHtml(w.depthKey)}</span>
+                <span class="font-mono text-[10px] text-rose-300">(${w.streakRight}/2 ✓)</span>
+              </span>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    function openRecallFromMastery(presetKey, depthKey) {
+      const presetEl = document.getElementById('rg-recall-preset');
+      const depthEl = document.getElementById('rg-recall-depth');
+      const profileEl = document.getElementById('rg-recall-profile');
+      if (presetEl) presetEl.value = presetKey;
+      if (depthEl) depthEl.value = depthKey;
+      if (profileEl) profileEl.value = 'standard';
+      setRangeGameTab('recall');
+      loadRecallSpot();
+    }
+
+    function startLeaksDrill() {
+      const weakEntries = Object.values(rgState.mastery.weakHands).sort((a, b) => b.misses - a.misses);
+      if (weakEntries.length === 0) {
+        showToast('Aucun leak actif ! Lancement d’un Drill Mains Frontières.', 'info');
+        startFrontierDrill();
+        return;
+      }
+      rgState.leaksDrill.active = true;
+      rgState.leaksDrill.queue = weakEntries.slice(0, 12).map(w => ({ ...w }));
+      rgState.leaksDrill.index = 0;
+      rgState.leaksDrill.modeLabel = 'Leaks';
+      document.getElementById('rg-leaks-drill-box')?.classList.remove('hidden');
+      renderLeaksDrillQuestion();
+    }
+
+    function startFrontierDrill() {
+      const presets = Object.keys(RANGE_PRESET_META);
+      const depths = ['40bb', '100bb', '200bb'];
+      const profiles = ['standard', 'fish_bb', 'nit_behind'];
+      const queue = [];
+
+      for (let i = 0; i < 10; i++) {
+        const presetKey = presets[Math.floor(Math.random() * presets.length)];
+        const depthKey = depths[Math.floor(Math.random() * depths.length)];
+        const profileKey = profiles[Math.floor(Math.random() * profiles.length)];
+        const ctx = getContextualRange(presetKey, depthKey, profileKey);
+        const bounds = getBoundaryHands(presetKey, depthKey, profileKey);
+        const handName = bounds.length > 0
+          ? bounds[Math.floor(Math.random() * bounds.length)]
+          : ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)].name;
+        queue.push({
+          presetKey,
+          depthKey,
+          profileKey,
+          handName,
+          expectedAction: ctx.map[handName] || 'fold',
+        });
+      }
+
+      rgState.leaksDrill.active = true;
+      rgState.leaksDrill.queue = queue;
+      rgState.leaksDrill.index = 0;
+      rgState.leaksDrill.modeLabel = 'Frontières';
+      document.getElementById('rg-leaks-drill-box')?.classList.remove('hidden');
+      renderLeaksDrillQuestion();
+    }
+
+    function renderLeaksDrillQuestion() {
+      const d = rgState.leaksDrill;
+      if (!d.active || d.index >= d.queue.length) {
+        d.active = false;
+        document.getElementById('rg-leaks-drill-box')?.classList.add('hidden');
+        renderMasteryDashboard();
+        showToast('✅ Session de Drill terminée !', 'success');
+        return;
+      }
+
+      d.answered = false;
+      const item = d.queue[d.index];
+      const metaInfo = RANGE_PRESET_META[item.presetKey];
+      const depthInfo = RANGE_STACK_DEPTHS[item.depthKey];
+      const profInfo = RANGE_TABLE_PROFILES[item.profileKey];
+
+      const progEl = document.getElementById('rg-leaks-progress');
+      const posEl = document.getElementById('rg-leaks-pos-badge');
+      const depthEl = document.getElementById('rg-leaks-depth-badge');
+      const profEl = document.getElementById('rg-leaks-profile-badge');
+      const labelEl = document.getElementById('rg-leaks-hand-label');
+
+      if (progEl) progEl.textContent = `${d.modeLabel} • Main ${d.index + 1} / ${d.queue.length}`;
+      if (posEl) posEl.textContent = metaInfo.label;
+      if (depthEl) {
+        depthEl.textContent = `${depthInfo.icon} ${depthInfo.short}`;
+        depthEl.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${depthInfo.badgeClass}`;
+      }
+      if (profEl) {
+        profEl.textContent = `${profInfo.icon} ${profInfo.short}`;
+        profEl.className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${profInfo.badgeClass}`;
+      }
+      if (labelEl) labelEl.textContent = item.handName;
+      renderMiniCards('rg-leaks-cards', item.handName, 'lg');
+
+      document.querySelectorAll('#rg-leaks-actions button').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('opacity-40', 'cursor-not-allowed');
+      });
+      document.getElementById('rg-leaks-feedback')?.classList.add('hidden');
+      document.getElementById('rg-leaks-next-btn')?.classList.add('hidden');
+    }
+
+    function submitLeaksDrillAnswer(userAction) {
+      const d = rgState.leaksDrill;
+      if (!d.active || d.answered || d.index >= d.queue.length) return;
+      d.answered = true;
+
+      const item = d.queue[d.index];
+      const isCorrect = userAction === item.expectedAction;
+      const graduated = recordRangeAnswer(item.presetKey, item.depthKey, item.profileKey, item.handName, item.expectedAction, isCorrect);
+
+      if (graduated) {
+        creditKillTiltCoachXp(15);
+      }
+
+      document.querySelectorAll('#rg-leaks-actions button').forEach(b => {
+        b.disabled = true;
+        b.classList.add('opacity-40', 'cursor-not-allowed');
+      });
+
+      const fb = document.getElementById('rg-leaks-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = isCorrect
+          ? 'rounded-xl p-3.5 border border-emerald-500/40 bg-emerald-950/30 text-left text-xs space-y-1.5'
+          : 'rounded-xl p-3.5 border border-rose-500/40 bg-rose-950/30 text-left text-xs space-y-1.5';
+        const expl = getHandContextExplanation(item.presetKey, item.depthKey, item.profileKey, item.handName, item.expectedAction);
+        fb.innerHTML = `
+          <div class="font-extrabold ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}">
+            ${isCorrect ? `✅ Exact (${escapeHtml(ACTIONS[item.expectedAction].short)})` : `❌ Erreur — Attendu : ${escapeHtml(ACTIONS[item.expectedAction].short)}`}
+            ${graduated ? ' • 🎉 Leak corrigé (+15 XP) !' : ''}
+          </div>
+          <p class="text-slate-200 leading-relaxed">${escapeHtml(expl)}</p>
+        `;
+      }
+
+      document.getElementById('rg-leaks-next-btn')?.classList.remove('hidden');
+      renderMasteryDashboard();
+    }
+
+    function nextLeaksDrillHand() {
+      rgState.leaksDrill.index += 1;
+      renderLeaksDrillQuestion();
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       initRanges();
       buildMatrixDOM();
@@ -5815,6 +7694,9 @@
       coachVideosState.watched = loadWatchedVideos();
       updateCoachVideosProgressUI();
 
+      rgState.mastery = loadRangeMastery();
+      updateGamesMasteryBadges();
+
       evaluateHudProfile();
       updateOutsCalculator(9);
       initBankrollTracker();
@@ -5823,7 +7705,7 @@
       computeGtoSolver();
     });
 
-    // Couch-friendly keyboard shortcuts when Quiz is active
+    // Couch-friendly keyboard shortcuts when Quiz or Jeux de Ranges is active
     window.addEventListener('keydown', (e) => {
       const videosModal = document.getElementById('coach-videos-modal');
       if (videosModal && !videosModal.classList.contains('hidden')) {
@@ -5834,10 +7716,39 @@
         return;
       }
 
-      if (state.mode !== 'quiz' || document.getElementById('suite-tab-ranges').classList.contains('hidden')) return;
+      const rangesTabHidden = document.getElementById('suite-tab-ranges').classList.contains('hidden');
+      if (rangesTabHidden) return;
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
 
       const key = e.key.toLowerCase();
+
+      if (state.mode === 'games') {
+        const actionMap = { '1': 'fold', '2': 'opencall', '3': 'raise', '4': 'threebet', '5': 'fourbet' };
+        if (rgState.tab === 'blitz' && rgState.blitz.running && actionMap[key]) {
+          e.preventDefault();
+          submitBlitzAnswer(actionMap[key]);
+          return;
+        }
+        if (rgState.tab === 'mastery' && rgState.leaksDrill.active) {
+          if (!rgState.leaksDrill.answered && actionMap[key]) {
+            e.preventDefault();
+            submitLeaksDrillAnswer(actionMap[key]);
+          } else if (rgState.leaksDrill.answered && (key === 'enter' || key === ' ')) {
+            e.preventDefault();
+            nextLeaksDrillHand();
+          }
+          return;
+        }
+        if (rgState.tab === 'depth' && key === 'enter') {
+          e.preventDefault();
+          if (rgState.depth.answered) nextDepthChallenge();
+          else submitDepthChallenge();
+        }
+        return;
+      }
+
+      if (state.mode !== 'quiz') return;
+
       if (key === 'enter' || key === ' ') {
         if (state.quiz.answered) {
           e.preventDefault();
