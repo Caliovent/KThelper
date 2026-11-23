@@ -363,11 +363,12 @@
                 <option value="RANGES_ALL">🃏 Toutes les Ranges Préflop (RFI + 3-Bet + 4-Bet)</option>
                 <option value="RFI_ONLY">📍 Ranges Open Raise (UTG, MP, CO, BU, SB, BB Iso)</option>
                 <option value="DEFENSE_ONLY">🛡️ Ranges Défense (BB, BU vs CO, Face à 3-Bet)</option>
-                <option value="CONCEPTS_ALL">🧠 Toutes les Notions du Guide (Sizings, HUD, Cotes, Postflop)</option>
+                <option value="CONCEPTS_ALL">🧠 Toutes les Notions (Sizings, HUD, Cotes, Postflop, Mental)</option>
                 <option value="CONCEPT_SIZING">💰 Sizings & Positions (Open, Limpers, 3-Bet, Squeeze)</option>
                 <option value="CONCEPT_HUD">🎯 Profiling HUD & Adversaires (VPIP, PFR, Fish, Nit)</option>
                 <option value="CONCEPT_MATH">📐 Outs, Équité, Cotes & EV</option>
-                <option value="CONCEPT_POSTFLOP">🔥 Jeu Postflop, C-Bet, Texture & Bankroll</option>
+                <option value="CONCEPT_POSTFLOP">🔥 Jeu Postflop, C-Bet, Texture & Value</option>
+                <option value="CONCEPT_MENTAL">🧘 Mental, Tilt & Bankroll Management</option>
               </select>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 font-mono text-xs">
@@ -394,6 +395,9 @@
               </span>
               <button id="quiz-hint-btn" type="button" onclick="revealQuizHint()" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition">
                 💡 Indice du Coach
+              </button>
+              <button id="quiz-videos-btn" type="button" onclick="openCoachVideosModal()" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition inline-flex items-center gap-1">
+                📺 Vidéos du Coach <span id="quiz-videos-theme-pill" class="text-[10px] opacity-80"></span>
               </button>
             </div>
 
@@ -440,7 +444,10 @@
               <span id="quiz-xp-gained" class="hidden px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-xs font-extrabold">+15 XP</span>
             </div>
             <p id="quiz-feedback-explanation" class="text-xs text-slate-200 leading-relaxed"></p>
-            <div class="pt-1 text-right">
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <button id="quiz-feedback-video-btn" type="button" onclick="openCoachVideosForCurrentQuestion()" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-200 text-xs font-bold transition inline-flex items-center gap-1.5">
+                📺 Voir les vidéos du thème
+              </button>
               <button type="button" onclick="nextQuizQuestion()" class="px-4 py-2 rounded-xl bg-white text-slate-950 hover:bg-slate-200 text-xs font-extrabold transition">
                 Question suivante →
               </button>
@@ -1257,6 +1264,61 @@
     <!-- ===================================================================== -->
     <div id="suite-tab-coach" class="hidden space-y-6">
       <div id="coach-ia-root"></div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: VIDÉOS DU COACH KILL TILT (CASH GAME / NL2)                    -->
+    <!-- ===================================================================== -->
+    <div id="coach-videos-modal" role="dialog" aria-modal="true" aria-labelledby="coach-videos-modal-title" onclick="if (event.target === this) closeCoachVideosModal()" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+      <div class="bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <!-- Modal Header -->
+        <div class="px-4 sm:px-6 py-4 border-b border-slate-800 flex items-start justify-between gap-3 bg-slate-950/70 shrink-0">
+          <div>
+            <h2 id="coach-videos-modal-title" class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+              📺 Vidéos du Coach — Kill Tilt (Cash Game / NL2)
+            </h2>
+            <p id="coach-videos-context-subtitle" class="text-xs text-slate-400 mt-0.5">
+              Sélection pédagogique @KillTiltpoker triée par thème (hors divertissement, tournois et Expressos)
+            </p>
+          </div>
+          <button type="button" onclick="closeCoachVideosModal()" aria-label="Fermer la fenêtre des vidéos" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold transition shrink-0">
+            ✕
+          </button>
+        </div>
+
+        <!-- Theme Filters & Search -->
+        <div class="px-4 sm:px-6 py-3 border-b border-slate-800/80 bg-slate-900/95 space-y-2.5 shrink-0">
+          <div id="coach-videos-filters" class="flex flex-wrap items-center gap-1.5"></div>
+          <div class="relative">
+            <input id="coach-videos-search" type="search" oninput="renderCoachVideosList()" placeholder="Rechercher une vidéo Kill Tilt (ex: 3-bet, cbet, tracker, variance, NL2)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+          </div>
+        </div>
+
+        <!-- Scrollable Body: Inline YouTube Player + Curated Video Grid -->
+        <div id="coach-videos-scroll-body" class="overflow-y-auto flex-1 p-4 sm:p-5 space-y-4">
+          <div id="coach-videos-player" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="min-w-0">
+                <h3 id="coach-videos-player-title" class="text-xs sm:text-sm font-extrabold text-white truncate"></h3>
+                <p id="coach-videos-player-meta" class="text-[11px] text-slate-400"></p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a id="coach-videos-player-ext" href="#" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-200 text-xs font-bold transition">
+                  ↗ Ouvrir sur YouTube
+                </a>
+                <button type="button" onclick="closeCoachVideoPlayer()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                  Fermer le lecteur
+                </button>
+              </div>
+            </div>
+            <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-slate-800">
+              <iframe id="coach-videos-iframe" class="w-full h-full" title="Lecteur vidéo Kill Tilt" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+
+          <div id="coach-videos-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -2238,6 +2300,340 @@
       return `${posTips[presetKey] || ''} ${handTypeNote}`;
     }
 
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    const COACH_VIDEO_THEMES = {
+      preflop: {
+        id: 'preflop',
+        label: 'Préflop & Bases NL2',
+        shortLabel: 'Préflop',
+        icon: '🃏',
+        badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        activeBtnClass: 'bg-emerald-600 text-white border-emerald-400/50 shadow',
+      },
+      threebet: {
+        id: 'threebet',
+        label: '3-Bet, 4-Bet & Squeeze',
+        shortLabel: '3-Bet',
+        icon: '⚔️',
+        badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        activeBtnClass: 'bg-rose-600 text-white border-rose-400/50 shadow',
+      },
+      cbet: {
+        id: 'cbet',
+        label: 'C-Bet, Postflop & Cotes',
+        shortLabel: 'C-Bet',
+        icon: '🔥',
+        badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        activeBtnClass: 'bg-amber-600 text-white border-amber-400/50 shadow',
+      },
+      hud: {
+        id: 'hud',
+        label: 'Profiling HUD & Trackers',
+        shortLabel: 'Profiling HUD',
+        icon: '🎯',
+        badgeClass: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        activeBtnClass: 'bg-sky-600 text-white border-sky-400/50 shadow',
+      },
+      mental: {
+        id: 'mental',
+        label: 'Mental & Bankroll',
+        shortLabel: 'Mental / BR',
+        icon: '🧠',
+        badgeClass: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+        activeBtnClass: 'bg-purple-600 text-white border-purple-400/50 shadow',
+      },
+    };
+
+    const COACH_VIDEOS = [
+      // --- PRÉFLOP & BASES NL2 ---
+      {
+        videoId: 'ba8aJzFIWy4',
+        title: 'Les Bases du cash Game #2 - Avec quelles mains miser préflop !',
+        url: 'https://www.youtube.com/watch?v=ba8aJzFIWy4',
+        duration: '25:24',
+        theme: 'preflop',
+        summary: 'Comprendre la sélection de mains, la position à la table et éviter les mains dominées dès la NL2.',
+        tags: ['preflop', 'ranges', 'open raise', 'position', 'nl2'],
+      },
+      {
+        videoId: 'bjrgiLLHkis',
+        title: 'Les Bases du Cash Game #5 - Comment défendre sa Big Blind ?',
+        url: 'https://www.youtube.com/watch?v=bjrgiLLHkis',
+        duration: '29:12',
+        theme: 'preflop',
+        summary: 'Cotes du pot en BB, ajustements vs UTG ou Bouton et défense cohérente hors de position.',
+        tags: ['bb', 'defense', 'cotes', 'preflop', 'cash game'],
+      },
+      {
+        videoId: 'WSKznvxb4kg',
+        title: 'Les ranges en Cash Game : Fondamentaux et adaptations',
+        url: 'https://www.youtube.com/watch?v=WSKznvxb4kg',
+        duration: '1:51:09',
+        theme: 'preflop',
+        summary: 'Construction complète des ranges préflop en Cash Game 6-max et adaptations selon le field.',
+        tags: ['ranges', 'preflop', 'adaptation', '6-max'],
+      },
+      {
+        videoId: 'OXsdlYj5Ivs',
+        title: '7 erreurs préflop que vous faites TOUS en microlimites (et comment les corriger)',
+        url: 'https://www.youtube.com/watch?v=OXsdlYj5Ivs',
+        duration: '1:13:34',
+        theme: 'preflop',
+        summary: 'Open-limp, mauvais sizings, calls trop larges OOP et pièges classiques des micro-limites.',
+        tags: ['erreurs', 'microlimites', 'limp', 'sizing', 'preflop'],
+      },
+      {
+        videoId: 'aZcRgjzRj7s',
+        title: 'Cash Game Live en NL2 - Isoler les fish et jouer en position',
+        url: 'https://www.youtube.com/watch?v=aZcRgjzRj7s',
+        duration: '46:30',
+        theme: 'preflop',
+        summary: 'Application concrète en NL2 : punir les limpers avec l’iso-raise (3bb + 1bb/limper) et jouer IP.',
+        tags: ['nl2', 'iso-raise', 'limp', 'position', 'fish'],
+      },
+      {
+        videoId: 'NgKM6HrJKSs',
+        title: 'Les Bases pour Débuter au Poker en Cash Game NL2',
+        url: 'https://www.youtube.com/watch?v=NgKM6HrJKSs',
+        duration: '34:04',
+        theme: 'preflop',
+        summary: 'Les fondamentaux indispensables pour bâtir un jeu solide et gagnant dès la NL2.',
+        tags: ['bases', 'debuter', 'nl2', 'tag'],
+      },
+
+      // --- 3-BET, 4-BET & SQUEEZE ---
+      {
+        videoId: 'W_tvs9AVcyY',
+        title: 'Les Bases du Cash Game #4 - Le 3bet',
+        url: 'https://www.youtube.com/watch?v=W_tvs9AVcyY',
+        duration: '32:30',
+        theme: 'threebet',
+        summary: 'Pourquoi 3-bet en value ou light, sizings IP vs OOP et construction de ranges polarisées/linéaires.',
+        tags: ['3-bet', 'sizing', 'value', 'bluff'],
+      },
+      {
+        videoId: '8CNioOWy1fQ',
+        title: 'Les Bases du cash Game #3 - Comment se défendre Vs 3BET ?',
+        url: 'https://www.youtube.com/watch?v=8CNioOWy1fQ',
+        duration: '34:05',
+        theme: 'threebet',
+        summary: 'Quand fold, call ou 4-bet face à un 3-bet selon les positions et le profil de l’adversaire.',
+        tags: ['defense', 'vs 3-bet', '4-bet', 'fold'],
+      },
+      {
+        videoId: 'i1h3XQcdfV4',
+        title: 'Arrêtez de jouer les pots 3bet comme un fish !',
+        url: 'https://www.youtube.com/watch?v=i1h3XQcdfV4',
+        duration: '39:14',
+        theme: 'threebet',
+        summary: 'Éviter de s’envoyer en l’air avec des mains dominées et maîtriser le SPR en pot 3-bet.',
+        tags: ['pot 3-bet', 'spr', 'erreurs', 'postflop'],
+      },
+      {
+        videoId: '4vLMM9d3QvY',
+        title: 'COACHING POKER: Progresser en pot 3bet !',
+        url: 'https://www.youtube.com/watch?v=4vLMM9d3QvY',
+        duration: '29:15',
+        theme: 'threebet',
+        summary: 'Revue de mains commentée pour corriger les leaks récurrents dans les pots sur-relancés.',
+        tags: ['coaching', 'pot 3-bet', 'review'],
+      },
+      {
+        videoId: 'H2xcnEaGv6I',
+        title: 'THÉORIE POKER - Le 3bet en Small Blind',
+        url: 'https://www.youtube.com/watch?v=H2xcnEaGv6I',
+        duration: '1:36:24',
+        theme: 'threebet',
+        summary: 'Stratégie de 3-bet ou fold en SB, sizings OOP (+1 à 2bb) et gestion du squeeze.',
+        tags: ['small blind', '3-bet', 'oop', 'squeeze'],
+      },
+      {
+        videoId: 'CKdJx--jRuU',
+        title: 'Le 3bet pour value',
+        url: 'https://www.youtube.com/watch?v=CKdJx--jRuU',
+        duration: '31:51',
+        theme: 'threebet',
+        summary: 'Identifier les meilleurs spots de 3-bet en value contre les joueurs récréatifs et réguliers.',
+        tags: ['3-bet', 'value', 'exploit'],
+      },
+
+      // --- C-BET, POSTFLOP & COTES ---
+      {
+        videoId: 'Aiwi4Np_LOY',
+        title: 'LE CONTINUATION BET au Poker : Tout ce qu\'il faut savoir sur le CBET',
+        url: 'https://www.youtube.com/watch?v=Aiwi4Np_LOY',
+        duration: '9:30',
+        theme: 'cbet',
+        summary: 'Synthèse claire sur la fréquence de C-Bet, textures dry vs drawy et pots multiway.',
+        tags: ['c-bet', 'texture', 'dry', 'drawy', 'multiway'],
+      },
+      {
+        videoId: 'X3Z-JuxwUJo',
+        title: 'Work your basics - Le Cbet au poker #1',
+        url: 'https://www.youtube.com/watch?v=X3Z-JuxwUJo',
+        duration: '47:07',
+        theme: 'cbet',
+        summary: 'Analyse détaillée du C-Bet au flop : avantage de range, sizings et sélection des bluffs.',
+        tags: ['c-bet', 'flop', 'sizing', 'range advantage'],
+      },
+      {
+        videoId: 'R-E20DsclJ0',
+        title: 'Work Your Basics - Le 2nd Barrel au Poker #6',
+        url: 'https://www.youtube.com/watch?v=R-E20DsclJ0',
+        duration: '1:01:30',
+        theme: 'cbet',
+        summary: 'Quand poursuivre l’agression à la Turn (scare cards, équité, fold equity) ou ralentir.',
+        tags: ['2nd barrel', 'turn', 'semi-bluff', 'scare card'],
+      },
+      {
+        videoId: 'CKQ5nPTmhJY',
+        title: 'Les 3 raisons de miser au poker',
+        url: 'https://www.youtube.com/watch?v=CKQ5nPTmhJY',
+        duration: '19:43',
+        theme: 'cbet',
+        summary: 'Miser en value, en bluff ou pour collecter la dead money / protéger son équité.',
+        tags: ['value', 'bluff', 'dead money', 'postflop'],
+      },
+      {
+        videoId: 'NX6VPRsaToE',
+        title: 'Quand faut-il CHECK le FLOP au POKER ?',
+        url: 'https://www.youtube.com/watch?v=NX6VPRsaToE',
+        duration: '19:18',
+        theme: 'cbet',
+        summary: 'Maîtriser le pot control avec ses mains à showdown value et éviter le C-Bet automatique.',
+        tags: ['check', 'pot control', 'showdown value', 'flop'],
+      },
+      {
+        videoId: '2NkmKs80idk',
+        title: 'LES BASES DU POKER #2 : LES COTES',
+        url: 'https://www.youtube.com/watch?v=2NkmKs80idk',
+        duration: '42:46',
+        theme: 'cbet',
+        summary: 'Calculer les outs, les cotes du pot, les cotes implicites et la rentabilité d’un call ou bluff.',
+        tags: ['cotes', 'outs', 'equite', 'ev', 'math'],
+      },
+
+      // --- PROFILING HUD & TRACKERS ---
+      {
+        videoId: 'yVOZ6MEn63I',
+        title: '[TUTO] UTILISER UN TRACKER AU POKER',
+        url: 'https://www.youtube.com/watch?v=yVOZ6MEn63I',
+        duration: '33:12',
+        theme: 'hud',
+        summary: 'Configurer son HUD et comprendre les statistiques clés : VPIP, PFR, 3-Bet, AF et C-Bet.',
+        tags: ['tracker', 'hud', 'vpip', 'pfr', 'af'],
+      },
+      {
+        videoId: 'Wt01pB7TDtI',
+        title: '5 conseils pour utiliser au mieux votre tracker poker !',
+        url: 'https://www.youtube.com/watch?v=Wt01pB7TDtI',
+        duration: '14:42',
+        theme: 'hud',
+        summary: 'Fiabilité des échantillons (hands), ne pas sur-interpréter le HUD et exploiter les stats postflop.',
+        tags: ['tracker', 'sample', 'hud', 'conseils'],
+      },
+      {
+        videoId: 'MHIqPUJQ91o',
+        title: 'Comment améliorer son profiling au Poker ?',
+        url: 'https://www.youtube.com/watch?v=MHIqPUJQ91o',
+        duration: '1:00:20',
+        theme: 'hud',
+        summary: 'Adapter précisément ses sizings et lignes d’attaque selon les profils adverses en micro-limites.',
+        tags: ['profiling', 'adaptation', 'exploit', 'hud'],
+      },
+      {
+        videoId: 'Y8aW4xUbAVY',
+        title: 'Les différents types de joueurs de poker (TAG, LAG, NIT, FISH...)',
+        url: 'https://www.youtube.com/watch?v=Y8aW4xUbAVY',
+        duration: '12:45',
+        theme: 'hud',
+        summary: 'Identifier rapidement TAG, LAG, Nit, Calling Station et Maniac pour appliquer le bon plan de jeu.',
+        tags: ['tag', 'lag', 'nit', 'fish', 'calling station'],
+      },
+      {
+        videoId: 'PdSEVTwAlqo',
+        title: 'La prise de notes au poker',
+        url: 'https://www.youtube.com/watch?v=PdSEVTwAlqo',
+        duration: '25:14',
+        theme: 'hud',
+        summary: 'Pastillage couleur et prise de notes efficaces sur les showdowns pour exploiter les déviations.',
+        tags: ['notes', 'pastillage', 'showdown', 'profiling'],
+      },
+      {
+        videoId: 'Y68SCLgKntw',
+        title: 'LES BASES DU POKER #3 : POSITION, PROFILING, ÉQUITÉ',
+        url: 'https://www.youtube.com/watch?v=Y68SCLgKntw',
+        duration: '1:05:36',
+        theme: 'hud',
+        summary: 'Croiser sélection de table (être à gauche du récréatif), position, profiling et équité.',
+        tags: ['table selection', 'position', 'profiling', 'equite'],
+      },
+
+      // --- MENTAL & BANKROLL ---
+      {
+        videoId: 'nCb6HiyMpCo',
+        title: 'Les Bases du cash Game #1 - Objectifs, sessions, Bankroll et Variance',
+        url: 'https://www.youtube.com/watch?v=nCb6HiyMpCo',
+        duration: '38:22',
+        theme: 'mental',
+        summary: 'Fixer des objectifs de processus, gérer sa bankroll et accepter la variance dès le départ.',
+        tags: ['objectifs', 'sessions', 'bankroll', 'variance'],
+      },
+      {
+        videoId: 'kkJanFyO5gM',
+        title: '[Théorie Poker] Variance, winrate, breakeven & downswing',
+        url: 'https://www.youtube.com/watch?v=kkJanFyO5gM',
+        duration: '25:39',
+        theme: 'mental',
+        summary: 'Pourquoi le winrate ne se juge qu’au long terme (300k+ mains) et comment traverser les downswings.',
+        tags: ['variance', 'winrate', 'breakeven', 'downswing'],
+      },
+      {
+        videoId: 'MIXRsjfXkQE',
+        title: 'LES BASES DU POKER #5 - Le Bankroll Management (théorie avancée)',
+        url: 'https://www.youtube.com/watch?v=MIXRsjfXkQE',
+        duration: '51:22',
+        theme: 'mental',
+        summary: 'Règle des 50+ caves, critères pour monter de limite (NL2 → NL5) et savoir redescendre à temps.',
+        tags: ['bankroll', 'caves', 'move up', 'move down'],
+      },
+      {
+        videoId: 'qx3Q2SpP0cg',
+        title: '5 solutions pour gérer le TILT en pleine session - MENTAL AU POKER #9',
+        url: 'https://www.youtube.com/watch?v=qx3Q2SpP0cg',
+        duration: '50:10',
+        theme: 'mental',
+        summary: 'Stop-loss, respiration, détection du C-Game et techniques concrètes pour stopper le tilt à chaud.',
+        tags: ['tilt', 'stop-loss', 'session', 'c-game'],
+      },
+      {
+        videoId: '3R83YGyRMNY',
+        title: 'Mauvais résultats au Poker: BAD RUN ou BAD PLAY?',
+        url: 'https://www.youtube.com/watch?v=3R83YGyRMNY',
+        duration: '31:17',
+        theme: 'mental',
+        summary: 'Méthode objective pour distinguer la malchance statistique (bad run) des erreurs techniques.',
+        tags: ['bad run', 'bad play', 'review', 'ev'],
+      },
+      {
+        videoId: 'XUFEoov-FYE',
+        title: 'La vraie raison à l\'origine du tilt - MENTAL AU POKER #6',
+        url: 'https://www.youtube.com/watch?v=XUFEoov-FYE',
+        duration: '22:44',
+        theme: 'mental',
+        summary: 'Comprendre le mécanisme psychologique du tilt (ego, sentiment d’injustice) pour l’anticiper.',
+        tags: ['tilt', 'ego', 'psychologie', 'mental'],
+      },
+    ];
+
     const CONCEPT_QUIZ_BANK = [
       // --- SIZINGS & POSITIONS ---
       {
@@ -2622,9 +3018,11 @@
       },
       {
         level: 2,
-        category: 'CONCEPT_POSTFLOP',
+        category: 'CONCEPT_MENTAL',
         badge: 'Bankroll & Variance',
         chapter: 'Guide p.9-11',
+        videoTheme: 'mental',
+        videoId: 'MIXRsjfXkQE',
         title: 'Quelle est la règle minimale de Bankroll Management recommandée par Kill Tilt pour jouer sereinement en Cash Game ?',
         context: 'Encaisser les inévitables downswings de 20 à 30 caves.',
         hint: 'Pour la NL2 (cave à 2 €), le guide conseille de déposer au minimum 100 €.',
@@ -2639,9 +3037,11 @@
       },
       {
         level: 2,
-        category: 'CONCEPT_POSTFLOP',
+        category: 'CONCEPT_MENTAL',
         badge: 'Volume & Winrate',
         chapter: 'Guide p.6-7',
+        videoTheme: 'mental',
+        videoId: 'kkJanFyO5gM',
         title: 'À partir de combien de mains jouées obtient-on une estimation vraiment fiable et solide de son winrate (bb/100) ?',
         context: 'Comprendre l’impact de la variance sur le court terme.',
         hint: '100 000 mains donnent seulement un premier aperçu ; il faut 3 à 5 fois plus pour lisser la variance.',
@@ -2653,6 +3053,388 @@
         ],
         correctIdx: 2,
         explanation: 'Page 6 : la variance est telle qu’on peut être breakeven (0 € gagné) sur 50 000 mains tout en étant un joueur très gagnant (8,5 bb/100). Il faut 300k à 500k mains pour une mesure fiable.'
+      },
+
+      // --- NOUVELLES QUESTIONS THÉORIQUES ISSUES DES VIDÉOS KILL TILT ---
+      {
+        level: 1,
+        category: 'CONCEPT_SIZING',
+        badge: 'Open Limp Interdit',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'preflop',
+        videoId: 'NgKM6HrJKSs',
+        title: 'Pourquoi ne faut-il jamais entrer dans un pot non ouvert en payant simplement la Big Blind (Open Limp) en NL2 ?',
+        context: 'Fondamental Cash Game : « Raise or Fold » quand personne n’a encore relancé.',
+        hint: 'Comparez vos chances de remporter le pot tout de suite et la qualité de votre position/initiative.',
+        options: [
+          'Parce que le logiciel interdit de payer 1bb en début de parole',
+          'Parce que l’open-limp double le rake prélevé par la room',
+          'Parce qu’on perd l’initiative, on ne peut pas gagner le pot préflop sans voir de flop et on laisse les blindes entrer à bas prix',
+          'Parce qu’il est interdit de relancer au flop après avoir limpé'
+        ],
+        correctIdx: 2,
+        explanation: 'Si la main est assez forte pour être jouée, relancez à 3bb pour prendre l’initiative (fold equity), faire grossir le pot et isoler un adversaire. Sinon, jetez-la.'
+      },
+      {
+        level: 1,
+        category: 'CONCEPT_SIZING',
+        badge: 'Mains Dépareillées',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'preflop',
+        videoId: 'ba8aJzFIWy4',
+        title: 'Pourquoi les connecteurs moyens dépareillés comme J♠ 9♦ ou T♥ 8♣ doivent-ils être foldés en UTG et MP ?',
+        context: 'Sélection de mains préflop en début de parole (6-Max).',
+        hint: 'Évaluez leur potentiel de couleur et le risque face aux relances suivantes.',
+        options: [
+          'Ils ne peuvent pas faire de quinte en 6-Max',
+          'Ils ne paient jamais assez quand ils touchent une quinte',
+          'La règle interdit de les ouvrir hors du Bouton',
+          'Ils font rarement la meilleure paire, touchent peu de tirages couleur et perdent souvent gros contre de meilleurs kickers'
+        ],
+        correctIdx: 3,
+        explanation: 'Les mains moyennes dépareillées (offsuit) manquent de jouabilité postflop et se retrouvent souvent dominées par les broadways adverses quand elles touchent une simple paire.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_SIZING',
+        badge: 'Défense de Big Blind',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'preflop',
+        videoId: 'bjrgiLLHkis',
+        title: 'Pourquoi défend-on beaucoup plus de mains en Big Blind (BB) face à une relance du Bouton que face à une relance d’UTG ?',
+        context: 'Adaptation de la range de défense en BB selon la position de l’ouvreur.',
+        hint: 'Comparez la largeur des ranges d’ouverture UTG (~12,5%) vs Bouton (~45%) et votre investissement déjà posé (1bb).',
+        options: [
+          'Parce qu’on parle en dernier au flop lorsqu’on est en Big Blind',
+          'Parce que le Bouton relance toujours à 5bb en NL2',
+          'Parce que la Small Blind paie aussi à chaque coup',
+          'Parce que la range du Bouton est très large (~45%) et que vous avez déjà investi 1bb, offrant une excellente cote'
+        ],
+        correctIdx: 3,
+        explanation: 'En Big Blind vous clorez l’action préflop avec 1bb déjà investie : face à un Bouton qui ouvre ~45% de ses mains, vos mains assorties et connectées réalisent très bien leur équité.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_SIZING',
+        badge: 'Objectifs du 3-Bet',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'threebet',
+        videoId: 'W_tvs9AVcyY',
+        title: 'Quel est le double objectif principal d’un 3-Bet en value avec QQ+ ou AK en NL2 ?',
+        context: 'Comprendre pourquoi on sur-relance dès le préflop avec nos meilleures mains.',
+        hint: 'Pensez à la taille du pot souhaitée à la river et au nombre de joueurs dans le coup.',
+        options: [
+          'Faire passer tout le monde pour gagner 1,5bb sans voir de flop',
+          'Faire grossir le pot tout de suite avec la meilleure main, prendre l’initiative et isoler l’adversaire en tête-à-tête',
+          'Dissimuler sa main en évitant de relancer deux fois de suite',
+          'Forcer la Big Blind à compléter avec n’importe quelles deux cartes'
+        ],
+        correctIdx: 1,
+        explanation: 'En NL2, on ne piège pas en payant simplement avec AA/KK/QQ/AK : on 3-bet pour construire un gros pot dès le préflop, garder l’initiative postflop et éviter les pots multiway.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_SIZING',
+        badge: 'Jeu en Small Blind',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'threebet',
+        videoId: 'H2xcnEaGv6I',
+        title: 'Pourquoi Kill Tilt recommande-t-il une stratégie orientée « 3-Bet ou Fold » en Small Blind face à une relance du Bouton ou du Cutoff ?',
+        context: 'Désavantage mécanique de la Small Blind après le flop.',
+        hint: 'Réfléchissez à qui parle en premier au flop et au joueur qui reste derrière vous en Big Blind.',
+        options: [
+          'Parce que la Small Blind coûte aussi cher que le Bouton',
+          'Parce qu’il est impossible de toucher une couleur depuis la Small Blind',
+          'Parce qu’on jouera tout le coup hors de position (OOP) et qu’on risque un squeeze ou un call de la Big Blind derrière',
+          'Parce qu’en Small Blind on doit obligatoirement payer 100% des relances'
+        ],
+        correctIdx: 2,
+        explanation: 'En payant simplement en SB, vous jouez hors de position tout le coup et offrez une cote magnifique à la Big Blind pour entrer ou squeezer. Privilégiez donc le 3-bet ou le fold.'
+      },
+      {
+        level: 4,
+        category: 'CONCEPT_SIZING',
+        badge: 'Défense vs 3-Bet',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'threebet',
+        videoId: '8CNioOWy1fQ',
+        title: 'Vous ouvrez A♣ J♦ UTG et un joueur très serré (3-Bet 4%) vous 3-Bet au Bouton. Quelle erreur classique devez-vous éviter en NL2 ?',
+        context: 'Discipline préflop face aux profils serrés qui sur-relancent.',
+        hint: 'Contre un joueur qui ne 3-bet que ~4% des mains (JJ+, AQ+), que vaut votre AJo hors de position ?',
+        options: [
+          'Payer hors de position par ego : face à un 3-Bet serré, AJo est largement dominé et doit être foldé',
+          'Faire tapis immédiatement pour le bluffer',
+          'Payer systématiquement pour essayer de toucher un Valet au flop',
+          'Min-4-bet à 12bb pour obtenir une information'
+        ],
+        correctIdx: 0,
+        explanation: 'Un joueur à 4% de 3-Bet possède presque exclusivement JJ+, AK et AQ. Payer OOP avec AJo revient à jouer de gros pots dominé avec un kicker inférieur.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_HUD',
+        badge: 'Profil Nit',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'hud',
+        videoId: 'Y8aW4xUbAVY',
+        title: 'Un joueur affiche des statistiques HUD de 13 / 10 / 3 sur 400 mains. Comment exploiter au mieux ce profil « Nit » (ultra-serré) ?',
+        context: 'VPIP 13% | PFR 10% | 3-Bet 3% sur un échantillon fiable.',
+        hint: 'Il jette 87% de ses mains préflop, mais quand il mise ou relance fort, sa range est très solide.',
+        options: [
+          'Le payer très large à la river car il bluffe souvent pour compenser',
+          'Faire des 3-bets avec 72o quand il ouvre UTG',
+          'Éviter de voler ses blindes pour ne pas l’énerver',
+          'Voler très souvent ses blindes et ses C-Bets sur petits flops, mais respecter ses grosses relances'
+        ],
+        correctIdx: 3,
+        explanation: 'Un Nit abandonne énormément de pots préflop et au flop quand il rate, ce qui rend le vol de ses blindes très rentable. En revanche, s’il vous relance turn/river, croyez-le et sachez folder.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_HUD',
+        badge: 'Prise de Notes',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'hud',
+        videoId: 'PdSEVTwAlqo',
+        title: 'Après un showdown en NL2, quelle note est la plus utile et exploitable à écrire sur votre adversaire ?',
+        context: 'Optimiser votre pastillage et vos notes sur le tracker.',
+        hint: 'Cherchez une information actionnable qui orientera votre prochaine décision face à lui.',
+        options: [
+          'Le montant exact de son tapis à la fin de la session',
+          'Ses déviations concrètes par street (ex : « call 3bet OOP avec K8o », « donk-bet pot avec tirage »)',
+          'Un simple « joueur chanceux » après un bad beat',
+          'L’heure exacte de la main jouée'
+        ],
+        correctIdx: 1,
+        explanation: 'Les notes utiles décrivent une erreur reproductible (limp/call 3bet avec mains faibles, over-bluff river sur miss draw, slowplay de brelan) afin d’adapter instantanément vos sizings la fois suivante.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_HUD',
+        badge: 'Exploit C-Bet',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'hud',
+        videoId: 'yVOZ6MEn63I',
+        title: 'Un joueur régulier affiche 23 / 19, mais un C-Bet Flop de 82% et un Fold to C-Bet de 68%. Quel exploit immédiat appliquer ?',
+        context: 'Exploiter les statistiques postflop du HUD au-delà du VPIP/PFR.',
+        hint: 'Il mise presque tout au flop (donc souvent avec rien) et abandonne facilement dès qu’on lui résiste.',
+        options: [
+          'Toujours folder au flop si vous n’avez pas au moins Deux Paires',
+          'Ne jamais miser lorsque vous êtes l’agresseur préflop',
+          'Check-raiser en semi-bluff ou payer en position (float) pour attaquer ses C-Bets trop fréquents sur les flops qui ratent sa range',
+          'Limper toutes vos paires servies contre lui'
+        ],
+        correctIdx: 2,
+        explanation: 'Un C-Bet à 82% contient énormément d’air : en défendant en position (float) ou en check-raisant vos bons tirages, vous mettez une pression maximale sur un profil qui fold trop (68%).'
+      },
+      {
+        level: 4,
+        category: 'CONCEPT_HUD',
+        badge: 'Profil LAG / Maniac',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'hud',
+        videoId: 'MHIqPUJQ91o',
+        title: 'Comment adapter votre jeu face à un joueur très agressif (Maniac, 42 / 32 / 14) qui mise et relance sans arrêt ?',
+        context: 'Contrer l’hyper-agressivité en micro-limites sans perdre son calme.',
+        hint: 'Un joueur qui bluffe trop vous offre lui-même les jetons si vous le laissez continuer à miser.',
+        options: [
+          'Le laisser bluffer : évitez de le bluffer à votre tour et payez plus largement (bluff-catch) avec vos Top Paires et bonnes secondes paires',
+          'Essayer de le sur-bluffer sur toutes les rivers avec hauteur As',
+          'Jeter Top Paire Top Kicker dès qu’il mise 1/2 pot au flop',
+          'Partir à tapis préflop avec n’importe quel connecteur assorti'
+        ],
+        correctIdx: 0,
+        explanation: 'Contre un Maniac qui met de l’argent dans le pot avec trop de bluffs, la meilleure réponse est de resserrer vos bluffs et d’élargir votre range de call (bluff-catch) avec vos mains faites moyennes à fortes.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_MATH',
+        badge: 'Rentabilité du Bluff',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: '2NkmKs80idk',
+        title: 'À la river, le pot fait 1,00 € et vous misez 0,66 € (2/3 pot) en pur bluff. À quelle fréquence minimale l’adversaire doit-il passer pour que le bluff soit EV0 ?',
+        context: 'Formule d’auto-profit d’un bluff : Mise / (Pot + Mise).',
+        hint: 'Calculez 0,66 / (1,00 + 0,66) = 0,66 / 1,66.',
+        options: [
+          '25% du temps',
+          '40% du temps (0,66 / 1,66 ≈ 39,8%)',
+          '66% du temps',
+          '50% du temps'
+        ],
+        correctIdx: 1,
+        explanation: 'Formule clé : Risk / (Risk + Reward) = 0,66 / (0,66 + 1,00) ≈ 40%. Plus votre sizing de bluff est cher, plus votre adversaire doit passer souvent pour qu’il soit profitable.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_MATH',
+        badge: 'Cotes Implicites',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: '2NkmKs80idk',
+        title: 'Pourquoi peut-on parfois payer une petite mise avec une petite paire ou un tirage quinte même si les cotes directes du pot sont légèrement insuffisantes ?',
+        context: 'Comprendre la notion de cotes implicites (Implied Odds).',
+        hint: 'Pensez aux jetons supplémentaires restants dans les tapis lorsque vous touchez une main très camouflée.',
+        options: [
+          'Parce que les cotes directes ne servent à rien au Texas Hold’em',
+          'Pour voir si l’adversaire transpire à la turn',
+          'Grâce aux cotes implicites : lorsque vous touchez une main forte camouflée, l’adversaire risque de vous payer encore cher sur les streets suivantes',
+          'Parce qu’on récupère toujours sa mise en fin de session'
+        ],
+        correctIdx: 2,
+        explanation: 'Avec des tapis profonds (100bb+), les jetons que vous gagnerez après avoir touché votre brelan ou votre quinte cachée compensent un léger manque de cote directe.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_MATH',
+        badge: 'Raisons de Miser',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: 'CKQ5nPTmhJY',
+        title: 'Selon la théorie enseignée par Kill Tilt, quelles sont les raisons fondamentales de miser postflop ?',
+        context: 'Éviter de miser « pour voir où on en est » sans plan clair.',
+        hint: 'Chaque mise doit chercher soit à être payée par pire, soit à faire passer mieux (ou protéger/prendre la dead money).',
+        options: [
+          'Miser « pour information » afin de savoir si l’adversaire a un As',
+          'Miser systématiquement quand on est le relanceur préflop, quel que soit le board',
+          'Miser uniquement lorsqu’on a déjà brelan ou mieux',
+          'Miser pour Value (se faire payer par moins bien) ou en Bluff (faire passer mieux), ainsi que pour collecter la dead money / protéger son équité'
+        ],
+        correctIdx: 3,
+        explanation: 'Miser « pour info » est une erreur coûteuse : vous faites coucher ce que vous battez et vous faites payer ou relancer par ce qui vous bat. Ayez toujours une raison claire (value, bluff ou dead money).'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_POSTFLOP',
+        badge: 'C-Bet Multiway',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: 'Aiwi4Np_LOY',
+        title: 'Vous ouvrez A♦ Q♣ au Cutoff et êtes payé par le Bouton ET la Big Blind. Le flop vient J♠ 8♦ 4♣. Devez-vous faire un C-Bet bluff systématique ?',
+        context: 'Adaptation du Continuation Bet en pot multiway (3 joueurs ou plus).',
+        hint: 'Comparé à un heads-up, quelle est la probabilité qu’aucun des deux adversaires n’ait touché J-8-4 ?',
+        options: [
+          'Non, on C-Bet beaucoup moins souvent en bluff en multiway : la probabilité qu’un des deux joueurs ait touché ce flop est bien plus élevée',
+          'Oui, 100% du temps à 3/4 pot pour montrer votre force',
+          'Oui, mais uniquement en faisant tapis au flop',
+          'Non, il est interdit de C-Bet en pot multiway même avec brelan'
+        ],
+        correctIdx: 0,
+        explanation: 'En pot multiway, votre fold equity chute drastiquement car deux ranges ont vu le flop. Gardez vos C-Bets pour vos mains en value et vos très bons tirages.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_POSTFLOP',
+        badge: 'Pot Control (Check)',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: 'NX6VPRsaToE',
+        title: 'Vous relancez au Bouton avec A♠ J♣, la BB paie et le flop affiche K♥ J♦ 4♠. Quelle est la meilleure ligne au flop ?',
+        context: 'Gérer une main à bonne valeur d’abattage (2e Paire Top Kicker).',
+        hint: 'Si vous misez au flop, vous isolez surtout les Rois qui vous battent et faites fuir les petites paires/bluffs.',
+        options: [
+          'Miser pot au flop, turn et river pour chasser les Rois',
+          'Check-fold dès que la BB mise 1/3 pot à la turn',
+          'Check back au flop pour contrôler la taille du pot (Pot Control), laisser l’adversaire bluffer et value plus tard',
+          'Overbet 2x le pot pour protéger votre Valet'
+        ],
+        correctIdx: 2,
+        explanation: 'Avec 2e paire top kicker (AJ sur KJ4), votre main est trop forte pour être bluffée mais trop faible pour jouer 3 streets de value. Check back contrôle le pot et garde ses bluffs.'
+      },
+      {
+        level: 4,
+        category: 'CONCEPT_POSTFLOP',
+        badge: '2nd Barrel Turn',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'cbet',
+        videoId: 'R-E20DsclJ0',
+        title: 'Vous C-Bettez en semi-bluff au flop avec K♠ Q♠ sur 9♠ 6♦ 2♣ et êtes payé. La Turn apporte un A♥. Pourquoi l’As est-il une bonne carte pour envoyer un 2nd barrel ?',
+        context: 'Notion de « scare card » et d’avantage de range à la Turn.',
+        hint: 'Quel joueur (relanceur préflop ou payeur) possède le plus d’As forts dans sa range, et que deviennent les paires 77-TT ou 9x ?',
+        options: [
+          'Parce que l’As annule tous les brelans adverses',
+          'Parce que l’As touche fortement votre range perçue de relanceur et met une énorme pression sur les paires moyennes (77-TT, 9x) adverses',
+          'Parce qu’il faut toujours miser la Turn à 100% après un C-Bet',
+          'Parce que KQs passe devant les brelans sur un As'
+        ],
+        correctIdx: 1,
+        explanation: 'Une overcard haute comme l’As (ou le Roi) avantage le relanceur préflop et dévalorise les paires intermédiaires qui vous ont payé au flop, augmentant fortement votre fold equity.'
+      },
+      {
+        level: 1,
+        category: 'CONCEPT_MENTAL',
+        badge: 'Objectifs Session',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'mental',
+        videoId: 'nCb6HiyMpCo',
+        title: 'Quel est le meilleur objectif à se fixer avant de lancer une session de Cash Game en NL2 ?',
+        context: 'Se détacher des résultats à court terme pour progresser durablement.',
+        hint: 'Vous ne contrôlez pas les cartes ni la variance sur 1 heure, mais vous contrôlez votre concentration et vos décisions.',
+        options: [
+          'Gagner au moins +10 € avant de fermer les tables',
+          'Ne jamais perdre un seul coup à tapis préflop',
+          'Un objectif de processus maîtrisable (ex : jouer 45 min concentré sans limper et couper la session si le tilt apparaît)',
+          'Doubler le nombre de tables même en étant fatigué'
+        ],
+        correctIdx: 2,
+        explanation: 'Viser un gain financier sur une session mène au tilt dès le premier bad beat. Concentrez-vous uniquement sur la qualité de vos décisions et votre discipline.'
+      },
+      {
+        level: 2,
+        category: 'CONCEPT_MENTAL',
+        badge: 'Move Down (BRM)',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'mental',
+        videoId: 'MIXRsjfXkQE',
+        title: 'Vous êtes monté en NL5 avec 250 € (50 caves), mais un downswing fait tomber votre bankroll à 150 €. Que recommande Kill Tilt ?',
+        context: 'Gestion dynamique de la Bankroll et protection psychologique.',
+        hint: 'En NL5, 150 € ne font plus que 30 caves, alors qu’en NL2 cela représente 75 caves.',
+        options: [
+          'Redescendre immédiatement en NL2 (où 150 € représentent 75 caves) pour protéger votre capital et jouer sans pression',
+          'Monter en NL10 pour regagner les 100 € perdus deux fois plus vite',
+          'Rester en NL5 jusqu’à tomber à 20 €',
+          'Jouer un tournoi à 50 € pour se refaire'
+        ],
+        correctIdx: 0,
+        explanation: 'Savoir redescendre de limite (Move Down) est une force : cela supprime la peur de perdre de l’argent (« scared money ») et vous permet de reconstruire sereinement votre bankroll.'
+      },
+      {
+        level: 3,
+        category: 'CONCEPT_MENTAL',
+        badge: 'Stop-Loss & Tilt',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'mental',
+        videoId: 'qx3Q2SpP0cg',
+        title: 'Après deux bad beats d’affilée, vous sentez la frustration monter et avez envie de 3-bet light pour « vous refaire ». Quelle est la meilleure réaction ?',
+        context: 'Prévenir le basculement vers votre C-Game en pleine session.',
+        hint: 'Plus vous jouez énervé, plus votre winrate s’effondre et plus vous perdez de caves inutilement.',
+        options: [
+          'Ouvrir deux tables supplémentaires pour oublier les coups précédents',
+          'Faire tapis préflop avec la prochaine main moyenne pour tester sa chance',
+          'Continuer encore 2 heures coûte que coûte pour finir la session en positif',
+          'Activer « Sit Out Next BB » et fermer les tables : couper une session en C-Game est l’un des plus gros gains au poker'
+        ],
+        correctIdx: 3,
+        explanation: 'Les sessions où vous tiltez détruisent des semaines d’efforts. Fixez un stop-loss (ou un critère émotionnel) et quittez les tables dès que votre A-Game disparaît.'
+      },
+      {
+        level: 4,
+        category: 'CONCEPT_MENTAL',
+        badge: 'Bad Run vs Bad Play',
+        chapter: 'Vidéo Kill Tilt',
+        videoTheme: 'mental',
+        videoId: '3R83YGyRMNY',
+        title: 'Vous perdez 10 caves en 3 jours en NL2. Comment savoir objectivement s’il s’agit d’un Bad Run (variance) ou de Bad Play (erreurs techniques) ?',
+        context: 'Ne pas tout mettre sur le dos de la malchance — ni tout dramatiser.',
+        hint: 'La réponse se trouve hors des tables, à froid, en examinant vos mains une par une.',
+        options: [
+          'Regarder uniquement votre solde de caisse final',
+          'Analyser vos plus gros pots perdus à froid hors des tables (avec votre tracker / l’EV et un regard critique sur chaque street)',
+          'Demander l’avis du chat aux tables',
+          'Changer immédiatement toutes vos ranges du jour au lendemain'
+        ],
+        correctIdx: 1,
+        explanation: 'Un vrai downswing mélange souvent malchance et quelques erreurs provoquées par la frustration. Seule une review à froid permet d’identifier et de corriger les vrais leaks.'
       }
     ];
 
@@ -2720,6 +3502,12 @@
           pool = CONCEPT_QUIZ_BANK.filter(q => q.category === scope);
         }
 
+        if (pool.length > 1 && state.quiz.currentQuestion && state.quiz.currentQuestion.type === 'concept') {
+          const prevTitle = state.quiz.currentQuestion.data.title;
+          const filtered = pool.filter(item => item.title !== prevTitle);
+          if (filtered.length > 0) pool = filtered;
+        }
+
         const q = pool[Math.floor(Math.random() * pool.length)];
 
         state.quiz.currentQuestion = {
@@ -2746,6 +3534,7 @@
             <span class="leading-snug">${optText}</span>
           </button>
         `).join('');
+        updateQuizCoachVideoUI();
         return;
       }
 
@@ -2794,6 +3583,259 @@
         b.disabled = false;
         b.classList.remove('opacity-40', 'cursor-not-allowed');
       });
+      updateQuizCoachVideoUI();
+    }
+
+    const coachVideosState = {
+      filter: 'all',
+      linkedVideoId: null,
+    };
+
+    function getActiveQuizVideoTheme() {
+      const cq = state.quiz.currentQuestion;
+      if (cq && cq.type === 'concept' && cq.data) {
+        const q = cq.data;
+        if (q.videoTheme && COACH_VIDEO_THEMES[q.videoTheme]) {
+          return q.videoTheme;
+        }
+        if (q.category === 'CONCEPT_HUD') return 'hud';
+        if (q.category === 'CONCEPT_MENTAL') return 'mental';
+        if (q.category === 'CONCEPT_SIZING') {
+          const text = `${q.badge || ''} ${q.title || ''}`;
+          return /3-Bet|4-Bet|5-Bet|Squeeze/i.test(text) ? 'threebet' : 'preflop';
+        }
+        if (q.category === 'CONCEPT_POSTFLOP') {
+          const text = `${q.badge || ''} ${q.title || ''}`;
+          return /Bankroll|Variance|Volume|Winrate|Mental|Tilt/i.test(text) ? 'mental' : 'cbet';
+        }
+        if (q.category === 'CONCEPT_MATH') return 'cbet';
+      }
+
+      if (cq && cq.type === 'range') {
+        if (
+          cq.presetKey === '3BET_IP' ||
+          cq.presetKey === 'VS_3BET' ||
+          cq.expectedAction === 'threebet' ||
+          cq.expectedAction === 'fourbet'
+        ) {
+          return 'threebet';
+        }
+        return 'preflop';
+      }
+
+      const scope = document.getElementById('quiz-scope')?.value || 'GUIDED';
+      if (scope === 'CONCEPT_HUD') return 'hud';
+      if (scope === 'CONCEPT_MENTAL') return 'mental';
+      if (scope === 'CONCEPT_POSTFLOP' || scope === 'CONCEPT_MATH') return 'cbet';
+      if (scope === 'DEFENSE_ONLY') return 'threebet';
+      return 'preflop';
+    }
+
+    function updateQuizCoachVideoUI() {
+      const themeId = getActiveQuizVideoTheme();
+      const themeInfo = COACH_VIDEO_THEMES[themeId] || COACH_VIDEO_THEMES.preflop;
+      const pillEl = document.getElementById('quiz-videos-theme-pill');
+      if (pillEl) {
+        pillEl.textContent = `• ${themeInfo.shortLabel}`;
+      }
+
+      const feedbackBtn = document.getElementById('quiz-feedback-video-btn');
+      if (feedbackBtn) {
+        const linkedId = state.quiz.currentQuestion?.data?.videoId;
+        const hasLinkedVideo = Boolean(linkedId && COACH_VIDEOS.some(v => v.videoId === linkedId));
+        feedbackBtn.textContent = hasLinkedVideo
+          ? `📺 Revoir la vidéo liée (${themeInfo.shortLabel})`
+          : `📺 Vidéos : ${themeInfo.label}`;
+      }
+    }
+
+    function normalizeSearchText(str) {
+      return String(str ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    }
+
+    function openCoachVideosModal(forcedTheme) {
+      const modal = document.getElementById('coach-videos-modal');
+      if (!modal) return;
+
+      const activeTheme = getActiveQuizVideoTheme();
+      const chosenTheme = forcedTheme && (forcedTheme === 'all' || COACH_VIDEO_THEMES[forcedTheme])
+        ? forcedTheme
+        : activeTheme;
+
+      const linkedId = state.quiz.currentQuestion?.type === 'concept'
+        ? (state.quiz.currentQuestion.data?.videoId || null)
+        : null;
+
+      coachVideosState.filter = chosenTheme;
+      coachVideosState.linkedVideoId = linkedId && COACH_VIDEOS.some(v => v.videoId === linkedId) ? linkedId : null;
+
+      const searchEl = document.getElementById('coach-videos-search');
+      if (searchEl) searchEl.value = '';
+
+      const themeInfo = COACH_VIDEO_THEMES[activeTheme] || COACH_VIDEO_THEMES.preflop;
+      const subtitleEl = document.getElementById('coach-videos-context-subtitle');
+      if (subtitleEl) {
+        subtitleEl.textContent = `Thème actuel du Quiz : ${themeInfo.icon} ${themeInfo.label} • ${COACH_VIDEOS.length} vidéos Cash Game / NL2 vérifiées`;
+      }
+
+      closeCoachVideoPlayer();
+      renderCoachVideosFilters();
+      renderCoachVideosList();
+
+      modal.classList.remove('hidden');
+    }
+
+    function openCoachVideosForCurrentQuestion() {
+      const activeTheme = getActiveQuizVideoTheme();
+      const linkedId = state.quiz.currentQuestion?.type === 'concept'
+        ? (state.quiz.currentQuestion.data?.videoId || null)
+        : null;
+      openCoachVideosModal(activeTheme);
+      if (linkedId && COACH_VIDEOS.some(v => v.videoId === linkedId)) {
+        playCoachVideo(linkedId);
+      }
+    }
+
+    function closeCoachVideosModal() {
+      closeCoachVideoPlayer();
+      const modal = document.getElementById('coach-videos-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setCoachVideosFilter(themeId) {
+      coachVideosState.filter = themeId === 'all' || COACH_VIDEO_THEMES[themeId] ? themeId : 'all';
+      renderCoachVideosFilters();
+      renderCoachVideosList();
+    }
+
+    function renderCoachVideosFilters() {
+      const container = document.getElementById('coach-videos-filters');
+      if (!container) return;
+
+      const allActive = coachVideosState.filter === 'all';
+      const allBtnClass = allActive
+        ? 'px-2.5 py-1.5 rounded-xl text-xs font-bold border transition bg-white text-slate-950 border-white shadow'
+        : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600';
+
+      const parts = [
+        `<button type="button" onclick="setCoachVideosFilter('all')" class="${allBtnClass}">Toutes (${COACH_VIDEOS.length})</button>`,
+      ];
+
+      Object.values(COACH_VIDEO_THEMES).forEach(th => {
+        const count = COACH_VIDEOS.filter(v => v.theme === th.id).length;
+        const isActive = coachVideosState.filter === th.id;
+        const cls = isActive
+          ? `px-2.5 py-1.5 rounded-xl text-xs font-bold border transition ${th.activeBtnClass}`
+          : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border transition bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600';
+        parts.push(
+          `<button type="button" onclick="setCoachVideosFilter('${th.id}')" class="${cls}">${th.icon} ${escapeHtml(th.shortLabel)} (${count})</button>`
+        );
+      });
+
+      container.innerHTML = parts.join('');
+    }
+
+    function renderCoachVideosList() {
+      const grid = document.getElementById('coach-videos-grid');
+      if (!grid) return;
+
+      const query = normalizeSearchText(document.getElementById('coach-videos-search')?.value || '').trim();
+      const selectedFilter = coachVideosState.filter;
+      const linkedId = coachVideosState.linkedVideoId;
+
+      const filtered = COACH_VIDEOS.filter(v => {
+        if (selectedFilter !== 'all' && v.theme !== selectedFilter) return false;
+        if (!query) return true;
+        const themeLabel = COACH_VIDEO_THEMES[v.theme]?.label || '';
+        const haystack = normalizeSearchText(`${v.title} ${v.summary} ${(v.tags || []).join(' ')} ${themeLabel}`);
+        return haystack.includes(query);
+      });
+
+      if (linkedId) {
+        filtered.sort((a, b) => (a.videoId === linkedId ? -1 : b.videoId === linkedId ? 1 : 0));
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-8 px-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs sm:text-sm text-slate-400">
+            Aucune vidéo ne correspond à cette recherche dans le thème sélectionné.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(v => {
+        const th = COACH_VIDEO_THEMES[v.theme] || COACH_VIDEO_THEMES.preflop;
+        const isLinked = linkedId && v.videoId === linkedId;
+        const cardBorder = isLinked
+          ? 'border-amber-400/70 bg-amber-950/20 ring-1 ring-amber-400/30'
+          : 'border-slate-800 bg-slate-950/80 hover:border-slate-700';
+
+        return `
+          <article class="rounded-2xl border ${cardBorder} overflow-hidden flex flex-col transition">
+            <div class="relative aspect-video bg-slate-950 overflow-hidden group">
+              <img src="https://i.ytimg.com/vi/${escapeHtml(v.videoId)}/hqdefault.jpg" alt="${escapeHtml(v.title)}" loading="lazy" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-[1.02] transition duration-200" />
+              <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/85 text-white font-mono text-[11px] font-bold">
+                ${escapeHtml(v.duration)}
+              </span>
+              ${isLinked ? '<span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[10px] font-extrabold shadow">⭐ Vidéo liée à cette question</span>' : ''}
+            </div>
+            <div class="p-3.5 flex-1 flex flex-col justify-between gap-3">
+              <div class="space-y-1.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${th.badgeClass}">
+                  ${th.icon} ${escapeHtml(th.shortLabel)}
+                </span>
+                <h3 class="text-xs sm:text-sm font-extrabold text-white leading-snug line-clamp-2">
+                  ${escapeHtml(v.title)}
+                </h3>
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                  ${escapeHtml(v.summary)}
+                </p>
+              </div>
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="playCoachVideo('${escapeHtml(v.videoId)}')" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">
+                  ▶ Lire ici
+                </button>
+                <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition">
+                  ↗ YouTube
+                </a>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function playCoachVideo(videoId) {
+      const video = COACH_VIDEOS.find(v => v.videoId === videoId);
+      if (!video) return;
+
+      const playerEl = document.getElementById('coach-videos-player');
+      const iframeEl = document.getElementById('coach-videos-iframe');
+      const titleEl = document.getElementById('coach-videos-player-title');
+      const metaEl = document.getElementById('coach-videos-player-meta');
+      const extEl = document.getElementById('coach-videos-player-ext');
+      const scrollBody = document.getElementById('coach-videos-scroll-body');
+      const th = COACH_VIDEO_THEMES[video.theme] || COACH_VIDEO_THEMES.preflop;
+
+      if (titleEl) titleEl.textContent = video.title;
+      if (metaEl) metaEl.textContent = `${th.icon} ${th.label} • Durée : ${video.duration}`;
+      if (extEl) extEl.href = video.url;
+      if (iframeEl) {
+        iframeEl.src = `https://www.youtube.com/embed/${encodeURIComponent(video.videoId)}?autoplay=1&rel=0`;
+      }
+      if (playerEl) playerEl.classList.remove('hidden');
+      if (scrollBody) scrollBody.scrollTop = 0;
+    }
+
+    function closeCoachVideoPlayer() {
+      const playerEl = document.getElementById('coach-videos-player');
+      const iframeEl = document.getElementById('coach-videos-iframe');
+      if (iframeEl) iframeEl.src = '';
+      if (playerEl) playerEl.classList.add('hidden');
     }
 
     function awardQuizXp(isCorrect) {
@@ -4356,6 +5398,7 @@
 
       state.quiz.xp = loadQuizXp();
       updateQuizLevelUI();
+      updateQuizCoachVideoUI();
 
       evaluateHudProfile();
       updateOutsCalculator(9);
@@ -4367,6 +5410,15 @@
 
     // Couch-friendly keyboard shortcuts when Quiz is active
     window.addEventListener('keydown', (e) => {
+      const videosModal = document.getElementById('coach-videos-modal');
+      if (videosModal && !videosModal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeCoachVideosModal();
+        }
+        return;
+      }
+
       if (state.mode !== 'quiz' || document.getElementById('suite-tab-ranges').classList.contains('hidden')) return;
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
 
