@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Cpu,
   Dices,
   History,
   Lightbulb,
@@ -33,6 +34,7 @@ import {
   SavedHandReview,
 } from '../types/coach';
 import { HiddenPokerCard, PokerCardVisual } from './PokerCardVisual';
+import { generateOfflineScenario, reviewHandOffline } from '../engines/offlineCoach';
 
 const REVIEWS_STORAGE_KEY = 'killtilt_coach_reviews_v1';
 
@@ -118,6 +120,7 @@ export const CoachIAPoker: React.FC = () => {
   const [authReady, setAuthReady] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [offlineMode, setOfflineMode] = useState(false);
 
   // Synced XP Progress from Quiz tab
   const [progress, setProgress] = useState<QuizProgressInfo>(DEFAULT_PROGRESS);
@@ -144,7 +147,12 @@ export const CoachIAPoker: React.FC = () => {
   const [savedReviews, setSavedReviews] = useState<SavedHandReview[]>([]);
 
   useEffect(() => {
+    const fallbackTimer = window.setTimeout(() => {
+      setAuthReady(true);
+    }, 1500);
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      window.clearTimeout(fallbackTimer);
       setCurrentUser(user);
       setAuthReady(true);
       setAuthError(null);
@@ -158,7 +166,10 @@ export const CoachIAPoker: React.FC = () => {
         });
       }
     });
-    return () => unsubscribe();
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
   }, []);
 
   const handleGoogleSignIn = async () => {
@@ -254,11 +265,6 @@ export const CoachIAPoker: React.FC = () => {
   };
 
   const generateScenario = useCallback(async () => {
-    if (!auth.currentUser) {
-      setScenarioError('Veuillez vous connecter avec votre compte Google pour générer une main.');
-      return;
-    }
-
     setScenarioLoading(true);
     setScenarioError(null);
     setSelectedOption(null);
@@ -269,6 +275,19 @@ export const CoachIAPoker: React.FC = () => {
       typeof window.getKillTiltQuizProgress === 'function'
         ? window.getKillTiltQuizProgress()
         : progress;
+
+    if (offlineMode || !auth.currentUser) {
+      const localScenario = generateOfflineScenario({
+        streetFocus,
+        limit: scenarioLimit,
+        level: latestProgress.level,
+        recentTopics,
+      });
+      setScenario(localScenario);
+      setRecentTopics((prev) => [localScenario.keyConcept || localScenario.title, ...prev].slice(0, 6));
+      setScenarioLoading(false);
+      return;
+    }
 
     try {
       const idToken = await auth.currentUser.getIdToken();
@@ -299,11 +318,19 @@ export const CoachIAPoker: React.FC = () => {
       setRecentTopics((prev) => [generated.keyConcept || generated.title, ...prev].slice(0, 6));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur réseau avec le Coach IA.';
-      setScenarioError(msg);
+      const localScenario = generateOfflineScenario({
+        streetFocus,
+        limit: scenarioLimit,
+        level: latestProgress.level,
+        recentTopics,
+      });
+      setScenario(localScenario);
+      setOfflineMode(true);
+      setScenarioError(`API indisponible (${msg}) — Bascule automatique sur le moteur local V2.`);
     } finally {
       setScenarioLoading(false);
     }
-  }, [progress, recentTopics, scenarioLimit, streetFocus]);
+  }, [offlineMode, progress, recentTopics, scenarioLimit, streetFocus]);
 
   const handleSelectOption = useCallback(
     (idx: number) => {
@@ -371,10 +398,6 @@ export const CoachIAPoker: React.FC = () => {
 
   const handleAnalyzeHand = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!auth.currentUser) {
-      setReviewError('Veuillez vous connecter avec votre compte Google pour analyser une main.');
-      return;
-    }
     if (!handInput.trim()) {
       setReviewError('Collez un historique Winamax/PokerStars ou décrivez votre main avant de lancer l’analyse.');
       return;
@@ -382,6 +405,34 @@ export const CoachIAPoker: React.FC = () => {
 
     setReviewLoading(true);
     setReviewError(null);
+
+    const saveAndDisplayReview = (review: HandReview, toastMsg: string) => {
+      setCurrentReview(review);
+      const savedEntry: SavedHandReview = {
+        id: Date.now(),
+        createdAt: new Date().toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        limit: reviewLimit,
+        format: reviewFormat,
+        rawInput: handInput.trim(),
+        review,
+      };
+      persistReviews([savedEntry, ...savedReviews]);
+      if (typeof window.showKillTiltToast === 'function') {
+        window.showKillTiltToast(toastMsg, 'success');
+      }
+    };
+
+    if (offlineMode || !auth.currentUser) {
+      const localReview = reviewHandOffline(handInput, reviewLimit, reviewFormat);
+      saveAndDisplayReview(localReview, `Analyse locale terminée — Note : ${localReview.score}/10`);
+      setReviewLoading(false);
+      return;
+    }
 
     try {
       const idToken = await auth.currentUser.getIdToken();
@@ -403,29 +454,13 @@ export const CoachIAPoker: React.FC = () => {
       }
 
       const review = payload.review as HandReview;
-      setCurrentReview(review);
-
-      const savedEntry: SavedHandReview = {
-        id: Date.now(),
-        createdAt: new Date().toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        limit: reviewLimit,
-        format: reviewFormat,
-        rawInput: handInput.trim(),
-        review,
-      };
-      persistReviews([savedEntry, ...savedReviews]);
-
-      if (typeof window.showKillTiltToast === 'function') {
-        window.showKillTiltToast(`Analyse terminée — Note : ${review.score}/10`, 'success');
-      }
+      saveAndDisplayReview(review, `Analyse terminée — Note : ${review.score}/10`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur réseau lors de l’analyse.';
-      setReviewError(msg);
+      const localReview = reviewHandOffline(handInput, reviewLimit, reviewFormat);
+      saveAndDisplayReview(localReview, 'Bascule sur le moteur local hors-ligne');
+      setOfflineMode(true);
+      setReviewError(`API indisponible (${msg}) — Analyse locale affichée ci-dessous.`);
     } finally {
       setReviewLoading(false);
     }
@@ -464,7 +499,7 @@ export const CoachIAPoker: React.FC = () => {
     );
   }
 
-  if (!currentUser) {
+  if (!currentUser && !offlineMode) {
     return (
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xl max-w-2xl mx-auto text-center space-y-6">
         <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/50">
@@ -474,13 +509,13 @@ export const CoachIAPoker: React.FC = () => {
         <div className="space-y-2 max-w-lg mx-auto">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-bold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            Accès Réservé aux Membres Authentifiés
+            Accès Membres Gemini ou Mode Hors-Ligne Local
           </div>
           <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
-            Connectez-vous pour accéder au Coach IA Poker
+            Connectez-vous ou utilisez le Moteur Local V2
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            L’onglet <strong className="text-white">🤖 Coach IA Poker</strong> (générateur de mains interactives Gemini & analyseur d’historiques Winamax/PokerStars) est protégé par authentification Google afin de sécuriser l’accès à l’API.
+            L’API Gemini en ligne est protégée par connexion Google. Sans réseau ni clé API, vous pouvez activer immédiatement le <strong className="text-amber-300">Moteur Local Déterministe V2</strong>.
           </p>
         </div>
 
@@ -506,12 +541,20 @@ export const CoachIAPoker: React.FC = () => {
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                Se connecter avec Google
+                Se connecter avec Google (Gemini)
               </>
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => setOfflineMode(true)}
+            className="px-5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-xs sm:text-sm font-extrabold text-amber-200 transition inline-flex items-center gap-2"
+          >
+            <Cpu className="w-4 h-4" />
+            ⚡ Utiliser le Mode Hors-Ligne (Moteur Local V2)
+          </button>
           <p className="text-[11px] text-slate-500">
-            Les autres modules (Ranges, Jeux, HUD, Tableur Bankroll et Solver GTO) restent librement accessibles sans connexion.
+            Les autres modules (Ranges, ICM Lab, Jeux, HUD, Tableur Bankroll et Solver GTO) fonctionnent toujours 100 % hors-ligne.
           </p>
         </div>
       </div>
@@ -526,33 +569,57 @@ export const CoachIAPoker: React.FC = () => {
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
-                Coach IA Poker — Pédagogie Kill Tilt NL2 / NL5
+                Coach IA Poker — Pédagogie Kill Tilt V2
               </h2>
-              <span className="text-xs font-mono text-emerald-400">
-                · Gemini 4 Flash
-              </span>
+              {offlineMode || !currentUser ? (
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold">
+                  ⚡ Mode Hors-Ligne (Moteur Local)
+                </span>
+              ) : (
+                <span className="text-xs font-mono text-emerald-400">
+                  · Gemini En Ligne
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400">
-              Entraînez-vous sur des spots inédits adaptés à votre niveau XP ou faites analyser vos mains Winamax / PokerStars rue par rue.
+              Entraînez-vous sur des spots multi-formats adaptés à votre niveau XP ou faites analyser vos mains Winamax / PokerStars rue par rue.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto shrink-0">
-            {/* Authenticated User Badge & Sign Out */}
-            <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-xs font-semibold text-slate-200 max-w-[160px] truncate">
-                {currentUser.displayName || currentUser.email}
-              </span>
+            {/* Offline Toggle / User Badge & Sign Out */}
+            {currentUser ? (
+              <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5">
+                <div className={`w-2 h-2 rounded-full ${offlineMode ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                <span className="text-xs font-semibold text-slate-200 max-w-[160px] truncate">
+                  {currentUser.displayName || currentUser.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOfflineMode((v) => !v)}
+                  className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-amber-300 transition"
+                >
+                  {offlineMode ? 'En ligne' : 'Hors-ligne'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  title="Se déconnecter du Coach IA"
+                  className="p-1 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-slate-800 transition"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={handleSignOut}
-                title="Se déconnecter du Coach IA"
-                className="p-1 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-slate-800 transition"
+                onClick={() => setOfflineMode(false)}
+                className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-emerald-300 transition inline-flex items-center gap-1.5"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5" />
+                Connexion Google
               </button>
-            </div>
+            )}
 
             {/* Sub-mode Segmented Control */}
             <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">

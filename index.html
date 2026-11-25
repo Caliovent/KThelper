@@ -44,6 +44,9 @@
         <button id="tab-btn-ranges" onclick="switchSuiteTab('ranges')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow whitespace-nowrap shrink-0">
           📊 Ranges & Quiz
         </button>
+        <button id="tab-btn-icm" onclick="switchSuiteTab('icm')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
+          🏆 ICM & PKO Lab
+        </button>
         <button id="tab-btn-hud" onclick="switchSuiteTab('hud')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
           🎯 HUD, Outs & Cotes
         </button>
@@ -58,6 +61,9 @@
         </button>
         <button id="nav-btn-videos" type="button" onclick="openCoachVideosModal('all')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-rose-300 hover:text-white hover:bg-rose-600/20 border border-rose-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5" title="Ouvrir le parcours séquentiel des 30 vidéos Kill Tilt">
           📺 Vidéos <span id="nav-videos-progress" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-mono text-[10px]">0/30</span>
+        </button>
+        <button id="nav-btn-v2-backup" type="button" onclick="openV2BackupModal()" class="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-sky-300 hover:text-white hover:bg-sky-600/20 border border-sky-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1" title="Exporter / Importer l'état unifié ProPokerSuiteState V2 (.json)">
+          💾 JSON V2
         </button>
       </nav>
     </div>
@@ -91,6 +97,27 @@
           </button>
           <button id="btn-mode-games" onclick="setAppMode('games')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
             🎮 Jeux Ranges <span id="games-mastery-badge" class="hidden px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">0%</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- V2 Multi-Format Catalogue, Blocker Layer & Simplified GTO Bar -->
+      <div id="v2-range-bar" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <label for="v2-range-catalog" class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Catalogue V2 :</label>
+          <select id="v2-range-catalog" onchange="selectV2Range(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+            <option value="">📘 Tables V1 Kill Tilt NL2 (Presets ci-dessous)</option>
+          </select>
+          <span id="v2-provenance-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            V1 Curated NL2
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="v2-simplified-gto-btn" type="button" onclick="toggleSimplifiedGto25()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:text-white transition">
+            ✨ GTO Simplifié 25%
+          </button>
+          <button id="v2-blocker-layer-btn" type="button" onclick="toggleBlockerLayer()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:text-white transition">
+            🛡️ Calque Bloqueurs
           </button>
         </div>
       </div>
@@ -269,6 +296,24 @@
               <p id="inspect-advice" class="text-xs text-slate-300 leading-relaxed">
                 Survolez ou cliquez sur une main de la matrice pour afficher l'analyse détaillée.
               </p>
+            </div>
+
+            <!-- V2 Blocker Layer Box -->
+            <div id="v2-blocker-box" class="hidden bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-3 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">🛡️ Calque Bloqueurs (Retrait de cartes)</span>
+                <span id="v2-blocker-hand-label" class="font-mono text-[11px] font-bold text-white">AKs</span>
+              </div>
+              <div id="v2-blocker-grid" class="grid grid-cols-5 gap-1 text-center font-mono text-[10px]"></div>
+            </div>
+
+            <!-- V2 25-Line Chunking Box -->
+            <div id="v2-chunking-box" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">🧩 Chunking 25 Lignes &amp; Seuils</span>
+                <span id="v2-chunking-count" class="font-mono text-[10px] text-slate-400">0 lignes actives</span>
+              </div>
+              <div id="v2-chunking-list" class="max-h-36 overflow-y-auto space-y-1 text-[11px] font-mono text-slate-300 pr-1"></div>
             </div>
           </div>
 
@@ -473,6 +518,9 @@
               <span id="games-global-mastery-text" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                 Maîtrise : 0%
               </span>
+              <span id="games-v2-mastery-score" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30" title="Score composite V2 : précision + FSRS + vitesse + transfert">
+                Score V2 : 0/100
+              </span>
             </div>
             <p class="text-xs text-slate-400">
               Inspiré de Pe4nuts (Erreur #1 du Top 1%) : « Travaillez vos ranges comme un musicien travaille ses gammes » — selon la position, la profondeur (<span class="text-slate-200 font-semibold">40bb / 100bb / 200bb</span>) et la dynamique de table.
@@ -485,8 +533,11 @@
           </div>
         </div>
 
-        <!-- 4-Game Selector Bar -->
+        <!-- Multi-Game Selector Bar (V1 + V2 Warm-up & 5 Serious Games) -->
         <div class="flex flex-wrap items-center gap-1.5 bg-slate-950/90 border border-slate-800 rounded-2xl p-1.5">
+          <button id="rg-tab-warmup" type="button" onclick="setRangeGameTab('warmup')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-amber-300 hover:text-white inline-flex items-center gap-1.5">
+            🔥 Warm-up 5 min
+          </button>
           <button id="rg-tab-recall" type="button" onclick="setRangeGameTab('recall')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow">
             🎨 Peins la Range
           </button>
@@ -495,6 +546,21 @@
           </button>
           <button id="rg-tab-depth" type="button" onclick="setRangeGameTab('depth')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
             📏 Défi Profondeur (40/100/200bb)
+          </button>
+          <button id="rg-tab-texture" type="button" onclick="setRangeGameTab('texture')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            🌊 Texture Sprint
+          </button>
+          <button id="rg-tab-icmgame" type="button" onclick="setRangeGameTab('icmgame')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            💣 Pression ICM &amp; PKO
+          </button>
+          <button id="rg-tab-rafale" type="button" onclick="setRangeGameTab('rafale')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            ⚡ Rafale 3-Max
+          </button>
+          <button id="rg-tab-funnel" type="button" onclick="setRangeGameTab('funnel')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            🌪️ Entonnoir
+          </button>
+          <button id="rg-tab-boss" type="button" onclick="setRangeGameTab('boss')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white">
+            👑 Boss Fights
           </button>
           <button id="rg-tab-mastery" type="button" onclick="setRangeGameTab('mastery')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white inline-flex items-center gap-1.5">
             🧠 Maîtrise & Leaks <span id="rg-leaks-count-pill" class="px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono text-[10px]">0</span>
@@ -862,6 +928,156 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-0: DAILY WARM-UP 5 MIN (FSRS + SPOTS MIXTES)            -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-warmup" class="hidden bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">🔥 Daily Warm-up (5 min) — Routine FSRS avant session</h3>
+              <p class="text-xs text-slate-400">Ordonné par priorité mathématique (`buildWarmup`) : 60 % leaks dus, 25 % nouveautés, 15 % entretien.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="rg-warmup-timer" class="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-sm font-extrabold text-amber-300">05:00</span>
+              <button type="button" onclick="startDailyWarmup()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold transition">
+                ▶ Lancer / Recharger
+              </button>
+            </div>
+          </div>
+          <div id="rg-warmup-stage" class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span id="rg-warmup-progress" class="font-mono text-slate-400">Prêt (0/6 cartes)</span>
+              <span id="rg-warmup-grade-badge" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">Note FSRS : —</span>
+            </div>
+            <div id="rg-warmup-prompt" class="text-sm font-bold text-white">Cliquez sur « Lancer / Recharger » pour démarrer votre échauffement ciblé.</div>
+            <div id="rg-warmup-cards" class="flex items-center gap-2"></div>
+            <div id="rg-warmup-actions" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+            <div id="rg-warmup-feedback" class="hidden rounded-xl p-3 border text-xs"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-1: LECTURE DE TEXTURE & C-BET SPRINT                    -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-texture" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">🌊 Texture Sprint — Lecture de Board &amp; Sizing C-Bet IP</h3>
+              <p class="text-xs text-slate-400">Identifiez instantanément la texture via <code class="text-emerald-300">texture(flop)</code> et choisissez la fréquence/sizing optimal en IP.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="rg-texture-score" class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs font-bold text-emerald-300">Score : 0/0</span>
+              <button type="button" onclick="nextTextureSprintHand()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">🔄 Nouveau flop</button>
+            </div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div id="rg-texture-board" class="flex items-center gap-2"></div>
+              <div id="rg-texture-hero" class="text-xs font-mono text-slate-300 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button type="button" onclick="submitTextureAnswer('cbet33')" class="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-extrabold transition">
+                🎯 C-Bet Range 33% Pot (Board sec / avantage nut/range)
+              </button>
+              <button type="button" onclick="submitTextureAnswer('cbet75')" class="py-2.5 px-3 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-extrabold transition">
+                🔥 C-Bet Polarisé 66–75% Pot (Board dynamique / protection)
+              </button>
+              <button type="button" onclick="submitTextureAnswer('check')" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-extrabold transition">
+                🛡️ Check Back / Pot Control (Board connecté bas/favorable à BB)
+              </button>
+            </div>
+            <div id="rg-texture-feedback" class="hidden rounded-xl p-3 border text-xs leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-2: PRESSION ICM & PKO                                   -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-icmgame" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">💣 Pression ICM &amp; PKO — Decision Trainer Temps Réel</h3>
+              <p class="text-xs text-slate-400">Comparez l'intuition ChipEV avec la réalité mathématique du Bubble Factor ou du Bounty Power PKO.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="rg-icmgame-score" class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs font-bold text-amber-300">Score : 0/0</span>
+              <button type="button" onclick="nextIcmGameSpot()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">🔄 Spot suivant</button>
+            </div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div id="rg-icmgame-scenario" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium"></div>
+            <div id="rg-icmgame-stats" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono"></div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" onclick="submitIcmGameAnswer('call')" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition">✅ Call / Shove (EV$ positif)</button>
+              <button type="button" onclick="submitIcmGameAnswer('fold')" class="py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">🛑 Fold discipliné (Risk Premium trop élevé)</button>
+            </div>
+            <div id="rg-icmgame-feedback" class="hidden rounded-xl p-3 border text-xs leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-3: RAFALE EXPRESSO 3-MAX                                -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-rafale" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">⚡ Rafale Expresso 3-Max — Iso, Limp &amp; Push/Fold 25bb</h3>
+              <p class="text-xs text-slate-400">Entraînez vos décisions BTN 25bb et SB vs BB (Min-Raise, Shove, Limp, Fold) basées sur le catalogue Expresso 3-Max.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="rg-rafale-score" class="px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs font-bold text-sky-300">Score : 0/0</span>
+              <button type="button" onclick="nextRafaleHand()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">🔄 Nouvelle main</button>
+            </div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3 text-center">
+            <div id="rg-rafale-spot" class="text-xs font-bold text-amber-300 uppercase tracking-wider"></div>
+            <div id="rg-rafale-cards" class="flex justify-center gap-2 py-1"></div>
+            <div id="rg-rafale-actions" class="grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-xl mx-auto"></div>
+            <div id="rg-rafale-feedback" class="hidden rounded-xl p-3 border text-left text-xs leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-4: HAND READING ENTONNOIR                               -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-funnel" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">🌪️ Hand Reading Entonnoir — Filtrer la Range adverse</h3>
+              <p class="text-xs text-slate-400">Réduisez la range de Vilain rue après rue (Préflop → Flop → Turn → River) pour décider du meilleur bluff-catch ou value bet.</p>
+            </div>
+            <button type="button" onclick="resetFunnelGame()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">🔄 Nouveau scénario</button>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div id="rg-funnel-breadcrumb" class="flex flex-wrap gap-2 text-[11px] font-mono"></div>
+            <div id="rg-funnel-question" class="text-xs sm:text-sm text-white font-semibold"></div>
+            <div id="rg-funnel-choices" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+            <div id="rg-funnel-feedback" class="hidden rounded-xl p-3 border text-xs leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- GAME V2-5: BOSS FIGHTS RUE PAR RUE                              -->
+        <!-- =============================================================== -->
+        <div id="rg-panel-boss" class="hidden bg-slate-900/90 border border-purple-500/30 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-white">👑 Boss Fight — Du Préflop à la River (3 Vies)</h3>
+              <p class="text-xs text-slate-400">Affrontez un Boss complet sur 4 rues consécutives : chaque erreur coûte 1 cœur ♥, chaque ligne GTO/Exploit retire des PV au Boss.</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span id="rg-boss-hp" class="px-3 py-1 rounded-xl bg-rose-950/60 border border-rose-500/40 font-mono text-xs font-bold text-rose-300">♥♥♥ Hero • Boss 4/4</span>
+              <button type="button" onclick="startBossFight()" class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold transition">⚔️ Nouveau Boss</button>
+            </div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div id="rg-boss-stage-title" class="text-xs font-extrabold uppercase tracking-wider text-purple-300"></div>
+            <div id="rg-boss-narrative" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></div>
+            <div id="rg-boss-choices" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+            <div id="rg-boss-feedback" class="hidden rounded-xl p-3 border text-xs leading-relaxed"></div>
           </div>
         </div>
 
@@ -1258,6 +1474,92 @@
               <!-- Populated dynamically -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- V2 MULTI-FORMAT ANALYTICS & LOCAL .TXT HAND HISTORY IMPORTER -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Left: Risk of Ruin, CI 95%, Winamax Rake Cap & Expresso ChipEV -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400">📐 Métriques Avancées V2 (Hors-ligne)</h3>
+            <span class="text-[10px] font-mono text-slate-400">σ = 80 bb/100</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Risk of Ruin (RoR)</div>
+              <div id="v2-brm-ror" class="text-base font-extrabold font-mono text-sky-400 mt-0.5">—</div>
+              <div class="text-[10px] text-slate-500">Sur bankroll actuelle</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Intervalle Confiance 95%</div>
+              <div id="v2-brm-ci95" class="text-sm font-extrabold font-mono text-amber-300 mt-0.5">—</div>
+              <div class="text-[10px] text-slate-500">bb/100 observés</div>
+            </div>
+          </div>
+
+          <!-- Winamax Rake Cap Visualizer -->
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="text-[11px] font-bold text-white">💸 Simulateur Cap de Rake Winamax (5.75% • No Flop No Drop)</div>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="v2-rake-limit" onchange="recomputeV2FormatsAnalytics()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-white">
+                <option value="20">NL2 (Cap 20 bb)</option>
+                <option value="16">NL5 (Cap 16 bb)</option>
+                <option value="10">NL10 (Cap 10 bb)</option>
+                <option value="5">NL20 (Cap 5 bb)</option>
+                <option value="3.4">NL50 (Cap 3.4 bb)</option>
+                <option value="2">NL100 (Cap 2 bb)</option>
+                <option value="0.75">NL400 (Cap 0.75 bb)</option>
+              </select>
+              <input id="v2-rake-pot" type="number" min="1" step="5" value="100" oninput="recomputeV2FormatsAnalytics()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white" title="Taille du pot en bb" />
+            </div>
+            <div id="v2-rake-output" class="text-[11px] font-mono text-emerald-300"></div>
+          </div>
+
+          <!-- Expresso ChipEV -> EVROI -->
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="text-[11px] font-bold text-white">⚡ Expresso / Spin : ChipEV → %ITM &amp; EVROI</div>
+            <div class="flex items-center gap-2">
+              <label for="v2-expresso-cev" class="text-[11px] text-slate-400">ChipEV/game :</label>
+              <input id="v2-expresso-cev" type="number" step="5" value="65" oninput="recomputeV2FormatsAnalytics()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white" />
+              <span class="text-[10px] font-mono text-slate-500">(500j • 7% rake)</span>
+            </div>
+            <div id="v2-expresso-output" class="text-[11px] font-mono text-amber-300"></div>
+          </div>
+        </div>
+
+        <!-- Right: Local .txt Hand History Importer (Winamax & PokerStars) -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-extrabold text-white">📥 Importeur Local Hand History (.txt Winamax &amp; PokerStars)</h3>
+              <p class="text-xs text-slate-400">100 % côté client : parsing, déduplication SHA-libre, stats d'opportunité et détection bayésienne de leaks.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <label class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition cursor-pointer">
+                📂 Charger .txt
+                <input id="v2-hh-file-input" type="file" accept=".txt" multiple onchange="handleHandHistoryFiles(event)" class="hidden" />
+              </label>
+              <button type="button" onclick="loadSampleHandHistories()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+                📋 Exemple Winamax/PS
+              </button>
+            </div>
+          </div>
+
+          <div id="v2-hh-summary" class="text-xs font-mono text-slate-400 bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+            Aucun fichier importé pour le moment. Chargez un export .txt Winamax / PokerStars ou cliquez sur « Exemple Winamax/PS ».
+          </div>
+
+          <div id="v2-hh-leaks" class="space-y-2"></div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="v2-hh-push-brm-btn" type="button" onclick="importParsedSessionsToBankroll()" class="hidden px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold transition">
+              📈 Ajouter au Tableur Bankroll
+            </button>
+            <button id="v2-hh-push-srs-btn" type="button" onclick="pushParsedLeaksToSrs()" class="hidden px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold transition">
+              🎯 Envoyer les leaks vers Maîtrise SRS
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1671,6 +1973,201 @@
     </div>
 
     <!-- ===================================================================== -->
+    <!-- TAB V2: ICM MALMUTH-HARVILLE, BUBBLE FACTOR & PKO / MYSTERY LAB       -->
+    <!-- ===================================================================== -->
+    <div id="suite-tab-icm" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-base sm:text-lg font-extrabold text-white">🏆 Laboratoire ICM, Bubble Factor & PKO / Mystery Bounty</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                Calculé localement • Hors-ligne
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+              Moteur exact Malmuth-Harville (3 à 9 joueurs), matrice N×N Bubble Factor / Risk Premium et conversion Bounty Power PKO / Mystery.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applyIcmPreset('bulle4max')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              🎯 Bulle 4-Max (40/25/20/15)
+            </button>
+            <button type="button" onclick="applyIcmPreset('expressoEqual')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              ⚡ Expresso 80/12/8 (25/25/25)
+            </button>
+            <button type="button" onclick="applyIcmPreset('expressoAsym')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              ⚡ Expresso 80/12/8 (45/20/10)
+            </button>
+            <button type="button" onclick="applyIcmPreset('tf6max')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              👑 Table Finale 6-Max
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <!-- Left: Table Configuration & Call Spot -->
+          <div class="lg:col-span-5 space-y-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+            <div>
+              <label for="v2-icm-stacks" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Stacks (3 à 9 joueurs, séparés par des virgules)
+              </label>
+              <input id="v2-icm-stacks" type="text" value="40, 25, 20, 15" oninput="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-icm-payouts" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Payouts (prix nets ou %, même ordre que les places)
+              </label>
+              <input id="v2-icm-payouts" type="text" value="50, 30, 20, 0" oninput="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label for="v2-icm-hero" class="block text-[11px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Hero (Joueur #)</label>
+                <select id="v2-icm-hero" onchange="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500"></select>
+              </div>
+              <div>
+                <label for="v2-icm-villain" class="block text-[11px] font-bold uppercase tracking-wider text-rose-400 mb-1">Vilain (Joueur #)</label>
+                <select id="v2-icm-villain" onchange="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500"></select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 pt-1 border-t border-slate-800/80">
+              <div>
+                <label for="v2-icm-dead" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Argent mort (ante/blinde hors duel)</label>
+                <input id="v2-icm-dead" type="number" step="0.5" min="0" value="0" oninput="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div>
+                <label for="v2-icm-effective" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Taille du duel (0 = min stacks)</label>
+                <input id="v2-icm-effective" type="number" step="0.5" min="0" value="0" oninput="recomputeIcmLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+
+            <!-- Highlight Cards -->
+            <div class="grid grid-cols-3 gap-2 pt-2">
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Bubble Factor</div>
+                <div id="v2-icm-bf" class="text-base font-extrabold font-mono text-amber-400 mt-0.5">—</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Risk Premium</div>
+                <div id="v2-icm-rp" class="text-base font-extrabold font-mono text-rose-400 mt-0.5">—</div>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Équité Req.</div>
+                <div id="v2-icm-reqeq" class="text-base font-extrabold font-mono text-emerald-400 mt-0.5">—</div>
+              </div>
+            </div>
+            <p id="v2-icm-diagnostic" class="text-xs text-slate-300 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 leading-relaxed"></p>
+          </div>
+
+          <!-- Right: $EV Table & NxN Bubble Factor Heatmap -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Répartition $EV Malmuth-Harville</h3>
+                <button type="button" onclick="switchSuiteTab('ranges'); setAppMode('games'); setRangeGameTab('icmgame');" class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-extrabold transition">
+                  🎮 Tester en jeu : Pression ICM →
+                </button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                    <tr>
+                      <th class="py-2 px-2">Siège</th>
+                      <th class="py-2 px-2 text-right">Stack</th>
+                      <th class="py-2 px-2 text-right">% Jetons</th>
+                      <th class="py-2 px-2 text-right">$EV Exact</th>
+                      <th class="py-2 px-2 text-right">Différence vs ChipEV</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v2-icm-ev-tbody" class="divide-y divide-slate-800/70 font-mono"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Matrice N×N Bubble Factor &amp; Risk Premium (Ligne = Hero • Colonne = Vilain)
+              </h3>
+              <div id="v2-icm-bf-matrix" class="overflow-x-auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PKO / MYSTERY BOUNTY SECTION -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold text-white">💣 Calculateur PKO &amp; Mystery Bounty</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Convertit immédiatement un bounty cash (€) en jetons via le Bounty Power réel (Ratio Pool Régulier / Jetons en jeu) pour ajuster vos cotes de call à tapis.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applyBountyPreset('pkoStart')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">
+              🥊 PKO Standard
+            </button>
+            <button type="button" onclick="applyBountyPreset('mystery250k')" class="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-200 text-xs font-bold transition">
+              🎁 Mystery 250k€ (25k/50k)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <div class="lg:col-span-6 grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+            <div>
+              <label for="v2-bounty-call" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Montant Call (j)</label>
+              <input id="v2-bounty-call" type="number" step="100" min="1" value="18000" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-bounty-pot" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Pot Final (j)</label>
+              <input id="v2-bounty-pot" type="number" step="100" min="1" value="40000" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-bounty-cash" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Bounty Cash (€)</label>
+              <input id="v2-bounty-cash" type="number" step="0.5" min="0" value="10" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-bounty-chipsinplay" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Jetons en jeu</label>
+              <input id="v2-bounty-chipsinplay" type="number" step="1000" min="1" value="2500000" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-bounty-regpool" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Pool Régulier (€)</label>
+              <input id="v2-bounty-regpool" type="number" step="50" min="1" value="1250" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+              <label for="v2-bounty-pool" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Pool Bounties (€)</label>
+              <input id="v2-bounty-pool" type="number" step="50" min="0" value="1250" oninput="recomputeBountyLab()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+          </div>
+
+          <div class="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Bounty Power</div>
+              <div id="v2-bounty-power" class="text-lg font-extrabold font-mono text-sky-400 mt-1">—</div>
+              <div class="text-[10px] text-slate-500">jetons / 1€</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Bounty en Jetons</div>
+              <div id="v2-bounty-chips" class="text-lg font-extrabold font-mono text-amber-300 mt-1">—</div>
+              <div class="text-[10px] text-slate-500">ajouté au pot</div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Équité ChipEV</div>
+              <div id="v2-bounty-chipev" class="text-lg font-extrabold font-mono text-slate-300 mt-1">—</div>
+              <div class="text-[10px] text-slate-500">sans bounty</div>
+            </div>
+            <div class="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-3">
+              <div class="text-[10px] font-bold uppercase text-emerald-400">Avec Bounty</div>
+              <div id="v2-bounty-witheq" class="text-lg font-extrabold font-mono text-emerald-400 mt-1">—</div>
+              <div id="v2-bounty-drop" class="text-[10px] font-mono font-bold text-emerald-300">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- TAB 5: COACH IA POKER (SCÉNARIOS INTERACTIFS & HAND HISTORY REVIEW)   -->
     <!-- ===================================================================== -->
     <div id="suite-tab-coach" class="hidden space-y-6">
@@ -1762,11 +2259,48 @@
       </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODAL V2: BACKUP UNIFIÉ PRO POKER SUITE STATE V2 (EXPORT / IMPORT)    -->
+    <!-- ===================================================================== -->
+    <div id="v2-backup-modal" role="dialog" aria-modal="true" aria-labelledby="v2-backup-modal-title" onclick="if (event.target === this) closeV2BackupModal()" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+      <div class="bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+          <div>
+            <h2 id="v2-backup-modal-title" class="text-sm sm:text-base font-extrabold text-white">💾 Backup Unifié — Pro Poker Suite V2 (JSON)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Agrège en lecture seule vos 7 clés localStorage V1 sans jamais les supprimer ni les écraser.</p>
+          </div>
+          <button type="button" onclick="closeV2BackupModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold">✕</button>
+        </div>
+        <div class="p-5 overflow-y-auto space-y-4">
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">État de compatibilité V1 → V2 (7 clés détectées)</div>
+            <div id="v2-backup-keys-summary" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-mono text-slate-300"></div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="downloadV2StateJson()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold transition shadow">
+              📤 Télécharger pro-poker-suite-v2.json
+            </button>
+            <label class="px-4 py-2 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 text-sky-200 text-xs font-extrabold transition cursor-pointer">
+              📥 Restaurer depuis un fichier .json
+              <input type="file" accept=".json,application/json" onchange="importV2StateFile(event)" class="hidden" />
+            </label>
+          </div>
+          <div>
+            <label for="v2-backup-json-preview" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Aperçu instantané ProPokerSuiteState (schemaVersion: 2)</label>
+            <textarea id="v2-backup-json-preview" rows="8" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-300 focus:outline-none"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- Subtle Educational Footer -->
-  <footer class="border-t border-slate-900 bg-slate-950/60 py-4 px-4 text-center text-xs text-slate-500">
+  <footer class="border-t border-slate-900 bg-slate-950/60 py-4 px-4 text-center text-xs text-slate-500 space-y-1.5">
     <p>Règle d'or en NL2 : <span class="text-slate-300 font-medium">Jouez serré et agressif (TAG)</span>, privilégiez la position, évitez de limper et ne surjouez pas vos top paires face aux relances turn/river.</p>
+    <p class="text-[11px] text-amber-400/90">
+      ⚖️ <span class="font-semibold">Conformité Anti-RTA (Winamax / PokerStars) :</span> outil 100 % dédié à l'étude hors-ligne et à la révision post-session. Ne pas utiliser pendant une session active en argent réel.
+    </p>
   </footer>
 
   <script>
@@ -2051,7 +2585,7 @@
      * =========================================================================
      */
     function switchSuiteTab(tabName) {
-      const tabs = ['ranges', 'hud', 'bankroll', 'gto', 'coach'];
+      const tabs = ['ranges', 'icm', 'hud', 'bankroll', 'gto', 'coach'];
       tabs.forEach(t => {
         const panel = document.getElementById(`suite-tab-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
@@ -2065,11 +2599,19 @@
         }
       });
 
+      if (tabName === 'icm') {
+        if (typeof recomputeIcmLab === 'function') recomputeIcmLab();
+        if (typeof recomputeBountyLab === 'function') recomputeBountyLab();
+      }
       if (tabName === 'bankroll') {
         requestAnimationFrame(() => renderBankrollChart());
+        if (typeof recomputeV2FormatsAnalytics === 'function') recomputeV2FormatsAnalytics();
       }
       if (tabName !== 'ranges' && typeof stopBlitzTimer === 'function') {
         stopBlitzTimer();
+      }
+      if (tabName !== 'ranges' && typeof stopWarmupTimer === 'function') {
+        stopWarmupTimer();
       }
       window.dispatchEvent(new CustomEvent('killtilt-tab-changed', { detail: { tab: tabName } }));
     }
@@ -2213,13 +2755,21 @@
     }
 
     function renderMatrixState() {
+      const v2Spec = typeof getActiveV2RangeSpec === 'function' ? getActiveV2RangeSpec() : null;
+      const v2Expanded = typeof getActiveV2ExpandedMap === 'function' ? getActiveV2ExpandedMap() : null;
       const preset = DEFAULT_PRESETS[state.currentPreset];
-      document.getElementById('current-range-title').textContent = preset.title;
-      document.getElementById('current-range-subtitle').textContent = preset.subtitle;
+
+      if (v2Spec) {
+        document.getElementById('current-range-title').textContent = v2Spec.scenario;
+        document.getElementById('current-range-subtitle').textContent = `${v2Spec.formatKind.toUpperCase()} • ${v2Spec.stackBB}bb • ${v2Spec.provenance.note}`;
+      } else {
+        document.getElementById('current-range-title').textContent = preset.title;
+        document.getElementById('current-range-subtitle').textContent = preset.subtitle;
+      }
 
       // Update Preset Button active styling
       document.querySelectorAll('.preset-btn').forEach(btn => {
-        const isActive = btn.dataset.preset === state.currentPreset;
+        const isActive = !v2Spec && btn.dataset.preset === state.currentPreset;
         if (isActive) {
           btn.className = 'preset-btn px-3 py-2 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-950/60';
         } else {
@@ -2228,18 +2778,37 @@
       });
 
       // Update each of the 169 cells
+      const baseClasses = 'hand-cell rounded sm:rounded-md border flex flex-col items-center justify-center font-mono text-[10px] sm:text-xs md:text-[13px] font-bold leading-none focus:outline-none relative';
       ALL_HANDS.forEach(hand => {
         const cell = document.getElementById(`cell-${hand.name}`);
+        cell.style.background = '';
+        const selectedClass = state.selectedHand === hand.name ? ' selected-inspect' : '';
+
+        if (v2Expanded && window.ProPokerV2) {
+          const rawVec = v2Expanded[hand.name];
+          const vec = rawVec ? (v2State.simplifiedGto25 ? window.ProPokerV2.simplifyFreqVector25(rawVec) : rawVec) : null;
+          const grad = vec ? buildV2CellGradient(vec) : null;
+          if (grad) {
+            cell.className = `${baseClasses} text-white border-slate-600/70${selectedClass}`;
+            cell.style.background = grad;
+          } else {
+            cell.className = `${baseClasses} ${ACTIONS.fold.cellClass}${selectedClass}`;
+          }
+          return;
+        }
+
         const action = getHandAction(state.currentPreset, hand.name);
         const actionCfg = ACTIONS[action];
-
-        const baseClasses = 'hand-cell rounded sm:rounded-md border flex flex-col items-center justify-center font-mono text-[10px] sm:text-xs md:text-[13px] font-bold leading-none focus:outline-none relative';
-        const selectedClass = state.selectedHand === hand.name ? ' selected-inspect' : '';
         cell.className = `${baseClasses} ${actionCfg.cellClass}${selectedClass}`;
       });
+
+      if (typeof renderV2ChunkingPanel === 'function') {
+        renderV2ChunkingPanel();
+      }
     }
 
     function updateMetricsAndNotation() {
+      const v2Expanded = typeof getActiveV2ExpandedMap === 'function' ? getActiveV2ExpandedMap() : null;
       const map = state.ranges[state.currentPreset];
       let raiseCombos = 0;
       let threebetCombos = 0;
@@ -2250,8 +2819,35 @@
       let pairCombos = 0;
       let suitedCombos = 0;
       let offsuitCombos = 0;
+      const activeNotationMap = {};
 
       ALL_HANDS.forEach(h => {
+        if (v2Expanded && window.ProPokerV2) {
+          const rawVec = v2Expanded[h.name];
+          if (!rawVec) return;
+          const vec = v2State.simplifiedGto25 ? window.ProPokerV2.simplifyFreqVector25(rawVec) : rawVec;
+          const rF = (vec.mr || 0) + (vec.shv || 0);
+          const tbF = vec['3b'] || 0;
+          const fbF = vec['4b'] || 0;
+          const cF = (vec.c || 0) + (vec.limp || 0);
+          const playF = Math.min(1, rF + tbF + fbF + cF);
+          if (playF <= 0.01) return;
+
+          raiseCombos += h.combos * rF;
+          threebetCombos += h.combos * tbF;
+          fourbetCombos += h.combos * fbF;
+          callCombos += h.combos * cF;
+          if (Math.max(rF, tbF, fbF, cF) < 0.99 && playF > 0.01) {
+            mixedCombos += h.combos * playF;
+          }
+
+          if (h.type === 'pair') pairCombos += h.combos * playF;
+          if (h.type === 'suited') suitedCombos += h.combos * playF;
+          if (h.type === 'offsuit') offsuitCombos += h.combos * playF;
+          activeNotationMap[h.name] = 'raise';
+          return;
+        }
+
         const act = map[h.name];
         if (!act || act === 'fold') return;
 
@@ -2266,11 +2862,13 @@
         if (h.type === 'offsuit') offsuitCombos += h.combos;
       });
 
-      const totalActiveCombos = raiseCombos + threebetCombos + fourbetCombos + callCombos + mixedCombos;
+      const totalActiveCombos = v2Expanded
+        ? (raiseCombos + threebetCombos + fourbetCombos + callCombos)
+        : (raiseCombos + threebetCombos + fourbetCombos + callCombos + mixedCombos);
       const totalPct = ((totalActiveCombos / 1326) * 100).toFixed(1);
 
       document.getElementById('stat-total-pct').textContent = `${totalPct}%`;
-      document.getElementById('stat-total-combos').textContent = `(${totalActiveCombos} / 1326)`;
+      document.getElementById('stat-total-combos').textContent = `(${Math.round(totalActiveCombos)} / 1326)`;
 
       document.getElementById('stat-raise').textContent = `${((raiseCombos / 1326) * 100).toFixed(1)}%`;
       document.getElementById('stat-call').textContent = `${((callCombos / 1326) * 100).toFixed(1)}%`;
@@ -2284,17 +2882,17 @@
       const sPct = Math.round((suitedCombos / denom) * 100);
       const oPct = Math.round((offsuitCombos / denom) * 100);
 
-      document.getElementById('comp-pairs-label').textContent = `${pairCombos} combos (${totalActiveCombos ? pPct : 0}%)`;
-      document.getElementById('comp-pairs-bar').style.width = `${totalActiveCombos ? pPct : 0}%`;
+      document.getElementById('comp-pairs-label').textContent = `${Math.round(pairCombos)} combos (${totalActiveCombos > 0.1 ? pPct : 0}%)`;
+      document.getElementById('comp-pairs-bar').style.width = `${totalActiveCombos > 0.1 ? pPct : 0}%`;
 
-      document.getElementById('comp-suited-label').textContent = `${suitedCombos} combos (${totalActiveCombos ? sPct : 0}%)`;
-      document.getElementById('comp-suited-bar').style.width = `${totalActiveCombos ? sPct : 0}%`;
+      document.getElementById('comp-suited-label').textContent = `${Math.round(suitedCombos)} combos (${totalActiveCombos > 0.1 ? sPct : 0}%)`;
+      document.getElementById('comp-suited-bar').style.width = `${totalActiveCombos > 0.1 ? sPct : 0}%`;
 
-      document.getElementById('comp-offsuit-label').textContent = `${offsuitCombos} combos (${totalActiveCombos ? oPct : 0}%)`;
-      document.getElementById('comp-offsuit-bar').style.width = `${totalActiveCombos ? oPct : 0}%`;
+      document.getElementById('comp-offsuit-label').textContent = `${Math.round(offsuitCombos)} combos (${totalActiveCombos > 0.1 ? oPct : 0}%)`;
+      document.getElementById('comp-offsuit-bar').style.width = `${totalActiveCombos > 0.1 ? oPct : 0}%`;
 
       // Update text notation box
-      document.getElementById('range-notation-box').value = generateTextNotation(map);
+      document.getElementById('range-notation-box').value = generateTextNotation(v2Expanded ? activeNotationMap : map);
     }
 
     /**
@@ -2447,14 +3045,11 @@
       }
 
       const meta = HAND_META[handName];
-      const action = getHandAction(state.currentPreset, handName);
-      const actionCfg = ACTIONS[action];
+      const v2Spec = typeof getActiveV2RangeSpec === 'function' ? getActiveV2RangeSpec() : null;
+      const v2Expanded = typeof getActiveV2ExpandedMap === 'function' ? getActiveV2ExpandedMap() : null;
 
       document.getElementById('inspect-hand-name').textContent = handName;
       const badge = document.getElementById('inspect-action-badge');
-      badge.textContent = actionCfg.label;
-      badge.className = `px-2.5 py-1 rounded-lg text-xs font-bold border ${actionCfg.badgeClass}`;
-
       document.getElementById('inspect-combos').textContent = `${meta.combos} combos`;
       const typeLabels = {
         pair: 'Paire servie',
@@ -2463,19 +3058,42 @@
       };
       document.getElementById('inspect-type').textContent = typeLabels[meta.type];
 
-      // Share of current active range
-      const map = state.ranges[state.currentPreset];
-      let totalActive = 0;
-      ALL_HANDS.forEach(h => {
-        if (map[h.name] && map[h.name] !== 'fold') totalActive += h.combos;
-      });
-      const share = (action !== 'fold' && totalActive > 0)
-        ? `${((meta.combos / totalActive) * 100).toFixed(1)}%`
-        : '0% (Fold)';
-      document.getElementById('inspect-share').textContent = share;
+      if (v2Spec && v2Expanded && window.ProPokerV2) {
+        const rawVec = v2Expanded[handName];
+        const vec = rawVec ? (v2State.simplifiedGto25 ? window.ProPokerV2.simplifyFreqVector25(rawVec) : rawVec) : { f: 1 };
+        const parts = Object.entries(vec)
+          .filter(([, p]) => (p || 0) > 0.01)
+          .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+          .map(([k, p]) => `${window.ProPokerV2.V2_ACTION_PALETTE[k]?.label || k} ${Math.round((p || 0) * 100)}%`);
+        badge.textContent = parts.length ? parts.join(' • ') : 'Fold 100%';
+        badge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold border bg-sky-500/15 text-sky-200 border-sky-500/30';
+        const foldFreq = vec.f || 0;
+        const activeFreq = Math.max(0, 1 - foldFreq);
+        document.getElementById('inspect-share').textContent = `${Math.round(activeFreq * 100)}% joué`;
+        document.getElementById('inspect-advice').textContent = `${v2Spec.scenario} (${v2Spec.stackBB}bb) — Fréquences ${v2State.simplifiedGto25 ? 'simplifiées au pas de 25%' : 'mixtes V2'} : ${parts.join(' / ')}. Provenance : ${v2Spec.provenance.note}.`;
+      } else {
+        const action = getHandAction(state.currentPreset, handName);
+        const actionCfg = ACTIONS[action];
+        badge.textContent = actionCfg.label;
+        badge.className = `px-2.5 py-1 rounded-lg text-xs font-bold border ${actionCfg.badgeClass}`;
 
-      document.getElementById('inspect-advice').textContent = getStrategicAdvice(state.currentPreset, handName, action);
+        // Share of current active range
+        const map = state.ranges[state.currentPreset];
+        let totalActive = 0;
+        ALL_HANDS.forEach(h => {
+          if (map[h.name] && map[h.name] !== 'fold') totalActive += h.combos;
+        });
+        const share = (action !== 'fold' && totalActive > 0)
+          ? `${((meta.combos / totalActive) * 100).toFixed(1)}%`
+          : '0% (Fold)';
+        document.getElementById('inspect-share').textContent = share;
+        document.getElementById('inspect-advice').textContent = getStrategicAdvice(state.currentPreset, handName, action);
+      }
+
       renderMiniCards('inspect-cards-visual', handName, 'sm');
+      if (typeof renderV2BlockerBox === 'function') {
+        renderV2BlockerBox(handName);
+      }
     }
 
     /**
@@ -2484,6 +3102,16 @@
      * =========================================================================
      */
     function selectPreset(presetKey) {
+      if (typeof v2State !== 'undefined') {
+        v2State.activeRangeId = '';
+        const cat = document.getElementById('v2-range-catalog');
+        if (cat) cat.value = '';
+        const prov = document.getElementById('v2-provenance-badge');
+        if (prov) {
+          prov.textContent = 'V1 Curated NL2';
+          prov.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+        }
+      }
       state.currentPreset = presetKey;
       renderMatrixState();
       updateMetricsAndNotation();
@@ -5068,6 +5696,9 @@
       // Update BRM Advisor
       updateBrmAdvisor(currentBankroll);
       renderBankrollChart();
+      if (typeof updateV2BankrollMetrics === 'function') {
+        updateV2BankrollMetrics(currentBankroll, totalProfitBb, totalHands, globalBb100);
+      }
     }
 
     function updateBrmAdvisor(bankroll) {
@@ -6589,6 +7220,11 @@
         globalBadge.textContent = `Maîtrise : ${pct}%`;
       }
 
+      const v2ScoreBadge = document.getElementById('games-v2-mastery-score');
+      if (v2ScoreBadge && typeof computeV2MasteryScore === 'function') {
+        v2ScoreBadge.textContent = `Score V2 : ${computeV2MasteryScore()}/100`;
+      }
+
       const leaksPill = document.getElementById('rg-leaks-count-pill');
       if (leaksPill) {
         leaksPill.textContent = String(leakCount);
@@ -6669,15 +7305,24 @@
       if (tabName !== 'blitz') {
         stopBlitzTimer();
       }
+      if (tabName !== 'warmup' && typeof stopWarmupTimer === 'function') {
+        stopWarmupTimer();
+      }
 
-      const tabs = ['recall', 'blitz', 'depth', 'mastery'];
+      const tabs = ['warmup', 'recall', 'blitz', 'depth', 'texture', 'icmgame', 'rafale', 'funnel', 'boss', 'mastery'];
       tabs.forEach(t => {
         const btn = document.getElementById(`rg-tab-${t}`);
         const panel = document.getElementById(`rg-panel-${t}`);
         if (btn) {
-          btn.className = t === tabName
-            ? 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow inline-flex items-center gap-1.5'
-            : 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white inline-flex items-center gap-1.5';
+          if (t === tabName) {
+            btn.className = t === 'warmup'
+              ? 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-amber-600 text-white shadow inline-flex items-center gap-1.5'
+              : 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-emerald-600 text-white shadow inline-flex items-center gap-1.5';
+          } else {
+            btn.className = t === 'warmup'
+              ? 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-amber-300 hover:text-white inline-flex items-center gap-1.5'
+              : 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white inline-flex items-center gap-1.5';
+          }
         }
         if (panel) {
           if (t === tabName) panel.classList.remove('hidden');
@@ -6689,6 +7334,16 @@
         nextDepthChallenge();
       } else if (tabName === 'mastery') {
         renderMasteryDashboard();
+      } else if (tabName === 'texture' && typeof ensureTextureGameInit === 'function') {
+        ensureTextureGameInit();
+      } else if (tabName === 'icmgame' && typeof ensureIcmGameInit === 'function') {
+        ensureIcmGameInit();
+      } else if (tabName === 'rafale' && typeof ensureRafaleGameInit === 'function') {
+        ensureRafaleGameInit();
+      } else if (tabName === 'funnel' && typeof ensureFunnelGameInit === 'function') {
+        ensureFunnelGameInit();
+      } else if (tabName === 'boss' && typeof ensureBossGameInit === 'function') {
+        ensureBossGameInit();
       }
     }
 
@@ -7745,6 +8400,1237 @@
       renderLeaksDrillQuestion();
     }
 
+    /**
+     * =========================================================================
+     * 11. PRO POKER SUITE V2 — CONTROLLERS & GAMES (BRIDGED TO window.ProPokerV2)
+     * =========================================================================
+     */
+    const V2_SRS_KEY = 'pro_poker_suite_v2_srs';
+    const V2_IMPORTED_KEYS_SET = 'pro_poker_suite_v2_imported_hands';
+    const V1_PRESERVED_KEYS = [
+      'killtilt_nl2_ranges_v1',
+      'killtilt_quiz_xp_v1',
+      'killtilt_watched_videos_v1',
+      'killtilt_nl2_sessions_v1',
+      'killtilt_nl2_start_br_v1',
+      'killtilt_range_mastery_v1',
+      'killtilt_coach_reviews_v1',
+    ];
+
+    var v2State = {
+      initialized: false,
+      activeRangeId: '',
+      expandedCache: {},
+      simplifiedGto25: false,
+      blockerLayer: false,
+      srsStats: { successes: 0, failures: 0, fastHits: 0, transfers: 0 },
+      parsedImport: null,
+      warmup: { queue: [], index: 0, correct: 0, timerId: null, secondsLeft: 300, cardStartTs: 0, answered: false },
+      textureGame: { current: null, correct: 0, total: 0, answered: false },
+      icmGame: { current: null, correct: 0, total: 0, answered: false },
+      rafaleGame: { current: null, correct: 0, total: 0, answered: false },
+      funnelGame: { scenarioIdx: 0, stepIdx: 0, answered: false },
+      bossGame: { bossIdx: 0, streetIdx: 0, heroHp: 3, bossHp: 4, over: false },
+    };
+
+    function loadV2SrsStats() {
+      try {
+        const raw = localStorage.getItem(V2_SRS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.successes === 'number') {
+            v2State.srsStats = { ...v2State.srsStats, ...parsed };
+          }
+        }
+      } catch (e) {}
+    }
+
+    function saveV2SrsStats() {
+      try {
+        localStorage.setItem(V2_SRS_KEY, JSON.stringify(v2State.srsStats));
+      } catch (e) {}
+    }
+
+    function awardV2Xp(amount) {
+      if (typeof state === 'undefined' || !state.quiz) return;
+      state.quiz.xp = (state.quiz.xp || 0) + amount;
+      if (typeof saveQuizXp === 'function') saveQuizXp(state.quiz.xp);
+      if (typeof updateQuizLevelUI === 'function') updateQuizLevelUI();
+    }
+
+    function recordV2SrsAttempt(isCorrect, elapsedMs, limitMs, isTransfer = false) {
+      if (isCorrect) v2State.srsStats.successes += 1;
+      else v2State.srsStats.failures += 1;
+      if (isCorrect && elapsedMs <= limitMs * 0.5) v2State.srsStats.fastHits += 1;
+      if (isCorrect && isTransfer) v2State.srsStats.transfers += 1;
+      saveV2SrsStats();
+      if (typeof updateGamesMasteryBadges === 'function') updateGamesMasteryBadges();
+    }
+
+    function computeV2MasteryScore() {
+      const api = window.ProPokerV2;
+      const v1Stats = Object.values(rgState?.mastery?.spotStats || {});
+      const v1Succ = v1Stats.reduce((s, x) => s + (x.correct || 0), 0);
+      const v1Att = v1Stats.reduce((s, x) => s + (x.attempts || 0), 0);
+      const successes = (v2State.srsStats.successes || 0) + v1Succ;
+      const failures = (v2State.srsStats.failures || 0) + Math.max(0, v1Att - v1Succ);
+      const total = successes + failures;
+      if (!api || total === 0) return 0;
+
+      const leakPenalty = Math.min(0.45, Object.keys(rgState?.mastery?.weakHands || {}).length * 0.04);
+      const retrievability = Math.max(0.35, 0.92 - leakPenalty);
+      const fastShare = Math.min(1, (v2State.srsStats.fastHits + v1Succ * 0.5) / Math.max(1, successes));
+      const transferShare = Math.min(1, (v2State.srsStats.transfers + Math.min(6, Object.keys(rgState?.mastery?.bestRecall || {}).length)) / 10);
+
+      return api.masteryScore({
+        successes,
+        failures,
+        retrievability,
+        fastShare,
+        transferShare,
+      });
+    }
+
+    // --- 11A. V2 RANGE CATALOG, MIXED GRADIENTS, BLOCKERS & 25-LINE CHUNKING ---
+    function getActiveV2RangeSpec() {
+      if (!v2State.activeRangeId || !window.ProPokerV2) return null;
+      return window.ProPokerV2.V2_WEIGHTED_RANGES.find(r => r.id === v2State.activeRangeId) || null;
+    }
+
+    function getActiveV2ExpandedMap() {
+      const spec = getActiveV2RangeSpec();
+      if (!spec || !window.ProPokerV2) return null;
+      if (!v2State.expandedCache[spec.id]) {
+        v2State.expandedCache[spec.id] = window.ProPokerV2.expandRangeGroups(spec.groups);
+      }
+      return v2State.expandedCache[spec.id];
+    }
+
+    function buildV2CellGradient(vec) {
+      const api = window.ProPokerV2;
+      if (!api || !vec) return null;
+      const order = ['mr', 'shv', '3b', '4b', 'c', 'limp'];
+      const segments = [];
+      let cursor = 0;
+      order.forEach(code => {
+        const val = vec[code] || 0;
+        if (val > 0.005) {
+          const start = cursor;
+          const end = Math.min(100, cursor + val * 100);
+          segments.push(`${api.V2_ACTION_PALETTE[code].color} ${start.toFixed(1)}% ${end.toFixed(1)}%`);
+          cursor = end;
+        }
+      });
+      if (cursor <= 0.5) return null;
+      if (cursor < 99.5) {
+        segments.push(`${api.V2_ACTION_PALETTE.f.color} ${cursor.toFixed(1)}% 100%`);
+      }
+      return `linear-gradient(90deg, ${segments.join(', ')})`;
+    }
+
+    function populateV2RangeCatalog() {
+      const sel = document.getElementById('v2-range-catalog');
+      const api = window.ProPokerV2;
+      if (!sel || !api) return;
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">📘 Tables V1 Kill Tilt NL2 (Presets ci-dessous)</option>';
+      const groups = {
+        cash_6max: '💵 Cash Game 6-Max',
+        mtt_classic: '🏆 MTT / Nash Push-Fold',
+        expresso_3max: '⚡ Expresso / Spin 3-Max',
+      };
+      Object.entries(groups).forEach(([fmtKey, groupLabel]) => {
+        const items = api.V2_WEIGHTED_RANGES.filter(r => r.format === fmtKey);
+        if (!items.length) return;
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = groupLabel;
+        items.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.scenario;
+          optgroup.appendChild(opt);
+        });
+        sel.appendChild(optgroup);
+      });
+      if (currentVal) sel.value = currentVal;
+    }
+
+    function selectV2Range(rangeId) {
+      v2State.activeRangeId = rangeId || '';
+      const spec = getActiveV2RangeSpec();
+      const badge = document.getElementById('v2-provenance-badge');
+      if (badge) {
+        if (spec) {
+          badge.textContent = `V2 • ${spec.provenance.origin} (${spec.provenance.confidence})`;
+          badge.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30';
+        } else {
+          badge.textContent = 'V1 Curated NL2';
+          badge.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+        }
+      }
+      renderMatrixState();
+      updateMetricsAndNotation();
+      inspectHand(state.selectedHand || 'AKs', true);
+    }
+
+    function toggleSimplifiedGto25() {
+      v2State.simplifiedGto25 = !v2State.simplifiedGto25;
+      const btn = document.getElementById('v2-simplified-gto-btn');
+      if (btn) {
+        btn.className = v2State.simplifiedGto25
+          ? 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-emerald-400 bg-emerald-600 text-white shadow transition'
+          : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:text-white transition';
+      }
+      renderMatrixState();
+      updateMetricsAndNotation();
+      inspectHand(state.selectedHand || 'AKs', true);
+    }
+
+    function toggleBlockerLayer() {
+      v2State.blockerLayer = !v2State.blockerLayer;
+      const btn = document.getElementById('v2-blocker-layer-btn');
+      if (btn) {
+        btn.className = v2State.blockerLayer
+          ? 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-indigo-400 bg-indigo-600 text-white shadow transition'
+          : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:text-white transition';
+      }
+      renderV2BlockerBox(state.selectedHand || 'AKs');
+    }
+
+    function renderV2BlockerBox(handName) {
+      const box = document.getElementById('v2-blocker-box');
+      const label = document.getElementById('v2-blocker-hand-label');
+      const grid = document.getElementById('v2-blocker-grid');
+      const api = window.ProPokerV2;
+      if (!box || !grid || !api) return;
+      if (!v2State.blockerLayer) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      if (label) label.textContent = handName;
+      const imp = api.blockerImpact(handName);
+      const baseTotals = { AA: 6, KK: 6, QQ: 6, AK: 16, AQ: 16 };
+      grid.innerHTML = Object.entries(imp).map(([k, rem]) => {
+        const base = baseTotals[k];
+        const diff = rem - base;
+        const colorCls = diff < 0 ? 'text-indigo-300 border-indigo-500/40 bg-indigo-950/50' : 'text-slate-400 border-slate-800 bg-slate-950';
+        return `<div class="rounded-lg border p-1.5 ${colorCls}">
+          <div class="font-bold">${k}</div>
+          <div>${rem}/${base}</div>
+          <div class="text-[9px] opacity-80">${diff < 0 ? `${diff}` : '0'}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderV2ChunkingPanel() {
+      const list = document.getElementById('v2-chunking-list');
+      const countEl = document.getElementById('v2-chunking-count');
+      const api = window.ProPokerV2;
+      if (!list || !api) return;
+
+      const v2Expanded = getActiveV2ExpandedMap();
+      const v1Map = state.ranges[state.currentPreset] || {};
+      const freqFn = (hand) => {
+        if (v2Expanded) {
+          const raw = v2Expanded[hand];
+          if (!raw) return 0;
+          const vec = v2State.simplifiedGto25 ? api.simplifyFreqVector25(raw) : raw;
+          return Math.max(0, 1 - (vec.f || 0));
+        }
+        const act = v1Map[hand];
+        return act && act !== 'fold' ? 1 : 0;
+      };
+
+      const allLines = api.lines();
+      const described = allLines
+        .map(line => api.describeLine(line, freqFn, 0.25))
+        .filter(d => d.floor || d.islands.length > 0);
+
+      if (countEl) countEl.textContent = `${described.length} / 25 lignes actives`;
+
+      if (!described.length) {
+        list.innerHTML = '<div class="text-slate-500">Aucune main active dans cette range.</div>';
+        return;
+      }
+
+      const lineNames = { pairs: 'Paires' };
+      list.innerHTML = described.map(d => {
+        const label = lineNames[d.id] || d.id;
+        const floorText = d.floor ? `<span class="text-emerald-300 font-bold">≥ ${d.floor}</span>` : '';
+        const islandsText = d.islands.length ? `<span class="text-amber-300">+ îlots: ${d.islands.join(', ')}</span>` : '';
+        return `<div class="flex items-center justify-between gap-2 bg-slate-900/70 rounded-lg px-2 py-1 border border-slate-800/70">
+          <span class="text-slate-400 font-bold shrink-0">${label}</span>
+          <span class="text-right truncate">${floorText} ${islandsText}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // --- 11B. ICM & PKO / MYSTERY BOUNTY LAB ---
+    function applyIcmPreset(presetKey) {
+      const stacksEl = document.getElementById('v2-icm-stacks');
+      const payoutsEl = document.getElementById('v2-icm-payouts');
+      const deadEl = document.getElementById('v2-icm-dead');
+      const effEl = document.getElementById('v2-icm-effective');
+      const heroEl = document.getElementById('v2-icm-hero');
+      const villEl = document.getElementById('v2-icm-villain');
+      if (!stacksEl || !payoutsEl) return;
+
+      if (presetKey === 'bulle4max') {
+        stacksEl.value = '40, 25, 20, 15';
+        payoutsEl.value = '50, 30, 20, 0';
+        if (deadEl) deadEl.value = '0';
+        if (effEl) effEl.value = '0';
+      } else if (presetKey === 'expressoEqual') {
+        stacksEl.value = '25, 25, 25';
+        payoutsEl.value = '80, 12, 8';
+        if (deadEl) deadEl.value = '0';
+        if (effEl) effEl.value = '0';
+      } else if (presetKey === 'expressoAsym') {
+        stacksEl.value = '45, 20, 10';
+        payoutsEl.value = '80, 12, 8';
+        if (deadEl) deadEl.value = '0';
+        if (effEl) effEl.value = '0';
+      } else if (presetKey === 'tf6max') {
+        stacksEl.value = '55, 42, 30, 24, 15, 9';
+        payoutsEl.value = '35, 24, 17, 11, 7.5, 5.5';
+        if (deadEl) deadEl.value = '1.5';
+        if (effEl) effEl.value = '0';
+      }
+      recomputeIcmLab(presetKey === 'expressoAsym' ? 1 : 0, presetKey === 'expressoAsym' ? 0 : 1);
+      if (heroEl && villEl && presetKey === 'bulle4max') {
+        heroEl.value = '1';
+        villEl.value = '0';
+        recomputeIcmLab();
+      }
+    }
+
+    function recomputeIcmLab(forceHero = null, forceVillain = null) {
+      const api = window.ProPokerV2;
+      const stacksRaw = document.getElementById('v2-icm-stacks')?.value || '';
+      const payoutsRaw = document.getElementById('v2-icm-payouts')?.value || '';
+      const diagEl = document.getElementById('v2-icm-diagnostic');
+      if (!api || !diagEl) return;
+
+      const stacks = stacksRaw.split(',').map(x => parseFloat(x.trim())).filter(x => Number.isFinite(x) && x > 0);
+      if (stacks.length < 2 || stacks.length > 9) {
+        diagEl.textContent = '⚠️ Entrez entre 2 et 9 tapis strictement positifs séparés par des virgules.';
+        return;
+      }
+
+      let payouts = payoutsRaw.split(',').map(x => parseFloat(x.trim())).filter(x => Number.isFinite(x) && x >= 0);
+      while (payouts.length < stacks.length) payouts.push(0);
+
+      const heroSel = document.getElementById('v2-icm-hero');
+      const villSel = document.getElementById('v2-icm-villain');
+      let heroIdx = forceHero !== null ? forceHero : parseInt(heroSel?.value || '0', 10);
+      let villIdx = forceVillain !== null ? forceVillain : parseInt(villSel?.value || '1', 10);
+      if (!Number.isFinite(heroIdx) || heroIdx >= stacks.length) heroIdx = 0;
+      if (!Number.isFinite(villIdx) || villIdx >= stacks.length || villIdx === heroIdx) {
+        villIdx = (heroIdx + 1) % stacks.length;
+      }
+
+      if (heroSel && villSel) {
+        heroSel.innerHTML = stacks.map((s, i) => `<option value="${i}">J${i + 1} (${s}j)</option>`).join('');
+        villSel.innerHTML = stacks.map((s, i) => `<option value="${i}">J${i + 1} (${s}j)</option>`).join('');
+        heroSel.value = String(heroIdx);
+        villSel.value = String(villIdx);
+      }
+
+      const evs = api.icm(stacks, payouts);
+      const totalChips = stacks.reduce((a, b) => a + b, 0);
+      const totalPrizes = payouts.reduce((a, b) => a + b, 0);
+
+      const tbody = document.getElementById('v2-icm-ev-tbody');
+      if (tbody) {
+        tbody.innerHTML = stacks.map((st, i) => {
+          const chipShare = st / totalChips;
+          const chipEv = chipShare * totalPrizes;
+          const diff = evs[i] - chipEv;
+          const diffCls = diff >= 0 ? 'text-emerald-400' : 'text-rose-400';
+          const badge = i === heroIdx
+            ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">HERO</span>'
+            : (i === villIdx ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px]">VIL</span>' : '');
+          return `<tr class="hover:bg-slate-900/70">
+            <td class="py-1.5 px-2 text-white font-bold">J${i + 1} ${badge}</td>
+            <td class="py-1.5 px-2 text-right text-slate-300">${st.toFixed(1)}</td>
+            <td class="py-1.5 px-2 text-right text-slate-400">${(chipShare * 100).toFixed(1)}%</td>
+            <td class="py-1.5 px-2 text-right text-sky-300 font-bold">${evs[i].toFixed(2)}</td>
+            <td class="py-1.5 px-2 text-right ${diffCls}">${diff >= 0 ? '+' : ''}${diff.toFixed(2)}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      const bfRes = api.bubbleFactor(stacks, payouts, heroIdx, villIdx);
+      const deadMoney = Math.max(0, parseFloat(document.getElementById('v2-icm-dead')?.value || '0') || 0);
+      const effInput = Math.max(0, parseFloat(document.getElementById('v2-icm-effective')?.value || '0') || 0);
+      const risk = effInput > 0 ? Math.min(effInput, stacks[heroIdx], stacks[villIdx]) : Math.min(stacks[heroIdx], stacks[villIdx]);
+
+      let reqEq = bfRes.requiredEquity;
+      if (deadMoney > 0 && risk > 0.1) {
+        const ifFold = [...stacks];
+        const ifWin = stacks.map((x, i) => i === heroIdx ? x + risk + deadMoney : (i === villIdx ? Math.max(0, x - risk) : x));
+        const ifLose = stacks.map((x, i) => i === heroIdx ? Math.max(0, x - risk) : (i === villIdx ? x + risk + deadMoney : x));
+        reqEq = api.requiredEquityIcm({ start: stacks, ifFold, ifWin, ifLose, hero: heroIdx, payouts });
+      }
+
+      document.getElementById('v2-icm-bf').textContent = bfRes.bf.toFixed(3);
+      document.getElementById('v2-icm-rp').textContent = `${bfRes.riskPremium >= 0 ? '+' : ''}${(bfRes.riskPremium * 100).toFixed(2)} pt`;
+      document.getElementById('v2-icm-reqeq').textContent = `${(reqEq * 100).toFixed(1)}%`;
+
+      const pressureTxt = bfRes.bf >= 2.0
+        ? '🔥 Pression ICM extrême : un call marginale à 55% en ChipEV perd massivement en $EV.'
+        : (bfRes.bf >= 1.35 ? '⚠️ Pression modérée à forte : resserrez vos calls vs tapis couvrants et élargissez vos shoves sur les tapis moyens.' : '⚖️ Pression faible (proche ChipEV / Expresso top-heavy) : peu d’écart avec les cotes de pot classiques.');
+      diagEl.textContent = `J${heroIdx + 1} (${stacks[heroIdx]}j) vs J${villIdx + 1} (${stacks[villIdx]}j) : Bubble Factor ${bfRes.bf.toFixed(3)} • Équité minimale requise ${(reqEq * 100).toFixed(1)}% (vs 50.0% en ChipEV pur). ${pressureTxt}`;
+
+      const matrixEl = document.getElementById('v2-icm-bf-matrix');
+      if (matrixEl) {
+        let html = '<table class="w-full text-[10px] font-mono border-collapse"><thead><tr><th class="p-1 text-left text-slate-400">H \\ V</th>';
+        stacks.forEach((s, j) => {
+          html += `<th class="p-1 text-center text-slate-300">J${j + 1} (${s})</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        stacks.forEach((sHero, i) => {
+          html += `<tr><td class="p-1 font-bold text-slate-200 border border-slate-800 bg-slate-900/80">J${i + 1} (${sHero})</td>`;
+          stacks.forEach((_, j) => {
+            if (i === j) {
+              html += '<td class="p-1 text-center border border-slate-800 bg-slate-900/40 text-slate-600">—</td>';
+              return;
+            }
+            const cell = api.bubbleFactor(stacks, payouts, i, j);
+            const cls = cell.bf >= 2.0
+              ? 'bg-rose-950/70 text-rose-200 border-rose-500/40'
+              : (cell.bf >= 1.4 ? 'bg-amber-950/60 text-amber-200 border-amber-500/30' : 'bg-emerald-950/40 text-emerald-200 border-emerald-500/20');
+            const selectedBorder = (i === heroIdx && j === villIdx) ? ' ring-1 ring-white' : '';
+            html += `<td onclick="recomputeIcmLab(${i}, ${j})" title="Cliquer pour analyser J${i + 1} vs J${j + 1}" class="p-1 text-center border cursor-pointer hover:brightness-125 transition ${cls}${selectedBorder}">
+              <div class="font-bold">${cell.bf.toFixed(2)}</div>
+              <div class="text-[9px] opacity-80">+${(cell.riskPremium * 100).toFixed(1)}pt</div>
+            </td>`;
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        matrixEl.innerHTML = html;
+      }
+    }
+
+    function applyBountyPreset(presetKey) {
+      if (presetKey === 'pkoStart') {
+        document.getElementById('v2-bounty-call').value = '18000';
+        document.getElementById('v2-bounty-pot').value = '40000';
+        document.getElementById('v2-bounty-cash').value = '10';
+        document.getElementById('v2-bounty-chipsinplay').value = '2500000';
+        document.getElementById('v2-bounty-regpool').value = '1250';
+        document.getElementById('v2-bounty-pool').value = '1250';
+      } else if (presetKey === 'mystery250k') {
+        document.getElementById('v2-bounty-call').value = '25000';
+        document.getElementById('v2-bounty-pot').value = '50000';
+        document.getElementById('v2-bounty-cash').value = '30';
+        document.getElementById('v2-bounty-chipsinplay').value = '20000000';
+        document.getElementById('v2-bounty-regpool').value = '125000';
+        document.getElementById('v2-bounty-pool').value = '125000';
+      }
+      recomputeBountyLab();
+    }
+
+    function recomputeBountyLab() {
+      const api = window.ProPokerV2;
+      if (!api || !document.getElementById('v2-bounty-call')) return;
+      const call = Math.max(1, parseFloat(document.getElementById('v2-bounty-call').value) || 1);
+      const finalPot = Math.max(call + 1, parseFloat(document.getElementById('v2-bounty-pot').value) || call + 1);
+      const bountyCash = Math.max(0, parseFloat(document.getElementById('v2-bounty-cash').value) || 0);
+      const chipsInPlay = Math.max(1, parseFloat(document.getElementById('v2-bounty-chipsinplay').value) || 1);
+      const remainingRegularPool = Math.max(1, parseFloat(document.getElementById('v2-bounty-regpool').value) || 1);
+      const remainingBountyPool = Math.max(0, parseFloat(document.getElementById('v2-bounty-pool').value) || 0);
+
+      const res = api.bountyAdjusted({ call, finalPot, bountyCash, chipsInPlay, remainingRegularPool, remainingBountyPool });
+      document.getElementById('v2-bounty-power').textContent = Math.round(res.bountyPower).toLocaleString('fr-FR');
+      document.getElementById('v2-bounty-chips').textContent = `+${Math.round(res.bountyChips).toLocaleString('fr-FR')} j`;
+      document.getElementById('v2-bounty-chipev').textContent = `${(res.chipEv * 100).toFixed(1)}%`;
+      document.getElementById('v2-bounty-witheq').textContent = `${(res.withBounty * 100).toFixed(1)}%`;
+      document.getElementById('v2-bounty-drop').textContent = `${(res.equityDrop * 100).toFixed(1)}% requis`;
+    }
+
+    // --- 11C. BANKROLL METRICS V2, RAKE, EXPRESSO & LOCAL .TXT PARSER ---
+    function updateV2BankrollMetrics(currentBankroll, totalProfitBb, totalHands, globalBb100) {
+      const api = window.ProPokerV2;
+      if (!api) return;
+      const rorEl = document.getElementById('v2-brm-ror');
+      const ciEl = document.getElementById('v2-brm-ci95');
+      const sigma = 80;
+      const avgBbVal = bankrollState?.sessions?.length
+        ? (LIMIT_BB_VALUE[bankrollState.sessions[bankrollState.sessions.length - 1].limit] || 0.02)
+        : 0.02;
+      const bankrollBb = Math.max(100, currentBankroll / avgBbVal);
+
+      if (rorEl) {
+        const ror = api.riskOfRuin(globalBb100, sigma, bankrollBb);
+        rorEl.textContent = globalBb100 <= 0 ? '100 % (winrate ≤ 0)' : `${(ror * 100).toFixed(2)} %`;
+        rorEl.className = ror < 0.05
+          ? 'text-base font-extrabold font-mono text-emerald-400 mt-0.5'
+          : (ror < 0.25 ? 'text-base font-extrabold font-mono text-amber-300 mt-0.5' : 'text-base font-extrabold font-mono text-rose-400 mt-0.5');
+      }
+      if (ciEl) {
+        if (totalHands >= 100) {
+          const [lo, hi] = api.winrateCi95(globalBb100, sigma, totalHands);
+          ciEl.textContent = `[${lo.toFixed(1)} ; ${hi.toFixed(1)}] bb/100`;
+        } else {
+          ciEl.textContent = '≥ 100 mains requises';
+        }
+      }
+      recomputeV2FormatsAnalytics();
+    }
+
+    function recomputeV2FormatsAnalytics() {
+      const api = window.ProPokerV2;
+      if (!api) return;
+      const capEl = document.getElementById('v2-rake-limit');
+      const potEl = document.getElementById('v2-rake-pot');
+      const rakeOut = document.getElementById('v2-rake-output');
+      if (capEl && potEl && rakeOut) {
+        const cap = parseFloat(capEl.value) || 20;
+        const pot = Math.max(1, parseFloat(potEl.value) || 100);
+        const rFlop = api.rake(pot, 0.0575, cap, true, true);
+        const rPre = api.rake(pot, 0.0575, cap, false, true);
+        rakeOut.textContent = `Pot ${pot} bb → Rake Flop : ${rFlop.toFixed(2)} bb (${((rFlop / pot) * 100).toFixed(2)}%) • Préflop : ${rPre.toFixed(2)} bb`;
+      }
+
+      const cevEl = document.getElementById('v2-expresso-cev');
+      const expOut = document.getElementById('v2-expresso-output');
+      if (cevEl && expOut) {
+        const cev = parseFloat(cevEl.value) || 0;
+        const itm = api.evItmWta(cev, 500) * 100;
+        const roi = api.evRoiWta(cev, 500, 0.07) * 100;
+        const be = api.breakevenCev(500, 0.07);
+        expOut.textContent = `ITM WTA : ${itm.toFixed(2)}% • EVROI (7% rake) : ${roi >= 0 ? '+' : ''}${roi.toFixed(2)}% • Seuil rentabilité : ${be.toFixed(2)} cEV`;
+      }
+    }
+
+    function handleHandHistoryFiles(event) {
+      const files = Array.from(event?.target?.files || []);
+      if (!files.length) return;
+      Promise.all(files.map(f => f.text())).then(contents => {
+        processRawHandHistoryText(contents.join('\n\n'));
+      });
+    }
+
+    function loadSampleHandHistories() {
+      const sample = `Winamax Poker - CashGame - HandId: #20261125-001 - Holdem no limit (0.01€/0.02€) - 2026/11/25 18:10:00 UTC
+Table: 'Paris 04' 5-max Seat #1 is the button
+Seat 1: Hero (2.00€)
+Seat 2: Villain1 (2.00€)
+Seat 3: Villain2 (2.40€)
+*** ANTE/BLINDS ***
+Villain1 posts small blind 0.01€
+Villain2 posts big blind 0.02€
+Dealt to Hero [As Ks]
+*** PRE-FLOP ***
+Hero raises 0.04€ to 0.06€
+Villain1 folds
+Villain2 raises 0.14€ to 0.20€
+Hero folds
+*** SUMMARY ***
+
+Winamax Poker - CashGame - HandId: #20261125-002 - Holdem no limit (0.01€/0.02€) - 2026/11/25 18:13:00 UTC
+Table: 'Paris 04' 5-max Seat #3 is the button
+Seat 1: Hero (2.00€)
+Seat 2: Villain1 (2.10€)
+Seat 3: Villain2 (2.46€)
+*** ANTE/BLINDS ***
+Hero posts small blind 0.01€
+Villain1 posts big blind 0.02€
+Dealt to Hero [Qh Qc]
+*** PRE-FLOP ***
+Villain2 folds
+Hero raises 0.04€ to 0.06€
+Villain1 calls 0.04€
+*** FLOP *** [Qs 7d 2c]
+Hero bets 0.04€
+Villain1 folds
+*** SUMMARY ***
+
+PokerStars Hand #20261125003: Hold'em No Limit (€0.02/€0.05 EUR) - 2026/11/25 18:20:00 CET
+Table 'Euporie' 6-max Seat #1 is the button
+Seat 1: Hero (€5.00 in chips)
+Seat 2: VilainReg (€5.20 in chips)
+*** HOLE CARDS ***
+Dealt to Hero [Jh Th]
+Hero raises €0.12 to €0.15
+VilainReg raises €0.40 to €0.55
+Hero folds
+*** SUMMARY ***`;
+      processRawHandHistoryText(sample);
+      showToast('Échantillon Winamax + PokerStars analysé localement !', 'success');
+    }
+
+    function processRawHandHistoryText(rawText) {
+      const api = window.ProPokerV2;
+      if (!api) return;
+      let knownSet = new Set();
+      try {
+        const stored = localStorage.getItem(V2_IMPORTED_KEYS_SET);
+        if (stored) knownSet = new Set(JSON.parse(stored));
+      } catch (e) {}
+
+      // Count on clean set for current session preview while tracking new unique keys
+      const previewSet = new Set();
+      const res = api.importFile(rawText, previewSet);
+      const hands = res.hands || [];
+
+      let vpipOpp = 0; let vpipCount = 0;
+      let pfrOpp = 0; let pfrCount = 0;
+      let foldTo3BetOpp = 0; let foldTo3BetCount = 0;
+      let cbetOpp = 0; let cbetCount = 0;
+      const sites = new Set();
+
+      hands.forEach(h => {
+        sites.add(h.site);
+        if (!h.hero) return;
+        const preActions = h.actions.filter(a => a.street === 'preflop');
+        const heroPre = preActions.filter(a => a.player === h.hero);
+        if (heroPre.length > 0) {
+          vpipOpp += 1;
+          pfrOpp += 1;
+          if (heroPre.some(a => a.type === 'call' || a.type === 'raise' || a.type === 'bet')) vpipCount += 1;
+          if (heroPre.some(a => a.type === 'raise' || a.type === 'bet')) pfrCount += 1;
+
+          // Hero opened and later faced a raise before folding/calling
+          const raiseIdx = preActions.findIndex(a => a.player === h.hero && a.type === 'raise');
+          if (raiseIdx !== -1) {
+            const villainReRaiseIdx = preActions.findIndex((a, idx) => idx > raiseIdx && a.player !== h.hero && a.type === 'raise');
+            if (villainReRaiseIdx !== -1) {
+              const response = preActions.find((a, idx) => idx > villainReRaiseIdx && a.player === h.hero);
+              if (response) {
+                foldTo3BetOpp += 1;
+                if (response.type === 'fold') foldTo3BetCount += 1;
+              }
+            }
+            const flopHero = h.actions.filter(a => a.street === 'flop' && a.player === h.hero);
+            if (flopHero.length > 0) {
+              cbetOpp += 1;
+              if (flopHero.some(a => a.type === 'bet')) cbetCount += 1;
+            }
+          }
+        }
+      });
+
+      const leaks = [];
+      if (vpipOpp > 0) {
+        const lp = api.leakProbability({ k: vpipCount, n: vpipOpp, low: 0.19, high: 0.27 });
+        leaks.push({ id: 'VPIP', label: 'VPIP Préflop (cible 19–27%)', k: vpipCount, n: vpipOpp, ...lp, preset: 'CO', hand: 'KTo' });
+      }
+      if (foldTo3BetOpp > 0) {
+        const lp = api.leakProbability({ k: foldTo3BetCount, n: foldTo3BetOpp, low: 0.45, high: 0.58 });
+        leaks.push({ id: 'F3B', label: 'Fold to 3-Bet (cible 45–58%)', k: foldTo3BetCount, n: foldTo3BetOpp, ...lp, preset: 'VS_3BET', hand: 'AKs' });
+      }
+      if (cbetOpp > 0) {
+        const lp = api.leakProbability({ k: cbetCount, n: cbetOpp, low: 0.45, high: 0.65 });
+        leaks.push({ id: 'CBET', label: 'C-Bet Flop IP (cible 45–65%)', k: cbetCount, n: cbetOpp, ...lp, preset: 'BTN', hand: 'QJs' });
+      }
+
+      v2State.parsedImport = { hands, sites: [...sites], vpipOpp, vpipCount, pfrOpp, pfrCount, foldTo3BetOpp, foldTo3BetCount, cbetOpp, cbetCount, leaks, errors: res.errors.length, newUnique: hands.filter(h => !knownSet.has(h.key)).length };
+
+      hands.forEach(h => knownSet.add(h.key));
+      try { localStorage.setItem(V2_IMPORTED_KEYS_SET, JSON.stringify([...knownSet].slice(-2000))); } catch (e) {}
+
+      const summaryEl = document.getElementById('v2-hh-summary');
+      if (summaryEl) {
+        summaryEl.innerHTML = `<div class="text-emerald-300 font-bold mb-1">✅ ${hands.length} main(s) parsée(s) (${res.errors.length} erreur(s) • Sites : ${sites.size ? [...sites].join(', ') : '—'})</div>
+          <div>VPIP : ${vpipCount}/${vpipOpp} • PFR : ${pfrCount}/${pfrOpp} • Fold vs 3-Bet : ${foldTo3BetCount}/${foldTo3BetOpp} • C-Bet Flop : ${cbetCount}/${cbetOpp}</div>`;
+      }
+
+      const leaksEl = document.getElementById('v2-hh-leaks');
+      if (leaksEl) {
+        leaksEl.innerHTML = leaks.map(l => {
+          const pctObs = Math.round((l.k / Math.max(1, l.n)) * 100);
+          const pLeak = Math.round(l.p * 100);
+          const dirLabel = l.direction === 'trop_haut' ? 'Trop élevé' : 'Trop faible';
+          const badgeCls = pLeak >= 65 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+          return `<div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 text-xs">
+            <div><span class="font-bold text-white">${l.label}</span> <span class="font-mono text-slate-400">(${l.k}/${l.n} = ${pctObs}%)</span></div>
+            <span class="px-2 py-0.5 rounded-md border font-mono text-[11px] font-bold ${badgeCls}">P(leak ${dirLabel}) = ${pLeak}%</span>
+          </div>`;
+        }).join('');
+      }
+
+      const pushBrm = document.getElementById('v2-hh-push-brm-btn');
+      const pushSrs = document.getElementById('v2-hh-push-srs-btn');
+      if (pushBrm) pushBrm.classList.toggle('hidden', hands.length === 0);
+      if (pushSrs) pushSrs.classList.toggle('hidden', leaks.length === 0);
+    }
+
+    function importParsedSessionsToBankroll() {
+      const imp = v2State.parsedImport;
+      if (!imp || !imp.hands.length || typeof bankrollState === 'undefined') return;
+      const bbVal = imp.hands[0].bigBlind || 0.02;
+      const limitGuess = bbVal >= 0.25 ? 'NL25' : (bbVal >= 0.10 ? 'NL10' : (bbVal >= 0.05 ? 'NL5' : 'NL2'));
+      bankrollState.sessions.push({
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        limit: limitGuess,
+        format: imp.hands[0].isTournament ? 'MTT / Expresso' : `HH ${imp.sites.join('/')}`,
+        duration: Math.max(5, Math.round(imp.hands.length * 0.2)),
+        hands: imp.hands.length,
+        buyin: Number((bbVal * 100).toFixed(2)),
+        cashout: Number((bbVal * 100).toFixed(2)),
+        tilt: 5,
+        notes: `Import .txt V2 (${imp.hands.length} mains, sites: ${imp.sites.join(', ')})`,
+      });
+      if (typeof saveBankrollData === 'function') saveBankrollData();
+      if (typeof renderBankrollDashboard === 'function') renderBankrollDashboard();
+      showToast(`✅ ${imp.hands.length} mains ajoutées au tableur Bankroll.`, 'success');
+    }
+
+    function pushParsedLeaksToSrs() {
+      const imp = v2State.parsedImport;
+      if (!imp || !imp.leaks.length || typeof rgState === 'undefined') return;
+      imp.leaks.forEach(l => {
+        const expected = l.preset === 'VS_3BET' ? 'fourbet' : 'raise';
+        const key = `${l.preset}|100bb|standard|${l.hand}`;
+        rgState.mastery.weakHands[key] = {
+          presetKey: l.preset,
+          depthKey: '100bb',
+          profileKey: 'standard',
+          handName: l.hand,
+          expectedAction: expected,
+          misses: (rgState.mastery.weakHands[key]?.misses || 0) + 1,
+          streakRight: 0,
+        };
+      });
+      if (typeof saveRangeMastery === 'function') saveRangeMastery();
+      if (typeof updateGamesMasteryBadges === 'function') updateGamesMasteryBadges();
+      showToast(`🎯 ${imp.leaks.length} spot(s) envoyé(s) vers Maîtrise & Leaks SRS.`, 'success');
+    }
+
+    // --- 11D. BACKUP UNIFIÉ PRO POKER SUITE STATE V2 (EXPORT / IMPORT) ---
+    function buildProPokerSuiteStateV2() {
+      const legacyV1 = {};
+      V1_PRESERVED_KEYS.forEach(k => {
+        try {
+          const raw = localStorage.getItem(k);
+          legacyV1[k] = raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          legacyV1[k] = localStorage.getItem(k);
+        }
+      });
+      return {
+        schemaVersion: 2,
+        exportedAt: new Date().toISOString(),
+        bankrollInitialEur: typeof bankrollState !== 'undefined' ? bankrollState.startingBankroll : 100,
+        sessions: typeof bankrollState !== 'undefined' ? bankrollState.sessions : [],
+        v2SrsStats: v2State.srsStats,
+        legacyV1Keys: legacyV1,
+      };
+    }
+
+    function openV2BackupModal() {
+      const modal = document.getElementById('v2-backup-modal');
+      const summary = document.getElementById('v2-backup-keys-summary');
+      const preview = document.getElementById('v2-backup-json-preview');
+      if (!modal) return;
+      const stateObj = buildProPokerSuiteStateV2();
+      if (summary) {
+        summary.innerHTML = V1_PRESERVED_KEYS.map(k => {
+          const exists = localStorage.getItem(k) !== null;
+          return `<div class="px-2 py-1 rounded-lg border ${exists ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-300' : 'border-slate-800 bg-slate-900/70 text-slate-400'}">
+            ${exists ? '✅' : '○'} ${k}
+          </div>`;
+        }).join('');
+      }
+      if (preview) {
+        preview.value = JSON.stringify(stateObj, null, 2);
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeV2BackupModal() {
+      const modal = document.getElementById('v2-backup-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function downloadV2StateJson() {
+      const json = JSON.stringify(buildProPokerSuiteStateV2(), null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pro-poker-suite-v2-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('💾 Sauvegarde JSON V2 téléchargée.', 'success');
+    }
+
+    function importV2StateFile(event) {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+      file.text().then(raw => {
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed || parsed.schemaVersion !== 2 || !parsed.legacyV1Keys) {
+            showToast('Fichier JSON V2 invalide (schemaVersion: 2 attendu).', 'error');
+            return;
+          }
+          V1_PRESERVED_KEYS.forEach(k => {
+            const val = parsed.legacyV1Keys[k];
+            if (val !== null && val !== undefined) {
+              localStorage.setItem(k, typeof val === 'string' ? val : JSON.stringify(val));
+            }
+          });
+          if (parsed.v2SrsStats) {
+            v2State.srsStats = { ...v2State.srsStats, ...parsed.v2SrsStats };
+            saveV2SrsStats();
+          }
+          showToast('📥 Restauration JSON V2 effectuée ! Rechargement UI...', 'success');
+          openV2BackupModal();
+          initBankrollTracker();
+          rgState.mastery = loadRangeMastery();
+          updateGamesMasteryBadges();
+        } catch (e) {
+          showToast('Impossible de lire ce fichier JSON.', 'error');
+        }
+      });
+    }
+
+    // --- 11E. SERIOUS GAMES V2 : DAILY WARM-UP + 5 NOUVEAUX JEUX ---
+    const V2_TEXTURE_SPOTS = [
+      { flop: ['As', 'Kd', '4c'], hero: 'BTN (AQs) vs BB', answer: 'cbet33', note: 'Board A-K-4 rainbow très sec : avantage de range et de nuts massif côté BTN → C-Bet haute fréquence à 33% pot.' },
+      { flop: ['9h', '8h', '6s'], hero: 'CO (KK) vs BB', answer: 'check', note: 'Board 9-8-6 two-tone ultra-connecté : avantage de double paires/quintes en BB → fréquence élevée de Check Back ou petit protection selon profil, jamais de c-bet range automatique.' },
+      { flop: ['Jd', 'Ts', '5d'], hero: 'BTN (KQo) vs BB', answer: 'cbet75', note: 'Board dynamique two-tone avec de nombreux tirages (quintes + couleur) : polarisez à 66–75% pot pour faire payer les tirages.' },
+      { flop: ['7c', '7d', '2s'], hero: 'MP (AKo) vs BB', answer: 'cbet33', note: 'Board pairé très sec 7-7-2 rainbow : BB rate souvent ce board → C-Bet range 25–33% extrêmement rentable.' },
+      { flop: ['6h', '5h', '4c'], hero: 'CO (AKs) vs BB', answer: 'check', note: 'Board 6-5-4 connecté bas : la BB possède beaucoup plus de combos de brelans, deux paires et quintes → Check Back et réalisez votre équité.' },
+      { flop: ['Ks', '8d', '3c'], hero: 'BTN (ATo) vs BB', answer: 'cbet33', note: 'Board K-8-3 rainbow sans connectivité directe : avantage de Kx supérieurs côté BTN → C-Bet 33% quasi automatique.' },
+    ];
+
+    const V2_RAFALE_DECK = [
+      { spot: 'Expresso 3-Max • 25bb • BTN Open', hand: 'K7s', expected: 'mr', opts: [['mr', 'Min-Raise 2x'], ['shv', 'All-In 25bb'], ['limp', 'Limp'], ['f', 'Fold']], explain: 'À 25bb au BTN en Expresso, K7s est un Min-Raise 2x standard.' },
+      { spot: 'Expresso 3-Max • 25bb • BTN vs BB', hand: 'Q4o', expected: 'f', opts: [['mr', 'Min-Raise 2x'], ['shv', 'All-In 25bb'], ['limp', 'Limp'], ['f', 'Fold']], explain: 'Q4o reste hors range d’open BTN à 25bb (trop facilement dominée OOP/IP face aux défenses BB).' },
+      { spot: 'Expresso 3-Max • 16bb • SB vs BB', hand: 'A4o', expected: 'shv', opts: [['mr', 'Min-Raise 2x'], ['shv', 'Open Shove'], ['limp', 'Limp Trap'], ['f', 'Fold']], explain: 'À ~15bb en BvB Expresso, A4o réalise très bien son équité et possède un excellent bloqueur As en Open Shove.' },
+      { spot: 'Expresso 3-Max • 25bb • SB vs BB', hand: 'AA', expected: 'limp', opts: [['mr', 'Min-Raise 2x'], ['shv', 'Open Shove'], ['limp', 'Limp Trap / Mix'], ['f', 'Fold']], explain: 'En SB 25bb Expresso, trapper AA en Limp (mixé avec MR) protège votre range de limp face aux iso-raises de BB.' },
+      { spot: 'MTT • 15bb • SB vs BB Nash', hand: 'K9o', expected: 'shv', opts: [['mr', 'Min-Raise 2x'], ['shv', 'Nash Push'], ['limp', 'Limp'], ['f', 'Fold']], explain: 'En BvB 15bb MTT avec ante, K9o fait partie des shoves profitables de la table Nash.' },
+    ];
+
+    const V2_FUNNEL_SCENARIOS = [
+      {
+        title: 'Cash 6-Max 100bb — Vilain (Reg CO) Open, vous défendez BB avec A♠9♠',
+        steps: [
+          {
+            street: '1. Préflop • Flop K♦ 9♣ 4♠ (Pot 5.5bb)',
+            q: 'Vilain C-Bet 33% pot sur K-9-4 rainbow. Quelle est sa fréquence approximative et votre action ?',
+            choices: ['Vilain C-Bet très large (65–80% range) → Call facile avec 2e paire TK', 'Vilain n’a jamais de Kx → Check-Raise all-in en bluff', 'Vilain est strictement polarisé sur AA/KK → Fold dès le flop'],
+            best: 0,
+            explain: 'Sur K-9-4 rainbow, l’agresseur CO c-bet à haute fréquence à petit sizing. Votre A9s bat tous ses bluffs et flotteurs.'
+          },
+          {
+            street: '2. Turn • 2♥ (Pot 9.1bb)',
+            q: 'Vilain check back sur la Turn 2♥. Comment l’entonnoir filtre-t-il sa range maintenant ?',
+            choices: ['Sa range est cappellée vers JJ/TT, 9x, quelques K faibles et air qui abandonne', 'Il piège exclusivement avec KK et AA', 'Il va sûrement shove 2x pot River'],
+            best: 0,
+            explain: 'En checkant Turn sur une brique totale (2♥), CO retire la grande majorité de ses KQ+/sets qui veulent 2-barrel pour value.'
+          },
+          {
+            street: '3. River • 5♣ (Pot 9.1bb)',
+            q: 'Vous checkez (ou misez petit). Vilain mise faiblement 30% pot en thin value ou block. Votre décision ?',
+            choices: ['Call serein avec Top kicker 2e paire (vous battez ses 9x dominés, TT-JJ et bluffs manqués)', 'Fold exploitable face à un petit sizing', '3-Bet bluff avec A9s'],
+            best: 0,
+            explain: 'Votre 2e paire kicker As est très haute dans votre range après le check back Turn de CO : Easy Call pour attraper bluff/thin value.'
+          }
+        ]
+      }
+    ];
+
+    const V2_BOSS_FIGHTS = [
+      {
+        name: 'Boss NL10 Reg IP (BTN vs BB 100bb • K♣ T♦ 6♠ 3♥ Q♠)',
+        stages: [
+          { title: 'Rue 1/4 : Préflop', text: 'Vous êtes au BTN (100bb) avec A♥ Q♥. MP fold, c’est à vous.', opts: ['Open Raise 2.5x standard', 'Limp pour induire un squeeze', 'Fold par prudence'], best: 0, tip: 'AQs est un open automatique à 100% au BTN (Top 5% des mains).' },
+          { title: 'Rue 2/4 : Flop K♣ T♦ 6♠', text: 'BB a défendu. Il checke vers vous sur K-T-6 rainbow. Pot = 5.5bb.', opts: ['C-Bet 50–66% avec OESD (AJ) + backdoor', 'C-Bet 100% pot uniquement en value', 'Open Fold'], best: 0, tip: 'Vous avez Gutshot max (J pour quinte max) + overcard As + backdoor quinte royale : excellent C-Bet semi-bluff !' },
+          { title: 'Rue 3/4 : Turn 3♥', text: 'BB call votre C-Bet flop. Turn = 3♥ (aucun tirage couleur possible). Pot = 12bb.', opts: ['2-Barrel 66% pour faire coucher T9/77 et valoriser vos tirages', 'Check Back gratuit et abandonner si raté', 'Min-bet 1bb'], best: 0, tip: 'Votre équité reste forte (4 J + 3 As = ~15%) avec grosse fold equity sur les paires intermédiaires face au 2-barrel.' },
+          { title: 'Rue 4/4 : River J♦ (Quinte Max !)', text: 'MIRACLE ! River J♦ complète votre quinte max (A-K-Q-J-T). BB checke. Pot = 28bb, reste ~78bb.', opts: ['Overbet / Gros Value Bet 100%–125% pot (ou 75% max)', 'Check Back par peur d’un brelan', 'Small bet 15% pot'], best: 0, tip: 'Avec les nuts absolues (quinte max à l’As), maximisez la value contre KQ, KT, QT, deux paires et brelans de BB !' },
+        ]
+      }
+    ];
+
+    function stopWarmupTimer() {
+      if (v2State.warmup.timerId) {
+        clearInterval(v2State.warmup.timerId);
+        v2State.warmup.timerId = null;
+      }
+    }
+
+    function startDailyWarmup() {
+      const api = window.ProPokerV2;
+      if (!api) return;
+      stopWarmupTimer();
+
+      const weakArr = Object.values(rgState?.mastery?.weakHands || {});
+      const candidates = [];
+      weakArr.forEach((w, idx) => {
+        candidates.push({
+          id: `weak-${idx}`,
+          family: w.presetKey,
+          kind: 'leak',
+          priority: 100 - idx,
+          seconds: 40,
+          hand: w.handName,
+          spotLabel: `${RANGE_PRESET_META[w.presetKey]?.label || w.presetKey} (${w.depthKey})`,
+          expected: w.expectedAction === 'opencall' ? 'c' : (w.expectedAction === 'threebet' ? '3b' : (w.expectedAction === 'fourbet' ? '4b' : (w.expectedAction === 'raise' ? 'mr' : 'f'))),
+        });
+      });
+
+      const fallbackSpots = [
+        { id: 'due-1', family: 'cash', kind: 'due', priority: 90, seconds: 45, hand: 'A5s', spotLabel: 'BB vs BTN Open 2.5x (Cash 100bb)', expected: '3b' },
+        { id: 'due-2', family: 'cash', kind: 'due', priority: 85, seconds: 45, hand: 'KQo', spotLabel: 'UTG Open 100bb', expected: 'mr' },
+        { id: 'new-1', family: 'expresso', kind: 'new', priority: 80, seconds: 45, hand: 'K7s', spotLabel: 'Expresso 3-Max BTN 25bb', expected: 'mr' },
+        { id: 'new-2', family: 'mtt', kind: 'new', priority: 75, seconds: 45, hand: 'A4o', spotLabel: 'Expresso 3-Max SB 15bb', expected: 'shv' },
+        { id: 'tr-1', family: 'cash', kind: 'transfer', priority: 70, seconds: 45, hand: '65s', spotLabel: 'BB vs BTN Open (Polarisé 75% 3-Bet)', expected: '3b' },
+        { id: 'due-3', family: 'mtt', kind: 'due', priority: 65, seconds: 45, hand: 'Q9o', spotLabel: 'UTG Open 6-Max 100bb', expected: 'f' },
+      ];
+      fallbackSpots.forEach(x => candidates.push(x));
+
+      const queue = api.buildWarmup(candidates, 270).slice(0, 6);
+      v2State.warmup.queue = queue;
+      v2State.warmup.index = 0;
+      v2State.warmup.correct = 0;
+      v2State.warmup.secondsLeft = 300;
+      v2State.warmup.timerId = setInterval(() => {
+        v2State.warmup.secondsLeft = Math.max(0, v2State.warmup.secondsLeft - 1);
+        const m = String(Math.floor(v2State.warmup.secondsLeft / 60)).padStart(2, '0');
+        const s = String(v2State.warmup.secondsLeft % 60).padStart(2, '0');
+        const el = document.getElementById('rg-warmup-timer');
+        if (el) el.textContent = `${m}:${s}`;
+        if (v2State.warmup.secondsLeft === 0) stopWarmupTimer();
+      }, 1000);
+      renderWarmupCard();
+    }
+
+    function renderWarmupCard() {
+      const q = v2State.warmup.queue;
+      const idx = v2State.warmup.index;
+      const prog = document.getElementById('rg-warmup-progress');
+      const promptEl = document.getElementById('rg-warmup-prompt');
+      const cardsEl = document.getElementById('rg-warmup-cards');
+      const actEl = document.getElementById('rg-warmup-actions');
+      const fbEl = document.getElementById('rg-warmup-feedback');
+      if (!promptEl || !actEl) return;
+
+      if (fbEl) fbEl.classList.add('hidden');
+      if (!q.length || idx >= q.length) {
+        stopWarmupTimer();
+        if (prog) prog.textContent = `Warm-up terminé (${v2State.warmup.correct}/${q.length} réussites)`;
+        promptEl.textContent = `🎉 Routine terminée ! Score : ${v2State.warmup.correct}/${q.length}. Vous êtes prêt pour votre session.`;
+        if (cardsEl) cardsEl.innerHTML = '';
+        actEl.innerHTML = '';
+        return;
+      }
+
+      const item = q[idx];
+      v2State.warmup.answered = false;
+      v2State.warmup.cardStartTs = Date.now();
+      if (prog) prog.textContent = `Carte ${idx + 1}/${q.length} • Priorité : ${item.kind.toUpperCase()}`;
+      promptEl.textContent = `${item.spotLabel} — Quelle action optimale avec ${item.hand} ?`;
+      if (cardsEl && typeof renderMiniCards === 'function') renderMiniCards('rg-warmup-cards', item.hand, 'sm');
+
+      const btns = [
+        ['f', 'Fold', 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'],
+        ['c', 'Call / Défendre', 'bg-sky-600 hover:bg-sky-500 text-white border-sky-400/40'],
+        ['mr', 'Open / Raise', 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40'],
+        ['3b', '3-Bet / 4-Bet', 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400/40'],
+        ['shv', 'All-In Shove', 'bg-purple-600 hover:bg-purple-500 text-white border-purple-400/40'],
+      ];
+      actEl.innerHTML = btns.map(([code, lbl, cls]) => `<button type="button" onclick="submitWarmupAnswer('${code}')" class="py-2 px-2 rounded-xl border text-xs font-extrabold transition ${cls}">${lbl}</button>`).join('');
+    }
+
+    function submitWarmupAnswer(choiceCode) {
+      if (v2State.warmup.answered) return;
+      const api = window.ProPokerV2;
+      const item = v2State.warmup.queue[v2State.warmup.index];
+      if (!item || !api) return;
+      v2State.warmup.answered = true;
+      const ms = Date.now() - v2State.warmup.cardStartTs;
+      const ok = choiceCode === item.expected || (item.expected === '4b' && choiceCode === '3b');
+      if (ok) {
+        v2State.warmup.correct += 1;
+        awardV2Xp(20);
+      }
+      const grade = api.gradeAttempt({ evLossBb: ok ? 0 : 0.35, freqError: ok ? 0 : 1, ms, limitMs: 10000, usedHint: false });
+      const gradeLabels = { 1: '1 (À revoir)', 2: '2 (Difficile)', 3: '3 (Bien)', 4: '4 (Facile ⚡)' };
+      const gb = document.getElementById('rg-warmup-grade-badge');
+      if (gb) gb.textContent = `Note FSRS : ${gradeLabels[grade] || grade}`;
+      recordV2SrsAttempt(ok, ms, 10000, item.kind === 'transfer');
+
+      const fb = document.getElementById('rg-warmup-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = ok
+          ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+          : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        fb.innerHTML = `${ok ? '✅ Excellent !' : `❌ Attendu : ${item.expected.toUpperCase()}.`} <button type="button" onclick="v2State.warmup.index++; renderWarmupCard();" class="ml-3 px-2.5 py-1 rounded-lg bg-white text-slate-950 font-extrabold">Continuer →</button>`;
+      }
+    }
+
+    function ensureTextureGameInit() {
+      if (!v2State.textureGame.current) nextTextureSprintHand();
+    }
+
+    function nextTextureSprintHand() {
+      const api = window.ProPokerV2;
+      const spot = V2_TEXTURE_SPOTS[Math.floor(Math.random() * V2_TEXTURE_SPOTS.length)];
+      v2State.textureGame.current = spot;
+      v2State.textureGame.answered = false;
+      const tex = api ? api.texture(spot.flop) : null;
+      const boardEl = document.getElementById('rg-texture-board');
+      const heroEl = document.getElementById('rg-texture-hero');
+      const fbEl = document.getElementById('rg-texture-feedback');
+      if (fbEl) fbEl.classList.add('hidden');
+      if (boardEl) {
+        const suitSym = { s: '♠', h: '♥', d: '♦', c: '♣' };
+        boardEl.innerHTML = spot.flop.map(c => {
+          const red = c[1] === 'h' || c[1] === 'd';
+          return `<div class="w-11 h-14 rounded-xl bg-white border border-slate-300 shadow flex flex-col items-center justify-center font-mono font-extrabold text-sm ${red ? 'text-rose-600' : 'text-slate-900'}">
+            <span>${c[0]}</span><span>${suitSym[c[1]]}</span>
+          </div>`;
+        }).join('') + (tex ? `<span class="ml-2 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono text-sky-300">${tex.high} • ${tex.suits} • conn=${tex.connectivity}${tex.paired ? ' • pairé' : ''}</span>` : '');
+      }
+      if (heroEl) heroEl.textContent = spot.hero;
+    }
+
+    function submitTextureAnswer(choice) {
+      if (v2State.textureGame.answered || !v2State.textureGame.current) return;
+      v2State.textureGame.answered = true;
+      v2State.textureGame.total += 1;
+      const ok = choice === v2State.textureGame.current.answer;
+      if (ok) {
+        v2State.textureGame.correct += 1;
+        awardV2Xp(25);
+      }
+      recordV2SrsAttempt(ok, 4000, 10000, true);
+      const sc = document.getElementById('rg-texture-score');
+      if (sc) sc.textContent = `Score : ${v2State.textureGame.correct}/${v2State.textureGame.total}`;
+      const fb = document.getElementById('rg-texture-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = ok ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200' : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        fb.textContent = `${ok ? '✅ Juste ! ' : '❌ Incorrect. '}${v2State.textureGame.current.note}`;
+      }
+    }
+
+    function ensureIcmGameInit() {
+      if (!v2State.icmGame.current) nextIcmGameSpot();
+    }
+
+    function nextIcmGameSpot() {
+      const api = window.ProPokerV2;
+      if (!api) return;
+      const bfBulle = api.bubbleFactor([40, 25, 20, 15], [50, 30, 20, 0], 1, 0);
+      const bountySpot = api.bountyAdjusted({ call: 18000, finalPot: 40000, bountyCash: 10, chipsInPlay: 2500000, remainingRegularPool: 1250, remainingBountyPool: 1250 });
+      const spots = [
+        {
+          text: 'Bulle 4-Max (Payouts 50/30/20/0). Vous êtes 2e en jetons (25bb) au CO. Le Chipleader (40bb) vous met à tapis effectif avec une range large. Vous avez AQo (54% d’équité estimée vs sa range de shove).',
+          stats: [`Bubble Factor : ${bfBulle.bf.toFixed(2)}`, `Risk Premium : +${(bfBulle.riskPremium * 100).toFixed(1)} pt`, `Équité requise : ${(bfBulle.requiredEquity * 100).toFixed(1)}%`],
+          expected: 'fold',
+          explain: `En ChipEV pur, 54% serait un call. Mais avec un Bubble Factor de ${bfBulle.bf.toFixed(2)} et un joueur short à 15bb à la table, l’équité minimale réelle requise monte à ${(bfBulle.requiredEquity * 100).toFixed(1)}% → Fold discipliné !`
+        },
+        {
+          text: `Tournoi PKO : vous couvrez Vilain (18k à payer dans un pot final de 40k). Sa prime encaissable vaut 10€ (Bounty Power = ${Math.round(bountySpot.bountyPower)} j/€). Vous avez KJs avec ~41% d'équité.`,
+          stats: [`Équité ChipEV : ${(bountySpot.chipEv * 100).toFixed(1)}%`, `Bonus Bounty : +${Math.round(bountySpot.bountyChips)}j`, `Équité avec Bounty : ${(bountySpot.withBounty * 100).toFixed(1)}%`],
+          expected: 'call',
+          explain: `Sans bounty, le call demanderait ${(bountySpot.chipEv * 100).toFixed(1)}% (41% serait un fold). Grâce au Bounty Power, la cote réelle chute à ${(bountySpot.withBounty * 100).toFixed(1)}% → Call EV+ !`
+        },
+      ];
+      v2State.icmGame.current = spots[v2State.icmGame.total % spots.length];
+      v2State.icmGame.answered = false;
+      const scEl = document.getElementById('rg-icmgame-scenario');
+      const stEl = document.getElementById('rg-icmgame-stats');
+      const fbEl = document.getElementById('rg-icmgame-feedback');
+      if (scEl) scEl.textContent = v2State.icmGame.current.text;
+      if (stEl) {
+        stEl.innerHTML = v2State.icmGame.current.stats.map(s => `<div class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200">${s}</div>`).join('');
+      }
+      if (fbEl) fbEl.classList.add('hidden');
+    }
+
+    function submitIcmGameAnswer(choice) {
+      if (v2State.icmGame.answered || !v2State.icmGame.current) return;
+      v2State.icmGame.answered = true;
+      v2State.icmGame.total += 1;
+      const ok = choice === v2State.icmGame.current.expected;
+      if (ok) {
+        v2State.icmGame.correct += 1;
+        awardV2Xp(30);
+      }
+      recordV2SrsAttempt(ok, 5000, 12000, true);
+      const scoreEl = document.getElementById('rg-icmgame-score');
+      if (scoreEl) scoreEl.textContent = `Score : ${v2State.icmGame.correct}/${v2State.icmGame.total}`;
+      const fb = document.getElementById('rg-icmgame-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = ok ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200' : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        fb.textContent = `${ok ? '✅ Bien joué ! ' : '❌ Erreur coûteuse. '}${v2State.icmGame.current.explain}`;
+      }
+    }
+
+    function ensureRafaleGameInit() {
+      if (!v2State.rafaleGame.current) nextRafaleHand();
+    }
+
+    function nextRafaleHand() {
+      const item = V2_RAFALE_DECK[v2State.rafaleGame.total % V2_RAFALE_DECK.length];
+      v2State.rafaleGame.current = item;
+      v2State.rafaleGame.answered = false;
+      const spotEl = document.getElementById('rg-rafale-spot');
+      const actEl = document.getElementById('rg-rafale-actions');
+      const fbEl = document.getElementById('rg-rafale-feedback');
+      if (spotEl) spotEl.textContent = item.spot;
+      if (typeof renderMiniCards === 'function') renderMiniCards('rg-rafale-cards', item.hand, 'lg');
+      if (actEl) {
+        actEl.innerHTML = item.opts.map(([code, label]) => `<button type="button" onclick="submitRafaleAnswer('${code}')" class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-white transition">${label}</button>`).join('');
+      }
+      if (fbEl) fbEl.classList.add('hidden');
+    }
+
+    function submitRafaleAnswer(code) {
+      if (v2State.rafaleGame.answered || !v2State.rafaleGame.current) return;
+      v2State.rafaleGame.answered = true;
+      v2State.rafaleGame.total += 1;
+      const ok = code === v2State.rafaleGame.current.expected;
+      if (ok) {
+        v2State.rafaleGame.correct += 1;
+        awardV2Xp(20);
+      }
+      recordV2SrsAttempt(ok, 3000, 8000, true);
+      const sc = document.getElementById('rg-rafale-score');
+      if (sc) sc.textContent = `Score : ${v2State.rafaleGame.correct}/${v2State.rafaleGame.total}`;
+      const fb = document.getElementById('rg-rafale-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = ok ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200' : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        fb.textContent = `${ok ? '✅ Parfait ! ' : '❌ À ajuster. '}${v2State.rafaleGame.current.explain}`;
+      }
+    }
+
+    function ensureFunnelGameInit() {
+      renderFunnelStep();
+    }
+
+    function resetFunnelGame() {
+      v2State.funnelGame = { scenarioIdx: 0, stepIdx: 0, answered: false };
+      renderFunnelStep();
+    }
+
+    function renderFunnelStep() {
+      const sc = V2_FUNNEL_SCENARIOS[v2State.funnelGame.scenarioIdx];
+      const step = sc.steps[v2State.funnelGame.stepIdx];
+      const bc = document.getElementById('rg-funnel-breadcrumb');
+      const qEl = document.getElementById('rg-funnel-question');
+      const chEl = document.getElementById('rg-funnel-choices');
+      const fbEl = document.getElementById('rg-funnel-feedback');
+      if (!qEl || !chEl) return;
+
+      v2State.funnelGame.answered = false;
+      if (fbEl) fbEl.classList.add('hidden');
+      if (bc) {
+        bc.innerHTML = sc.steps.map((st, idx) => `<span class="px-2 py-1 rounded-lg border ${idx === v2State.funnelGame.stepIdx ? 'bg-sky-500/20 border-sky-400 text-sky-200' : 'bg-slate-900 border-slate-800 text-slate-500'}">${st.street}</span>`).join('');
+      }
+      qEl.textContent = `${sc.title} — ${step.q}`;
+      chEl.innerHTML = step.choices.map((txt, idx) => `<button type="button" onclick="submitFunnelChoice(${idx})" class="text-left p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">${txt}</button>`).join('');
+    }
+
+    function submitFunnelChoice(choiceIdx) {
+      if (v2State.funnelGame.answered) return;
+      const sc = V2_FUNNEL_SCENARIOS[v2State.funnelGame.scenarioIdx];
+      const step = sc.steps[v2State.funnelGame.stepIdx];
+      v2State.funnelGame.answered = true;
+      const ok = choiceIdx === step.best;
+      if (ok) awardV2Xp(25);
+      recordV2SrsAttempt(ok, 4500, 12000, true);
+      const fb = document.getElementById('rg-funnel-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        fb.className = ok ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200' : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        const hasNext = v2State.funnelGame.stepIdx + 1 < sc.steps.length;
+        fb.innerHTML = `${ok ? '✅ Lecture exacte ! ' : '❌ Mauvais filtre de range. '}${step.explain} ` +
+          (hasNext ? '<button type="button" onclick="v2State.funnelGame.stepIdx++; renderFunnelStep();" class="ml-2 px-2.5 py-1 rounded-lg bg-white text-slate-950 font-extrabold">Rue suivante →</button>' : '<span class="ml-2 font-bold text-emerald-300">🏆 Entonnoir complété !</span>');
+      }
+    }
+
+    function ensureBossGameInit() {
+      renderBossStage();
+    }
+
+    function startBossFight() {
+      v2State.bossGame = { bossIdx: 0, streetIdx: 0, heroHp: 3, bossHp: 4, over: false };
+      renderBossStage();
+    }
+
+    function renderBossStage() {
+      const boss = V2_BOSS_FIGHTS[v2State.bossGame.bossIdx];
+      const st = boss.stages[v2State.bossGame.streetIdx];
+      const hpEl = document.getElementById('rg-boss-hp');
+      const tEl = document.getElementById('rg-boss-stage-title');
+      const nEl = document.getElementById('rg-boss-narrative');
+      const cEl = document.getElementById('rg-boss-choices');
+      const fEl = document.getElementById('rg-boss-feedback');
+      if (!tEl || !nEl || !cEl) return;
+
+      if (hpEl) {
+        const hearts = '♥'.repeat(v2State.bossGame.heroHp) + '♡'.repeat(Math.max(0, 3 - v2State.bossGame.heroHp));
+        hpEl.textContent = `${hearts} Hero • Boss ${v2State.bossGame.bossHp}/4`;
+      }
+      if (fEl) fEl.classList.add('hidden');
+
+      if (v2State.bossGame.over || v2State.bossGame.bossHp <= 0 || v2State.bossGame.heroHp <= 0) {
+        tEl.textContent = v2State.bossGame.bossHp <= 0 ? `🏆 VICTOIRE SUR ${boss.name}` : '💀 DÉFAITE — REJOUEZ LE BOSS';
+        nEl.textContent = v2State.bossGame.bossHp <= 0 ? 'Félicitations ! Vous avez maîtrisé les 4 rues avec rigueur GTO + Value maximale (+100 XP).' : 'Vous avez perdu vos 3 cœurs en route. Cliquez sur « Nouveau Boss » pour retenter.';
+        cEl.innerHTML = '';
+        return;
+      }
+
+      tEl.textContent = `${boss.name} — ${st.title}`;
+      nEl.textContent = st.text;
+      cEl.innerHTML = st.opts.map((opt, idx) => `<button type="button" onclick="submitBossChoice(${idx})" class="text-left p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">${opt}</button>`).join('');
+    }
+
+    function submitBossChoice(choiceIdx) {
+      if (v2State.bossGame.over) return;
+      const boss = V2_BOSS_FIGHTS[v2State.bossGame.bossIdx];
+      const st = boss.stages[v2State.bossGame.streetIdx];
+      const ok = choiceIdx === st.best;
+      if (ok) {
+        v2State.bossGame.bossHp -= 1;
+        awardV2Xp(v2State.bossGame.bossHp === 0 ? 100 : 25);
+      } else {
+        v2State.bossGame.heroHp -= 1;
+      }
+      recordV2SrsAttempt(ok, 5000, 15000, true);
+
+      const fEl = document.getElementById('rg-boss-feedback');
+      if (fEl) {
+        fEl.classList.remove('hidden');
+        fEl.className = ok ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200' : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
+        const ended = v2State.bossGame.bossHp <= 0 || v2State.bossGame.heroHp <= 0 || v2State.bossGame.streetIdx + 1 >= boss.stages.length;
+        if (ended) v2State.bossGame.over = true;
+        fEl.innerHTML = `${ok ? '⚔️ Coup critique sur le Boss ! ' : '💔 -1 Cœur Hero ! '}${st.tip} ` +
+          `<button type="button" onclick="${ended ? 'renderBossStage()' : 'v2State.bossGame.streetIdx++; renderBossStage()'}" class="ml-2 px-2.5 py-1 rounded-lg bg-white text-slate-950 font-extrabold">${ended ? 'Voir verdict →' : 'Rue suivante →'}</button>`;
+      }
+    }
+
+    function initProPokerV2() {
+      if (v2State.initialized) return;
+      if (!window.ProPokerV2) return;
+      v2State.initialized = true;
+      loadV2SrsStats();
+      populateV2RangeCatalog();
+      renderV2ChunkingPanel();
+      recomputeIcmLab();
+      recomputeBountyLab();
+      recomputeV2FormatsAnalytics();
+      if (typeof updateGamesMasteryBadges === 'function') updateGamesMasteryBadges();
+    }
+
+    window.addEventListener('propoker-v2-ready', () => {
+      initProPokerV2();
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       initRanges();
       buildMatrixDOM();
@@ -7767,10 +9653,20 @@
       initEquityCalculator();
       initFourBetSimulator();
       computeGtoSolver();
+      initProPokerV2();
     });
 
     // Couch-friendly keyboard shortcuts when Quiz or Jeux de Ranges is active
     window.addEventListener('keydown', (e) => {
+      const backupModal = document.getElementById('v2-backup-modal');
+      if (backupModal && !backupModal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeV2BackupModal();
+        }
+        return;
+      }
+
       const videosModal = document.getElementById('coach-videos-modal');
       if (videosModal && !videosModal.classList.contains('hidden')) {
         if (e.key === 'Escape') {
