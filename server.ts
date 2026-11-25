@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
-import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
+import { getAuth as getAdminAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 
 const __filename = fileURLToPath(import.meta.url);

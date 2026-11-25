@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import {
   doc,
@@ -12,6 +13,16 @@ import {
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
+
+// Initialisation App Check avec votre Site Key reCAPTCHA Enterprise
+export const appCheck =
+  typeof window !== 'undefined'
+    ? initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider('6LeUrzEuAAAAAPbp1RCYJkJjIi-i5EmZfZj2UPz-'),
+        isTokenAutoRefreshEnabled: true,
+      })
+    : null;
+
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
