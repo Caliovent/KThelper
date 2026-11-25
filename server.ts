@@ -12,7 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
-const MODEL_NAME = 'gemini-4-hydrogen';
+const PRIMARY_MODEL = 'gemini-4-hydrogen';
+const FALLBACK_MODEL = 'gemini-3.1-flash-lite';
 
 const adminApp = getApps().length
   ? getApp()
@@ -65,6 +66,64 @@ function getGeminiClient(): GoogleGenAI {
       },
     },
   });
+}
+
+function isTransientGeminiError(err: unknown): boolean {
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  const status = (err as { status?: number; code?: number })?.status ?? (err as { code?: number })?.code;
+  return (
+    status === 503 ||
+    status === 500 ||
+    status === 429 ||
+    /503|UNAVAILABLE|high demand|overloaded|RESOURCE_EXHAUSTED|temporarily unavailable/i.test(raw)
+  );
+}
+
+function formatGeminiError(err: unknown, fallbackMessage: string): { status: number; message: string } {
+  if (isTransientGeminiError(err)) {
+    return {
+      status: 503,
+      message:
+        'Le service Gemini connaît un pic de trafic temporaire (503). Réessayez dans quelques secondes.',
+    };
+  }
+  const message = err instanceof Error ? err.message : fallbackMessage;
+  return { status: 500, message };
+}
+
+async function generateJsonWithRetry(
+  ai: GoogleGenAI,
+  prompt: string,
+  responseSchema: Record<string, unknown>
+) {
+  const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
+  let lastError: unknown = null;
+
+  for (const model of modelsToTry) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema,
+          },
+        });
+      } catch (err) {
+        lastError = err;
+        if (!isTransientGeminiError(err)) {
+          throw err;
+        }
+        console.warn(`[Gemini] Transient error on ${model} (attempt ${attempt + 1}/2), retrying...`);
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 900));
+        }
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 const VALID_CARD_RE = /^[AKQJT98765432][shdc]$/;
@@ -272,14 +331,7 @@ Règles strictes :
 
       let scenario: GeneratedScenario | null = null;
       for (let attempt = 0; attempt < 2; attempt++) {
-        const response = await ai.models.generateContent({
-          model: MODEL_NAME,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema,
-          },
-        });
+        const response = await generateJsonWithRetry(ai, prompt, responseSchema);
         const text = (response.text ?? '').trim();
         const parsed = JSON.parse(text) as GeneratedScenario;
         if (validateScenario(parsed)) {
@@ -297,12 +349,12 @@ Règles strictes :
 
       return res.json({ scenario });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors de la génération du scénario IA.';
       console.error('[/api/coach/scenario] error:', err);
-      return res.status(500).json({ error: message });
+      const { status, message } = formatGeminiError(
+        err,
+        'Erreur lors de la génération du scénario IA.'
+      );
+      return res.status(status).json({ error: message });
     }
   });
 
@@ -409,14 +461,7 @@ IMPORTANT : Pour heroCards et boardCards dans detectedSpot, n'utilise QUE des co
         ],
       };
 
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema,
-        },
-      });
+      const response = await generateJsonWithRetry(ai, prompt, responseSchema);
 
       const text = (response.text ?? '').trim();
       const review = JSON.parse(text);
@@ -443,12 +488,12 @@ IMPORTANT : Pour heroCards et boardCards dans detectedSpot, n'utilise QUE des co
 
       return res.json({ review });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors de l’analyse de la main.';
       console.error('[/api/coach/review] error:', err);
-      return res.status(500).json({ error: message });
+      const { status, message } = formatGeminiError(
+        err,
+        'Erreur lors de l’analyse de la main.'
+      );
+      return res.status(status).json({ error: message });
     }
   });
 
