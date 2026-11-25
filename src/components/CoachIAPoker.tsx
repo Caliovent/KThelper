@@ -480,7 +480,7 @@ export const CoachIAPoker: React.FC = () => {
             Connectez-vous pour accéder au Coach IA Poker
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            L’onglet <strong className="text-white">🤖 Coach IA Poker</strong> (générateur de mains interactives Gemini 2.5 Flash & analyseur d’historiques Winamax/PokerStars) est protégé par authentification Google afin de sécuriser l’accès à l’API.
+            L’onglet <strong className="text-white">🤖 Coach IA Poker</strong> (générateur de mains interactives Gemini & analyseur d’historiques Winamax/PokerStars) est protégé par authentification Google afin de sécuriser l’accès à l’API.
           </p>
         </div>
 
@@ -529,7 +529,7 @@ export const CoachIAPoker: React.FC = () => {
                 Coach IA Poker — Pédagogie Kill Tilt NL2 / NL5
               </h2>
               <span className="text-xs font-mono text-emerald-400">
-                · Gemini 2.5 Flash
+                · Gemini 4 Flash
               </span>
             </div>
             <p className="text-xs text-slate-400">
