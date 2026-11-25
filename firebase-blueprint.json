@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "CoachProfile": {
+      "title": "CoachProfile",
+      "description": "Public coach progress profile for an authenticated Kill Tilt user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name shown in the Coach IA dashboard.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total XP earned in Kill Tilt Poker Suite."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "xp", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/coachProfiles/{userId}": {
+      "schema": {
+        "$ref": "#/entities/CoachProfile"
+      },
+      "description": "Stores per-user Coach IA Poker profile and XP state."
+    }
+  }
+}

@@ -4,12 +4,51 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
+import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
+import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
 const MODEL_NAME = 'gemini-2.5-flash';
+
+const adminApp = getApps().length
+  ? getApp()
+  : initializeAdminApp({
+      projectId: firebaseConfig.projectId,
+    });
+const adminAuth = getAdminAuth(adminApp);
+
+async function requireFirebaseAuth(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Authentification requise. Connectez-vous avec votre compte Google pour utiliser le Coach IA Poker.',
+      });
+    }
+    const token = authHeader.slice('Bearer '.length).trim();
+    if (!token) {
+      return res.status(401).json({
+        error: 'Jeton d’authentification manquant. Veuillez vous reconnecter.',
+      });
+    }
+    const decoded: DecodedIdToken = await adminAuth.verifyIdToken(token);
+    (req as express.Request & { user?: DecodedIdToken }).user = decoded;
+    return next();
+  } catch (err) {
+    console.error('[Auth] Invalid Firebase ID token:', err);
+    return res.status(401).json({
+      error: 'Session expirée ou non autorisée. Veuillez vous reconnecter avec Google.',
+    });
+  }
+}
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -87,7 +126,7 @@ async function createServer() {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
 
-  app.post('/api/coach/scenario', async (req, res) => {
+  app.post('/api/coach/scenario', requireFirebaseAuth, async (req, res) => {
     try {
       const {
         xp = 0,
@@ -267,7 +306,7 @@ Règles strictes :
     }
   });
 
-  app.post('/api/coach/review', async (req, res) => {
+  app.post('/api/coach/review', requireFirebaseAuth, async (req, res) => {
     try {
       const {
         handHistory = '',

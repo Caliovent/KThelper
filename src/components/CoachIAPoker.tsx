@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import {
   AlertTriangle,
   Award,
@@ -9,12 +10,22 @@ import {
   History,
   Lightbulb,
   Loader2,
+  Lock,
+  LogIn,
+  LogOut,
   Search,
+  ShieldCheck,
   Sparkles,
   Target,
   Trash2,
   XCircle,
 } from 'lucide-react';
+import {
+  auth,
+  signInWithGoogleCoach,
+  signOutCoach,
+  syncCoachProfileToFirestore,
+} from '../firebase';
 import {
   CoachScenario,
   HandReview,
@@ -102,6 +113,12 @@ export const CoachIAPoker: React.FC = () => {
   const [coachMode, setCoachMode] = useState<'scenario' | 'review'>('scenario');
   const [isCoachTabActive, setIsCoachTabActive] = useState(false);
 
+  // Firebase Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   // Synced XP Progress from Quiz tab
   const [progress, setProgress] = useState<QuizProgressInfo>(DEFAULT_PROGRESS);
 
@@ -125,6 +142,56 @@ export const CoachIAPoker: React.FC = () => {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [currentReview, setCurrentReview] = useState<HandReview | null>(null);
   const [savedReviews, setSavedReviews] = useState<SavedHandReview[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthReady(true);
+      setAuthError(null);
+      if (user) {
+        const latestXp =
+          typeof window.getKillTiltQuizProgress === 'function'
+            ? window.getKillTiltQuizProgress().xp
+            : 0;
+        syncCoachProfileToFirestore(latestXp).catch(() => {
+          // Handled by structured Firestore error logger
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      await signInWithGoogleCoach();
+      if (typeof window.showKillTiltToast === 'function') {
+        window.showKillTiltToast('Connecté au Coach IA Poker !', 'success');
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Impossible de finaliser la connexion Google.';
+      setAuthError(msg);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutCoach();
+      setScenario(null);
+      setCurrentReview(null);
+      if (typeof window.showKillTiltToast === 'function') {
+        window.showKillTiltToast('Déconnecté du Coach IA Poker.', 'info');
+      }
+    } catch (err: unknown) {
+      console.error('Sign out error:', err);
+    }
+  };
 
   // Load initial XP progress and saved reviews
   useEffect(() => {
@@ -187,6 +254,11 @@ export const CoachIAPoker: React.FC = () => {
   };
 
   const generateScenario = useCallback(async () => {
+    if (!auth.currentUser) {
+      setScenarioError('Veuillez vous connecter avec votre compte Google pour générer une main.');
+      return;
+    }
+
     setScenarioLoading(true);
     setScenarioError(null);
     setSelectedOption(null);
@@ -199,9 +271,13 @@ export const CoachIAPoker: React.FC = () => {
         : progress;
 
     try {
+      const idToken = await auth.currentUser.getIdToken();
       const resp = await fetch('/api/coach/scenario', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           xp: latestProgress.xp,
           level: latestProgress.level,
@@ -252,6 +328,7 @@ export const CoachIAPoker: React.FC = () => {
         if (typeof window.creditKillTiltCoachXp === 'function') {
           const updated = window.creditKillTiltCoachXp(totalGain);
           setProgress({ ...updated.levelInfo, xp: updated.xp });
+          syncCoachProfileToFirestore(updated.xp).catch(() => {});
         }
       } else {
         setLastXpGained(0);
@@ -294,6 +371,10 @@ export const CoachIAPoker: React.FC = () => {
 
   const handleAnalyzeHand = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!auth.currentUser) {
+      setReviewError('Veuillez vous connecter avec votre compte Google pour analyser une main.');
+      return;
+    }
     if (!handInput.trim()) {
       setReviewError('Collez un historique Winamax/PokerStars ou décrivez votre main avant de lancer l’analyse.');
       return;
@@ -303,9 +384,13 @@ export const CoachIAPoker: React.FC = () => {
     setReviewError(null);
 
     try {
+      const idToken = await auth.currentUser.getIdToken();
       const resp = await fetch('/api/coach/review', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           handHistory: handInput,
           limit: reviewLimit,
@@ -368,6 +453,71 @@ export const CoachIAPoker: React.FC = () => {
       ? Math.round((sessionStats.correct / sessionStats.total) * 100)
       : 100;
 
+  if (!authReady) {
+    return (
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-10 text-center space-y-3">
+        <Loader2 className="w-7 h-7 animate-spin text-emerald-400 mx-auto" />
+        <p className="text-xs font-mono text-slate-400">
+          Vérification de votre session d’authentification...
+        </p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xl max-w-2xl mx-auto text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-950/50">
+          <Lock className="w-8 h-8" />
+        </div>
+
+        <div className="space-y-2 max-w-lg mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono font-bold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Accès Réservé aux Membres Authentifiés
+          </div>
+          <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+            Connectez-vous pour accéder au Coach IA Poker
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            L’onglet <strong className="text-white">🤖 Coach IA Poker</strong> (générateur de mains interactives Gemini 2.5 Flash & analyseur d’historiques Winamax/PokerStars) est protégé par authentification Google afin de sécuriser l’accès à l’API.
+          </p>
+        </div>
+
+        {authError && (
+          <div className="bg-rose-950/50 border border-rose-500/40 rounded-xl p-3.5 text-xs text-rose-200 flex items-start gap-2.5 text-left max-w-md mx-auto">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <span className="selectable-text">{authError}</span>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={authLoading}
+            className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/60 transition inline-flex items-center gap-2.5"
+          >
+            {authLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Connexion Google en cours...
+              </>
+            ) : (
+              <>
+                <LogIn className="w-4 h-4" />
+                Se connecter avec Google
+              </>
+            )}
+          </button>
+          <p className="text-[11px] text-slate-500">
+            Les autres modules (Ranges, Jeux, HUD, Tableur Bankroll et Solver GTO) restent librement accessibles sans connexion.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {/* Top Coach Banner + Sub-Mode Switch */}
@@ -387,32 +537,50 @@ export const CoachIAPoker: React.FC = () => {
             </p>
           </div>
 
-          {/* Sub-mode Segmented Control */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-start lg:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={() => setCoachMode('scenario')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                coachMode === 'scenario'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Dices className="w-3.5 h-3.5" />
-              Scénarios Interactifs
-            </button>
-            <button
-              type="button"
-              onClick={() => setCoachMode('review')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                coachMode === 'review'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              Analyseur de Mains
-            </button>
+          <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto shrink-0">
+            {/* Authenticated User Badge & Sign Out */}
+            <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs font-semibold text-slate-200 max-w-[160px] truncate">
+                {currentUser.displayName || currentUser.email}
+              </span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                title="Se déconnecter du Coach IA"
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-slate-800 transition"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Sub-mode Segmented Control */}
+            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setCoachMode('scenario')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                  coachMode === 'scenario'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Dices className="w-3.5 h-3.5" />
+                Scénarios Interactifs
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoachMode('review')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                  coachMode === 'review'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                Analyseur de Mains
+              </button>
+            </div>
           </div>
         </div>
 

@@ -84,3 +84,110 @@ textarea,
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Distraction-free Fullscreen Mode for "Peins la Range" */
+#rg-panel-recall.recall-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background-color: #0b0f17;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  overflow-y: auto;
+}
+
+#rg-panel-recall.recall-fullscreen > * {
+  margin-top: 0 !important;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-controls-card {
+  padding: 0.5rem 0.75rem;
+  flex-shrink: 0;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-controls-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-controls-card > div > div {
+  flex: 1 1 160px;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-controls-card > div > div:last-child {
+  flex: 0 0 auto;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-controls-card label {
+  display: none;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-brief {
+  display: none;
+}
+
+/* Mobile & narrow windows (< 1024px): natural height flow so cards never overlap */
+#rg-panel-recall.recall-fullscreen #rg-recall-main-grid {
+  flex: 0 0 auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-matrix-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-matrix-card > * {
+  margin-top: 0 !important;
+}
+
+#rg-panel-recall.recall-fullscreen #rg-recall-matrix {
+  width: min(100%, 540px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Desktop side-by-side fullscreen (>= 1024px and >= 560px height): fit 100% without page scroll */
+@media (min-width: 1024px) and (min-height: 560px) {
+  #rg-panel-recall.recall-fullscreen {
+    overflow: hidden;
+  }
+
+  #rg-panel-recall.recall-fullscreen #rg-recall-main-grid {
+    flex: 1 1 0%;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  #rg-panel-recall.recall-fullscreen #rg-recall-matrix-card {
+    justify-content: space-between;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  #rg-panel-recall.recall-fullscreen #rg-recall-matrix {
+    width: min(100%, calc(100dvh - 210px));
+    max-width: 760px;
+  }
+
+  #rg-panel-recall.recall-fullscreen #rg-recall-feedback-col {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+}
+
+@media (max-height: 760px) {
+  #rg-panel-recall.recall-fullscreen .rg-recall-cell {
+    font-size: 10px;
+  }
+}
+
+
