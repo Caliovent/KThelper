@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
@@ -12,8 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
-const PRIMARY_MODEL = 'gemini-4-hydrogen';
-const FALLBACK_MODEL = 'gemini-3.1-flash-lite';
+const PRIMARY_MODEL = 'gemini-3.1-flash-lite';
+const FALLBACK_MODEL = 'gemini-4-hydrogen';
 
 const adminApp = getApps().length
   ? getApp()
@@ -96,29 +96,33 @@ async function generateJsonWithRetry(
   prompt: string,
   responseSchema: Record<string, unknown>
 ) {
-  const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
+  const attempts: Array<{ model: string; thinkingLevel: ThinkingLevel }> = [
+    { model: PRIMARY_MODEL, thinkingLevel: ThinkingLevel.MINIMAL },
+    { model: FALLBACK_MODEL, thinkingLevel: ThinkingLevel.LOW },
+    { model: PRIMARY_MODEL, thinkingLevel: ThinkingLevel.MINIMAL },
+  ];
   let lastError: unknown = null;
 
-  for (const model of modelsToTry) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        return await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema,
-          },
-        });
-      } catch (err) {
-        lastError = err;
-        if (!isTransientGeminiError(err)) {
-          throw err;
-        }
-        console.warn(`[Gemini] Transient error on ${model} (attempt ${attempt + 1}/2), retrying...`);
-        if (attempt === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 900));
-        }
+  for (let i = 0; i < attempts.length; i++) {
+    const { model, thinkingLevel } = attempts[i];
+    try {
+      return await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema,
+          thinkingConfig: { thinkingLevel },
+        },
+      });
+    } catch (err) {
+      lastError = err;
+      if (!isTransientGeminiError(err)) {
+        throw err;
+      }
+      console.warn(`[Gemini] Transient error on ${model} (attempt ${i + 1}/${attempts.length}), trying next...`);
+      if (i < attempts.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
       }
     }
   }
