@@ -62,6 +62,83 @@ export const ReviewEventV3Schema = z
   })
   .strict();
 
+/** Contrats Zod stricts des frontières HTTP M1 (/v1/*). */
+export const PseudoSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(24)
+  .regex(/^[a-zA-Z0-9_-]+$/, 'Pseudo : lettres, chiffres, _ ou - uniquement (3..24 car.)');
+
+export const AuthLinkRequestSchema = z
+  .object({
+    email: z.string().trim().email().max(160),
+    pseudo: PseudoSchema,
+    adultAttested: z.literal(true),
+  })
+  .strict();
+
+export const AuthSessionRequestSchema = z
+  .object({
+    linkToken: z.string().min(12).max(128),
+  })
+  .strict();
+
+export const QueueJoinSchema = z
+  .object({
+    league: LeagueSchema,
+    mode: z.literal('ghost_duel').default('ghost_duel'),
+    targetMatchId: z.string().uuid().optional(),
+  })
+  .strict();
+
+export const OpenSpotRequestSchema = z
+  .object({
+    key: z.string().uuid(),
+  })
+  .strict();
+
+export const AnswerSpotRequestSchema = z
+  .object({
+    action: z.string().min(1).max(64),
+    clientMs: z.number().finite().min(0).max(120000),
+    key: z.string().uuid(),
+  })
+  .strict();
+
+export const ForfeitRequestSchema = z
+  .object({
+    key: z.string().uuid(),
+  })
+  .strict();
+
+export const DailyStartRequestSchema = z
+  .object({
+    key: z.string().uuid(),
+  })
+  .strict();
+
+export const LeaderboardQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).max(200).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+    season: z.coerce.number().int().min(1).max(100).optional(),
+  })
+  .strict();
+
+export const FresqueLineAnswerSchema = z
+  .object({
+    floorIndex: z.number().int().min(0).max(12).nullable(),
+    islands: z.array(z.number().int().min(0).max(12)).max(13),
+  })
+  .strict();
+
+export const SalveAnswerSchema = z
+  .object({
+    action: z.enum(['allin', 'call', 'fold']),
+  })
+  .strict();
+
 export function parseGhostChallengeV2(raw: unknown) {
   return GhostChallengeV2Schema.parse(raw);
 }

@@ -7,6 +7,11 @@ import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
+import { SEASON_CONFIG } from './src/engines/mp/config';
+import { createAwsKtpProxyRouter } from './src/server/mp/awsProxy';
+import { createMpRouter } from './src/server/mp/router';
+import { MpService } from './src/server/mp/service';
+import { MpStore } from './src/server/mp/store';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -500,6 +505,23 @@ IMPORTANT : Pour heroCards et boardCards dans detectedSpot, n'utilise QUE des co
       return res.status(status).json({ error: message });
     }
   });
+
+  const mpPersistRaw = process.env.MP_DATA_FILE;
+  const mpPersistPath =
+    mpPersistRaw === ''
+      ? null
+      : mpPersistRaw
+        ? path.resolve(__dirname, mpPersistRaw)
+        : path.resolve(__dirname, '.mp-data/mp-store.json');
+  const mpService = new MpService({
+    store: new MpStore({
+      currentSeason: SEASON_CONFIG.currentSeason,
+      seasonTheme: SEASON_CONFIG.theme,
+      persistPath: mpPersistPath,
+    }),
+  });
+  app.use('/v1', createMpRouter(mpService));
+  app.use('/api/ktp-aws', createAwsKtpProxyRouter());
 
   const isProd = process.env.NODE_ENV === 'production';
   const distPath = path.resolve(__dirname, 'dist');

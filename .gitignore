@@ -2,6 +2,7 @@ node_modules/
 build/
 dist/
 coverage/
+.mp-data/
 playwright-report/
 test-results/
 blob-report/

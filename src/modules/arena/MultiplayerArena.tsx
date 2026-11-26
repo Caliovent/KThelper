@@ -77,8 +77,12 @@ import {
   setMpEnabledFlag,
   type ArenaState,
 } from '../../stores/arenaStore';
+import { AwsCloudPanel } from './AwsCloudPanel';
+import { FresqueDuelPanel } from './FresqueDuelPanel';
+import { RankedL1Panel } from './RankedL1Panel';
+import { SalvePanel } from './SalvePanel';
 
-type ArenaTab = 'duel' | 'daily' | 'elo' | 'quests';
+type ArenaTab = 'duel' | 'aws' | 'l1' | 'daily' | 'elo' | 'quests' | 'games';
 type CertaintyMark = 'sur' | 'hesitant';
 
 const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
@@ -276,6 +280,7 @@ export const MultiplayerArena: React.FC = () => {
   const [shareTagsInput, setShareTagsInput] = useState<string>('cbet, flop, position');
   const [shareError, setShareError] = useState<string | null>(null);
   const [sharedPreviewJson, setSharedPreviewJson] = useState<string | null>(null);
+  const [l1RunLocked, setL1RunLocked] = useState<boolean>(false);
 
   const sessionRef = useRef<ActiveRunSession | null>(null);
   sessionRef.current = session;
@@ -301,7 +306,7 @@ export const MultiplayerArena: React.FC = () => {
 
   // Verrouillage Anti-RTA global pendant un run
   useEffect(() => {
-    const locked = session !== null;
+    const locked = session !== null || l1RunLocked;
     window.dispatchEvent(
       new CustomEvent('propoker-arena-lock', {
         detail: {
@@ -315,7 +320,7 @@ export const MultiplayerArena: React.FC = () => {
     return () => {
       window.dispatchEvent(new CustomEvent('propoker-arena-lock', { detail: { locked: false, reason: '' } }));
     };
-  }, [session !== null]);
+  }, [session !== null, l1RunLocked]);
 
   // Charger Daily local et ?challenge=KT2. éventuel
   useEffect(() => {
@@ -1368,6 +1373,9 @@ export const MultiplayerArena: React.FC = () => {
           {(
             [
               ['duel', '⚔️ Duel & Ghost Amical (L0)'],
+              ['aws', '☁️ Cloud AWS (L0)'],
+              ['l1', '🌐 Classé L1 & Daily Officiel'],
+              ['games', '🎨 Fresque & Salve (MP-19)'],
               ['daily', '🏆 Daily Local (L0)'],
               ['elo', '📊 Ligues & Journal FSRS V3'],
               ['quests', '🎯 Quêtes & Écuries'],
@@ -1576,6 +1584,41 @@ export const MultiplayerArena: React.FC = () => {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB AWS : CLOUD AMICAL L0 (AWS ktp-backend + IndexedDB) */}
+      {activeTab === 'aws' && (
+        <AwsCloudPanel
+          roomClosedAttested={arena.antiTilt.roomClosedAttested}
+          onRunLockChange={setL1RunLocked}
+          onRequireAttestation={() =>
+            setStatusBanner(
+              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de démarrer un défi Cloud AWS.'
+            )
+          }
+        />
+      )}
+
+      {/* TAB L1 : CLASSE L1 & DAILY OFFICIEL (MP-12..MP-18) */}
+      {activeTab === 'l1' && (
+        <RankedL1Panel
+          roomClosedAttested={arena.antiTilt.roomClosedAttested}
+          masteryM={masteryM}
+          onRunLockChange={setL1RunLocked}
+          onRequireAttestation={() =>
+            setStatusBanner(
+              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de démarrer en L1.'
+            )
+          }
+        />
+      )}
+
+      {/* TAB GAMES : FRESQUE DUEL & SALVE 3-MAX (MP-19) */}
+      {activeTab === 'games' && (
+        <div className="space-y-5">
+          <FresqueDuelPanel />
+          <SalvePanel />
         </div>
       )}
 

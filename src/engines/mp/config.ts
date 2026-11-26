@@ -63,3 +63,57 @@ export const FSRS_THRESHOLDS = {
   easyTimeRatio: 0.35,
   confirmDelayMs: 7 * 864e5,
 } as const;
+
+/** Règles M1 Ghost classé & appariement (Bible p.22 & p.35). */
+export const GHOST_RANKED = {
+  spotCount: 15,
+  expiryMs: 48 * 3600 * 1000,
+  pairWindowMs: 30 * 864e5,
+  maxPairMatchesInWindow: 3,
+  antiRepeatMs: 14 * 864e5,
+} as const;
+
+/** Protection anti-tilt serveur (Bible p.28). */
+export const ANTI_TILT = {
+  forfeitWindowMs: 3600 * 1000,
+  maxForfeitsInWindow: 2,
+  cooldownMs: 15 * 60 * 1000,
+} as const;
+
+/** Daily Top officiel L1 (Bible p.23-24). */
+export const DAILY_L1 = {
+  spotCount: 15,
+  graceCloseMs: 15 * 60 * 1000,
+  regularityWindowDays: 7,
+  regularityTarget: 5,
+} as const;
+
+/** Saisons (Bible p.22). */
+export const SEASON_CONFIG = {
+  currentSeason: 1,
+  durationWeeks: 8,
+  rdBump: 100,
+  theme: 'Saison 1 — Précision Maths & ICM',
+} as const;
+
+/** Fresque Duel (Peins la Range) & Salve (Rafale 3-Max) (Bible p.17 & p.19). */
+export const FRESQUE_CONFIG = {
+  lineCount: 6,
+  lineLimitMs: 25000,
+  frontierWeight: 2,
+} as const;
+
+export const SALVE_CONFIG = {
+  spotCount: 15,
+  rafaleCount: 12,
+  suddenDeathCount: 3,
+  limitMs: 4000,
+} as const;
+
+/** Auth & bornes HTTP serveur (Bible p.29-30). */
+export const AUTH_LIMITS = {
+  linkMaxPerWindow: 5,
+  linkWindowMs: 60 * 1000,
+  sessionTtlMs: 7 * 864e5,
+  maxBodyBytes: 65536,
+} as const;

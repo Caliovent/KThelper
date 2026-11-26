@@ -29,9 +29,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx vite preview --host 127.0.0.1 --port 4173 --strictPort',
-    url: 'http://127.0.0.1:4173',
+    command: 'npx tsx server.ts',
+    url: 'http://127.0.0.1:4173/v1/meta',
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
+    env: {
+      NODE_ENV: 'production',
+      PORT: '4173',
+      MP_DEV_AUTH: '1',
+      MP_DATA_FILE: '',
+    },
   },
 });
