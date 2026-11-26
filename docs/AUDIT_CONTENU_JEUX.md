@@ -1,6 +1,6 @@
 # Audit Complet du Contenu Pédagogique & des Jeux — Kill Tilt Poker Suite
 
-> Généré automatiquement le `2026-11-26T20:44:26.442Z` via `npm run export:audit`.
+> Généré automatiquement le `2026-11-26T20:57:33.556Z` via `npm run export:audit`.
 > Destiné à la relecture poker (EV, ICM, PKO, ChipEV, MDF, Alpha, textures, ranges) par un joueur pro, un coach ou un analyseur externe.
 
 ## 1. Synthèse & Vérifications Automatiques
@@ -28,92 +28,92 @@
 ### 1. `salve_01_jackpot_3eq` — Reg Expresso 80/12/8 (Modèle équilibré) 
 - **Format** : 3max | Tapis eff. 25 bb | Pot avant héro 1.5 bb | Coût call/shove 25 bb
 - **Hypothèses affichées** : Fold adverse = 82% | Équité héro si payé = 45% | Fréq affichées : Jackpot 80/12/8 • Fold combiné 82% • Call 18% (AQs = 45% vs call)
-- **EV calculée (`computeSalveSpotEv`)** : `ppm_pp` -> Action = `6432` vs Fold = `0` (Risk Premium ICM = 1.35%)
-- **Explication** : Reg Expresso 80/12/8 (Modèle équilibré) : EV(Push All-in 25bb) = 6432 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+6432 ppm_pp).
+- **EV calculée (`computeSalveSpotEv`)** : `ppm_pp` -> Action = `7045` vs Fold = `0` (Risk Premium ICM = 1.35%)
+- **Explication** : Reg Expresso 80/12/8 (Modèle équilibré) : EV(Push All-in 25bb) = 7045 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+7045 ppm_pp).
 
 ### 2. `salve_02_sb_vs_bb_nit` — Nit Passif BB 
 - **Format** : hu | Tapis eff. 14 bb | Pot avant héro 1.5 bb | Coût call/shove 13.5 bb
 - **Hypothèses affichées** : Fold adverse = 64% | Équité héro si payé = 36% | Fréq affichées : Fold to Shove 64% • Call 36% (77+, A8+, KQ)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-206` vs Fold = `0`
-- **Explication** : Nit Passif BB : EV(Open Shove 14bb) = -206 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-271` vs Fold = `0`
+- **Explication** : Nit Passif BB : EV(Open Shove 14bb) = -271 mbb vs Fold = 0 mbb.
 
 ### 3. `salve_03_hu_cs_shove` — Calling Station HU 
 - **Format** : hu | Tapis eff. 12 bb | Pot avant héro 1.5 bb | Coût call/shove 11.5 bb
 - **Hypothèses affichées** : Fold adverse = 28% | Équité héro si payé = 34% | Fréq affichées : Fold to Shove 28% • Call très large 72%
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-1862` vs Fold = `0`
-- **Explication** : Calling Station HU : EV(Open Shove 12bb) = -1862 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-1985` vs Fold = `0`
+- **Explication** : Calling Station HU : EV(Open Shove 12bb) = -1985 mbb vs Fold = 0 mbb.
 
 ### 4. `salve_04_bb_call_aggro` — Maniac SB 11bb (Shove 75%) 
 - **Format** : hu | Tapis eff. 11 bb | Pot avant héro 1.5 bb | Coût call/shove 10 bb
 - **Hypothèses affichées** : Fold adverse = 0% | Équité héro si payé = 56.4% | Fréq affichées : Shove 75% (tous Ax, Kx, Qx, SC) • A8o a 56,4% d’équité
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `2126` vs Fold = `0`
-- **Explication** : Maniac SB 11bb (Shove 75%) : EV(Call Shove 11bb) = 2126 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `2408` vs Fold = `0`
+- **Explication** : Maniac SB 11bb (Shove 75%) : EV(Call Shove 11bb) = 2408 mbb vs Fold = 0 mbb.
 
 ### 5. `salve_05_3max_btn_18bb` — Blindes Serrées 3-Max 
 - **Format** : 3max | Tapis eff. 18 bb | Pot avant héro 1.5 bb | Coût call/shove 18 bb
 - **Hypothèses affichées** : Fold adverse = 72% | Équité héro si payé = 38% | Fréq affichées : Fold combiné SB+BB 72% • Call 28% (QTs = 38%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `30` vs Fold = `0`
-- **Explication** : Blindes Serrées 3-Max : EV(Open Shove 18bb) = 30 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-76` vs Fold = `0`
+- **Explication** : Blindes Serrées 3-Max : EV(Open Shove 18bb) = -76 mbb vs Fold = 0 mbb.
 
 ### 6. `salve_06_bb_vs_iso_nit` — Nit 3-Max Shove 10bb (18%) 
 - **Format** : 3max | Tapis eff. 10 bb | Pot avant héro 1.5 bb | Coût call/shove 9 bb
 - **Hypothèses affichées** : Fold adverse = 0% | Équité héro si payé = 34.2% | Fréq affichées : Shove ultra serré 18% (55+, A9+, KQ) • K9o = 34,2% vs cette range
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-2331` vs Fold = `0`
-- **Explication** : Nit 3-Max Shove 10bb (18%) : EV(Call Shove 10bb) = -2331 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-1989` vs Fold = `0`
+- **Explication** : Nit 3-Max Shove 10bb (18%) : EV(Call Shove 10bb) = -1989 mbb vs Fold = 0 mbb.
 
 ### 7. `salve_07_hu_9bb_ace` — Reg Équilibré HU 9bb 
 - **Format** : hu | Tapis eff. 9 bb | Pot avant héro 1.5 bb | Coût call/shove 8.5 bb
 - **Hypothèses affichées** : Fold adverse = 48% | Équité héro si payé = 45.2% | Fréq affichées : Fold to Shove 48% • Call 52% (A3o = 45,2%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `648` vs Fold = `0`
-- **Explication** : Reg Équilibré HU 9bb : EV(Open Shove 9bb) = 648 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `531` vs Fold = `0`
+- **Explication** : Reg Équilibré HU 9bb : EV(Open Shove 9bb) = 531 mbb vs Fold = 0 mbb.
 
 ### 8. `salve_08_btn_15bb_trap` — Trap Reg BB (Call 55%) 
 - **Format** : 3max | Tapis eff. 15 bb | Pot avant héro 1.5 bb | Coût call/shove 15 bb
 - **Hypothèses affichées** : Fold adverse = 45% | Équité héro si payé = 31.8% | Fréq affichées : Fold 45% • Call large 55% (T6o = 31,8%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-2066` vs Fold = `0`
-- **Explication** : Trap Reg BB (Call 55%) : EV(Open Shove 15bb) = -2066 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-2241` vs Fold = `0`
+- **Explication** : Trap Reg BB (Call 55%) : EV(Open Shove 15bb) = -2241 mbb vs Fold = 0 mbb.
 
 ### 9. `salve_09_hu_6bb_su` — Reg HU 6bb 
 - **Format** : hu | Tapis eff. 6 bb | Pot avant héro 1.5 bb | Coût call/shove 5.5 bb
 - **Hypothèses affichées** : Fold adverse = 42% | Équité héro si payé = 40.5% | Fréq affichées : Fold 42% • Call 58% (86s = 40,5%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `376` vs Fold = `0`
-- **Explication** : Reg HU 6bb : EV(Open Shove 6bb) = 376 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `259` vs Fold = `0`
+- **Explication** : Reg HU 6bb : EV(Open Shove 6bb) = 259 mbb vs Fold = 0 mbb.
 
 ### 10. `salve_10_bb_8bb_call` — Reg Aggro SB 8bb (Shove 62%) 
 - **Format** : hu | Tapis eff. 8 bb | Pot avant héro 1.5 bb | Coût call/shove 7 bb
 - **Hypothèses affichées** : Fold adverse = 0% | Équité héro si payé = 52.8% | Fréq affichées : Shove 62% • QJo = 52,8% vs range de shove
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `1184` vs Fold = `0`
-- **Explication** : Reg Aggro SB 8bb (Shove 62%) : EV(Call Shove 8bb) = 1184 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `1448` vs Fold = `0`
+- **Explication** : Reg Aggro SB 8bb (Shove 62%) : EV(Call Shove 8bb) = 1448 mbb vs Fold = 0 mbb.
 
 ### 11. `salve_11_3max_13bb_fold` — BB Récréatif Call 60% 
 - **Format** : 3max | Tapis eff. 13 bb | Pot avant héro 1.5 bb | Coût call/shove 12.5 bb
 - **Hypothèses affichées** : Fold adverse = 40% | Équité héro si payé = 29.5% | Fréq affichées : Fold 40% • Call 60% (72o = 29,5%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-2209` vs Fold = `0`
-- **Explication** : BB Récréatif Call 60% : EV(Open Shove 13bb) = -2209 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `-2298` vs Fold = `0`
+- **Explication** : BB Récréatif Call 60% : EV(Open Shove 13bb) = -2298 mbb vs Fold = 0 mbb.
 
 ### 12. `salve_12_hu_16bb_kjs` — Reg Passif HU 16bb 
 - **Format** : hu | Tapis eff. 16 bb | Pot avant héro 1.5 bb | Coût call/shove 15.5 bb
 - **Hypothèses affichées** : Fold adverse = 58% | Équité héro si payé = 46.1% | Fréq affichées : Fold 58% • Call 42% (KJs = 46,1%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `653` vs Fold = `0`
-- **Explication** : Reg Passif HU 16bb : EV(Open Shove 16bb) = 653 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `556` vs Fold = `0`
+- **Explication** : Reg Passif HU 16bb : EV(Open Shove 16bb) = 556 mbb vs Fold = 0 mbb.
 
 ### 13. `salve_13_sd_jackpot_7bb` — Mort Subite — Nit HU 7bb 🔥 (Mort Subite)
 - **Format** : hu | Tapis eff. 7 bb | Pot avant héro 1.5 bb | Coût call/shove 6.5 bb
 - **Hypothèses affichées** : Fold adverse = 56% | Équité héro si payé = 42.8% | Fréq affichées : Fold 56% • Call 44% (A2o = 42,8%)
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `711` vs Fold = `0`
-- **Explication** : Mort Subite — Nit HU 7bb : EV(Open Shove 7bb) = 711 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `616` vs Fold = `0`
+- **Explication** : Mort Subite — Nit HU 7bb : EV(Open Shove 7bb) = 616 mbb vs Fold = 0 mbb.
 
 ### 14. `salve_14_sd_bb_call_12bb` — Mort Subite — Reg Shove 55% 🔥 (Mort Subite)
 - **Format** : hu | Tapis eff. 12 bb | Pot avant héro 1.5 bb | Coût call/shove 11 bb
 - **Hypothèses affichées** : Fold adverse = 0% | Équité héro si payé = 54.1% | Fréq affichées : Shove 55% en SB • 55 possède 54,1% d’équité
-- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `1714` vs Fold = `0`
-- **Explication** : Mort Subite — Reg Shove 55% : EV(Call Shove 12bb) = 1714 mbb vs Fold = 0 mbb.
+- **EV calculée (`computeSalveSpotEv`)** : `mbb` -> Action = `1984` vs Fold = `0`
+- **Explication** : Mort Subite — Reg Shove 55% : EV(Call Shove 12bb) = 1984 mbb vs Fold = 0 mbb.
 
-### 15. `salve_15_sd_jackpot_3max` — Mort Subite — Expresso 80/12/8 (25/25/25) 🔥 (Mort Subite)
+### 15. `salve_15_sd_jackpot_3max` — Mort Subite — Expresso 80/12/8 (14/14/14) 🔥 (Mort Subite)
 - **Format** : 3max | Tapis eff. 14 bb | Pot avant héro 1.5 bb | Coût call/shove 14 bb
-- **Hypothèses affichées** : Fold adverse = 70% | Équité héro si payé = 44.5% | Fréq affichées : Jackpot 80/12/8 (tapis égaux 25/25/25) • Fold 70% • KQo = 44,5% vs call
-- **EV calculée (`computeSalveSpotEv`)** : `ppm_pp` -> Action = `262` vs Fold = `0` (Risk Premium ICM = 1.35%)
-- **Explication** : Mort Subite — Expresso 80/12/8 (25/25/25) : EV(Push 14bb (Jackpot 80/12/8)) = 262 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+262 ppm_pp).
+- **Hypothèses affichées** : Fold adverse = 70% | Équité héro si payé = 44.5% | Fréq affichées : Jackpot 80/12/8 (tapis égaux 14/14/14) • Fold 70% • KQo = 44,5% vs call
+- **EV calculée (`computeSalveSpotEv`)** : `ppm_pp` -> Action = `9134` vs Fold = `0` (Risk Premium ICM = 1.35%)
+- **Explication** : Mort Subite — Expresso 80/12/8 (14/14/14) : EV(Push 14bb (Jackpot 80/12/8)) = 9134 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+9134 ppm_pp).
 
 ---
 
@@ -175,7 +175,7 @@
   - Référence (%) : {"valeur_forte":15,"valeur_moyenne":40,"tirages_forts":30,"tirages_faibles":5,"bluff_catchers":10,"air":0}
   - Pair affiché (%) : {"valeur_forte":20,"valeur_moyenne":35,"tirages_forts":25,"tirages_faibles":10,"bluff_catchers":10,"air":0}
   - Explication : Le 2s ouvre un tirage couleur backdoor mais n’aide pas les paires faibles. L’entonnoir se resserre sur Qx + tirages forts.
-- **River [Qh 9s 4d 2s Js] (River Js (complète QT/KTs et pique) — Vilain donk-bet 75% pot)**
+- **River [Qh 9s 4d 2s Js] (River Js (complète KTs/T8s et pique) — Vilain donk-bet 75% pot)**
   - Référence (%) : {"valeur_forte":65,"valeur_moyenne":10,"tirages_forts":0,"tirages_faibles":0,"bluff_catchers":5,"air":20}
   - Pair affiché (%) : {"valeur_forte":55,"valeur_moyenne":15,"tirages_forts":0,"tirages_faibles":0,"bluff_catchers":10,"air":20}
   - Explication : Les tirages ont soit touché (quintes/couleurs en valeur forte) soit raté (transformés en bluff avec bloqueurs KT/AT).
@@ -221,9 +221,9 @@
 - **Décision 1 (Préflop (BTN 100bb) / preflop)** : Héro `[Kd Jd]` Board `[]` — Calling Station complète sa BB. Open standard BTN ?
   - Ligne de référence : *Open 2.5bb BTN* | EV exactes -> raise: 740 | fold: 0
   - Explication : KJs domine la range de défense très large d’une Calling Station.
-- **Décision 2 (Flop 9d 6c 2d (Pot 5.5bb) / postflop)** : Héro `[Kd Jd]` Board `[9d 6c 2d]` — Vous avez tirage couleur max + deux overcards.
+- **Décision 2 (Flop 9d 6c 2d (Pot 5.5bb) / postflop)** : Héro `[Kd Jd]` Board `[9d 6c 2d]` — Vous avez tirage couleur au Roi (2e couleur max) + deux overcards.
   - Ligne de référence : *Semi-bluff C-Bet 66%* | EV exactes -> bet: 680 | check: 410
-  - Explication : Tirage couleur max + 2 overs garde une énorme équité même payé.
+  - Explication : Tirage couleur au Roi + 2 overcards garde une énorme équité même payé.
 - **Décision 3 (River 4s (Tirage raté, Vilain check) / pression)** : Héro `[Kd Jd]` Board `[9d 6c 2d Th 4s]` — Tout a raté. Vilain ne lâche aucune paire. Faut-il bluffer river ?
   - Ligne de référence : *Check back (abandonner le bluff)* | EV exactes -> check: 150 | bet: -890
   - Explication : Règle d’or Kill Tilt : on ne bluffe jamais une Calling Station river quand on a K-high.
@@ -246,12 +246,12 @@
 - **Décision 2 (Flop Kd 9s 4c (Pot 48bb, si callé) / postflop)** : Héro `[As 5s]` Board `[Kd 9s 4c]` — Vilain check en pot 4-bet sur K-9-4 rainbow.
   - Ligne de référence : *C-Bet 25% pot (avantage Kx)* | EV exactes -> bet: 510 | check: 180
   - Explication : Un petit C-Bet 25% met une pression maximale sur ses TT-QQ et ses broadways sans K.
-- **Décision 3 (Turn Jh (Vilain x/shove après C-Bet) / pression)** : Héro `[As 5s]` Board `[Kd 9s 4c Jh]` — Vilain check-call flop puis donk-shove Turn.
+- **Décision 3 (Turn Jh (Vilain donk-shove après C-Bet) / pression)** : Héro `[As 5s]` Board `[Kd 9s 4c Jh]` — Vilain check-call flop puis donk-shove Turn.
   - Ligne de référence : *Fold immédiat (hauteur As)* | EV exactes -> fold: 0 | call: -1150
   - Explication : A-high sans tirage est battu même par ses semi-bluffs QT/JT.
 
 ### 7. `boss_h07_icm_bubble_call` (chip_leader_icm) — Main #7 — Call à la bulle 4-Max (40/25/20/15)
-- **Décision 1 (Préflop Bulle 4-Max (Tapis 40/25/20/15, 50/30/20) / preflop)** : Héro `[Ad Jc]` Board `[]` — Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Risk Premium énorme (68.9% requis vs range serrée ou call ?). Contre range 45% shove AJo a 59%.
+- **Décision 1 (Préflop Bulle 4-Max (Tapis 40/25/20/15, 50/30/20) / preflop)** : Héro `[Ad Jc]` Board `[]` — Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Contre sa range de shove large (45%), AJo possède 59% d’équité. Call ou Fold ICM ?
   - Ligne de référence : *Fold ICM discipliné* | EV exactes -> fold: 0 | call: -4200
   - Explication : Malgré 59% d’équité contre sa range large, le seuil Malmuth-Harville (40/25/20/15 -> 68,9%) rend le call négatif en $EV !
 - **Décision 2 (Scénario référence : Pot limped SB vs BB (Board A94) / postflop)** : Héro `[Ad Jc]` Board `[Ah 9s 4c]` — Si le pot était joué postflop à la bulle : le CL c-bet 33%.
@@ -265,10 +265,10 @@
 - **Décision 1 (Préflop TF (Stacks 45/20/18/17) / preflop)** : Héro `[As Qs]` Board `[]` — Le Chip Leader (45bb) min-raise CO (PFR 31%). Hero (20bb) en BB avec AQs.
   - Ligne de référence : *3-Bet All-in 20bb (Fold Equity + Value)* | EV exactes -> allin: 3600 | call: 1100 | fold: 0
   - Explication : Contre un open très large (31%) du Chip Leader, AQs a une fold equity massive + ~45% contre sa range de call.
-- **Décision 2 (Si call OOP — Flop Qs 7c 2h / postflop)** : Héro `[As Qs]` Board `[Qs 7c 2h]` — Vous avez check-call et touchez Top Paire Top Kicker. Check pour laisser c-bet ?
+- **Décision 2 (Si call OOP — Flop Qd 7s 2h / postflop)** : Héro `[As Qs]` Board `[Qd 7s 2h]` — Vous avez check-call et touchez Top Paire Top Kicker. Check pour laisser c-bet ?
   - Ligne de référence : *Check au Chip Leader agressif* | EV exactes -> check: 1900 | bet: 1100
   - Explication : Laisser le Tyran c-better sa fréquence élevée maximise la value.
-- **Décision 3 (Turn 5s — CL part à tapis 18bb / pression)** : Héro `[As Qs]` Board `[Qs 7c 2h 5s]` — Sur 5s, vous avez TPTK + tirage couleur max ! Le CL shove.
+- **Décision 3 (Turn 5s — CL part à tapis 18bb / pression)** : Héro `[As Qs]` Board `[Qd 7s 2h 5s]` — Sur 5s, vous avez TPTK + tirage couleur max ! Le CL shove.
   - Ligne de référence : *Snap Call (équité écrasante)* | EV exactes -> call: 8200 | fold: 0
   - Explication : TPTK + tirage couleur max dépasse très largement le seuil ICM même sous forte pression.
 
@@ -279,9 +279,9 @@
 - **Décision 2 (Flop Kh 6d 2c (Brelan touché !) / postflop)** : Héro `[6s 6h]` Board `[Kh 6d 2c]` — Le Nit c-bet 50% pot sur K-6-2 rainbow. Raise tout de suite ou slowplay ?
   - Ligne de référence : *Call flop pour garder AA/AK/KQ* | EV exactes -> call: 3200 | raise: 2550
   - Explication : Sur board sec K-6-2, laisser le Nit 2-barreller AA/AK rapporte plus que raise flop.
-- **Décision 3 (River 9s (Pot 32bb — Nit mise 20bb) / pression)** : Héro `[6s 6h]` Board `[Kh 6d 2c Td 9s]` — River 9s. Vous avez 666, le Nit bet 20bb (il reste 50bb derrière).
+- **Décision 3 (River 9s (Pot 32bb — Nit mise 20bb) / pression)** : Héro `[6s 6h]` Board `[Kh 6d 2c 3d 9s]` — River 9s. Vous avez 666, le Nit bet 20bb (il reste 50bb derrière).
   - Ligne de référence : *Raise All-in Value* | EV exactes -> allin: 4100 | call: 2100
-  - Explication : La range de 3-barrel d’un Nit sur K-high est composée d’AK/AA/KK : il faut tout prendre river.
+  - Explication : La range de 3-barrel d’un Nit sur K-6-2-3-9 est composée d’AK/AA/KQ (avec un faible risque de KK) : il faut prendre le maximum de value river.
 
 ### 10. `boss_h10_aggro_rivercheck` (reg_aggro) — Main #10 — Check-Call vs Check-Raise avec quinte contre Reg LAG
 - **Décision 1 (Préflop (BB vs BTN Reg Aggro 2.5bb) / preflop)** : Héro `[8d 7d]` Board `[]` — Le Reg LAG open 2.5bb au BTN. Défense en BB avec 87s ?
@@ -299,7 +299,7 @@
 ## 7. Catalogue Ranges V2 (`v2Ranges.ts`)
 
 ### `cash_6max_100bb_bb_vs_btn_3bet_polar` — Cash 6-Max 100bb — BB vs BTN Open 2.5x (3-Bet Polarisé) (cash_6max, 100bb, BB)
-- **Provenance** : `computed` (medium) — Table mixte pondérée sur 1 326 combos (heuristique de référence V2, hors solveur complet)
+- **Provenance** : `heuristic` (medium) — Table mixte pondérée sur 1 326 combos (heuristique de référence V2, hors solveur complet)
 - **Mains couvertes** : 85 mains 13×13 • Synthèse : {"3bPct":9.47,"callPct":30.8,"defendTotalPct":40.27,"combos3b":125.6,"combosCall":408.4}
   - {"3b":1} : `AA, KK, QQ, JJ, TT, AKs, AQs, AJs, AKo, AQo, KQs`
   - {"3b":0.5,"c":0.5} : `99, AJo, KJs, QJs`
@@ -309,7 +309,7 @@
   - {"c":1} : `88, 77, 66, 55, 44, 33, 22, ATs, A9s, A8s, A7s, A6s, KTs, K9s, K8s, K4s, K3s, K2s, QTs, Q9s, Q8s, Q7s, Q5s, Q4s, Q3s, Q2s, JTs, J9s, J8s, J7s, T9s, T8s, T7s, 98s, 97s, 87s, 64s, 53s, 43s, ATo, KQo, KJo, QJo, JTo, T9o, 98o, A7o, A6o, A5o, A4o, K9o, Q9o, J9o`
 
 ### `cash_6max_100bb_co_vs_btn_3bet_4bet_polar` — Cash 6-Max 100bb — CO vs BTN 3-Bet 7.5bb (4-Bet Polarisé) (cash_6max, 100bb, CO)
-- **Provenance** : `computed` (medium) — Table mixte pondérée sur l’éventail d’ouverture CO (54 combos 4-Bet / 77 combos Call)
+- **Provenance** : `heuristic` (medium) — Table mixte pondérée sur l’éventail d’ouverture CO (54 combos 4-Bet / 77 combos Call)
 - **Mains couvertes** : 26 mains 13×13 • Synthèse : {"4bOfOpenPct":15,"callOfOpenPct":21.4,"foldOfOpenPct":63.6,"combos4b":54,"combosCall":77}
   - {"4b":1} : `AA, KK, QQ, AKs, AKo`
   - {"4b":0.65,"f":0.35} : `A5s, A4s, KQo`
@@ -338,7 +338,7 @@
   - {"mr":0.5,"f":0.5} : `A6o, A5o, A4o, A3o, A2o, K8o, Q9o, J9o, T9o, K3s, K2s, Q5s, 96s, 64s`
 
 ### `expresso_3max_25bb_sb_vs_bb` — Expresso 3-Max 25bb — SB vs BB (Mix Raise 2.5–3x / Limp-Trap / Limp-Stab) (expresso_3max, 25bb, SB)
-- **Provenance** : `computed` (medium) — Bataille de blindes Expresso 25bb (208,7 combos Raise / 529,3 combos Limp)
+- **Provenance** : `heuristic` (medium) — Bataille de blindes Expresso 25bb (208,7 combos Raise / 529,3 combos Limp)
 - **Mains couvertes** : 106 mains 13×13 • Synthèse : {"mrPct":15.74,"limpPct":39.92,"totalVpipPct":55.66,"combosMr":208.7,"combosLimp":529.3}
   - {"mr":0.65,"limp":0.35} : `AA, KK`
   - {"mr":0.85,"limp":0.15} : `QQ, JJ, TT, 99, AKs, AQs, AJs, ATs, AKo, AQo, AJo, KQs, KJs, KTs, KQo, QJs`
@@ -346,13 +346,13 @@
   - {"limp":0.85,"mr":0.15} : `88, 77, 66, 55, 44, 33, 22, A9s, A8s, A7s, A6s, K9s, K8s, K7s, K3s, K2s, QTs, Q9s, Q8s, Q7s, Q6s, Q3s, Q2s, JTs, J9s, J8s, J7s, T9s, T8s, T7s, 98s, 97s, 87s, 86s, 76s, 75s, 65s, 54s, 53s, 43s, ATo, A9o, A8o, A7o, A6o, A5o, A4o, A3o, A2o, KJo, KTo, K9o, K8o, K7o, K6o, K5o, QJo, QTo, Q9o, Q8o, Q7o, JTo, J9o, J8o, J7o, T9o, T8o, T7o, 98o, 97o, 87o, 76o`
 
 ### `expresso_3max_25bb_bb_vs_btn_2x` — Expresso 3-Max 25bb — Défense BB vs BTN Min-Raise 2x (61,38%) (expresso_3max, 25bb, BB)
-- **Provenance** : `computed` (medium) — Défense large BB vs Min-Raise 2x en Expresso 25bb (814 combos défendus)
-- **Mains couvertes** : 120 mains 13×13 • Synthèse : {"3bPct":5.81,"shvPct":2.42,"callPct":53.15,"defendTotalPct":61.38,"combos3b":77.1,"combosShv":32.1,"combosCall":704.8}
+- **Provenance** : `heuristic` (medium) — Défense large BB vs Min-Raise 2x en Expresso 25bb (814 combos défendus)
+- **Mains couvertes** : 121 mains 13×13 • Synthèse : {"3bPct":5.81,"shvPct":2.42,"callPct":53.15,"defendTotalPct":61.38,"combos3b":77.1,"combosShv":32.1,"combosCall":704.8}
   - {"3b":0.85,"shv":0.15} : `AA, KK, QQ, AKs, AKo, AQs`
   - {"3b":0.5,"c":0.5} : `JJ, TT, 99, AJs, ATs, AQo, KQs`
   - {"shv":0.4,"c":0.6} : `88, 77, 66, 55, 44, A9s, A8s, A7s, AJo, ATo`
   - {"3b":0.35,"c":0.65} : `A5s, A4s, A3s, A2s, K7s, K6s, K5s, K4s, Q7s, Q6s, Q5s, J7s, T7s, 86s, 75s, 65s, 54s`
-  - {"c":1} : `33, 22, A6s, KJs, KTs, K9s, K8s, K3s, K2s, QJs, QTs, Q9s, Q8s, Q4s, Q3s, Q2s, JTs, J9s, J8s, J6s, J5s, J4s, J3s, J2s, T9s, T8s, T6s, T5s, T4s, T3s, T2s, 98s, 97s, 96s, 95s, 87s, 85s, 84s, 76s, 74s, 64s, 63s, 53s, 52s, 43s, 42s, 32s, A9o, A8o, A7o, A6o, A5o, A4o, A3o, A2o, KQo, KJo, KTo, K9o, K8o, K7o, K6o, K5o, QJo, QTo, Q9o, Q8o, Q7o, JTo, J9o, J8o, J7o, T9o, T8o, T7o, 98o, 97o, 87o, 86o, 76o`
+  - {"c":1} : `33, 22, A6s, KJs, KTs, K9s, K8s, K3s, K2s, QJs, QTs, Q9s, Q8s, Q4s, Q3s, Q2s, JTs, J9s, J8s, J6s, J5s, J4s, J3s, J2s, T9s, T8s, T6s, T5s, T4s, T3s, T2s, 98s, 97s, 96s, 95s, 87s, 85s, 84s, 76s, 74s, 64s, 63s, 53s, 52s, 43s, 42s, 32s, A9o, A8o, A7o, A6o, A5o, A4o, A3o, A2o, KQo, KJo, KTo, K9o, K8o, K7o, K6o, K5o, QJo, QTo, Q9o, Q8o, Q7o, Q6o, JTo, J9o, J8o, J7o, T9o, T8o, T7o, 98o, 97o, 87o, 86o, 76o`
 
 ---
 

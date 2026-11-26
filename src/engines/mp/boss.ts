@@ -327,7 +327,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         streetLabel: 'Flop 9d 6c 2d (Pot 5.5bb)',
         heroCards: ['Kd', 'Jd'],
         board: ['9d', '6c', '2d'],
-        prompt: 'Vous avez tirage couleur max + deux overcards.',
+        prompt: 'Vous avez tirage couleur au Roi (2e couleur max) + deux overcards.',
         referenceRailActionLabel: 'Semi-bluff C-Bet 66%',
         options: [
           { id: 'bet', label: 'Bet 66% (semi-bluff / value equity)' },
@@ -336,7 +336,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         unit: 'mbb',
         ev: { bet: 680, check: 410 },
         defaultAction: 'check',
-        explanation: 'Tirage couleur max + 2 overs garde une énorme équité même payé.',
+        explanation: 'Tirage couleur au Roi + 2 overcards garde une énorme équité même payé.',
       }),
       makeDecision({
         phase: 'pression',
@@ -455,7 +455,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
       }),
       makeDecision({
         phase: 'pression',
-        streetLabel: 'Turn Jh (Vilain x/shove après C-Bet)',
+        streetLabel: 'Turn Jh (Vilain donk-shove après C-Bet)',
         heroCards: ['As', '5s'],
         board: ['Kd', '9s', '4c', 'Jh'],
         prompt: 'Vilain check-call flop puis donk-shove Turn.',
@@ -482,7 +482,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         streetLabel: 'Préflop Bulle 4-Max (Tapis 40/25/20/15, 50/30/20)',
         heroCards: ['Ad', 'Jc'],
         board: [],
-        prompt: 'Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Risk Premium énorme (68.9% requis vs range serrée ou call ?). Contre range 45% shove AJo a 59%.',
+        prompt: 'Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Contre sa range de shove large (45%), AJo possède 59% d’équité. Call ou Fold ICM ?',
         referenceRailActionLabel: 'Fold ICM discipliné',
         options: [
           { id: 'fold', label: 'Fold ICM' },
@@ -552,9 +552,9 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
       }),
       makeDecision({
         phase: 'postflop',
-        streetLabel: 'Si call OOP — Flop Qs 7c 2h',
+        streetLabel: 'Si call OOP — Flop Qd 7s 2h',
         heroCards: ['As', 'Qs'],
-        board: ['Qs', '7c', '2h'],
+        board: ['Qd', '7s', '2h'],
         prompt: 'Vous avez check-call et touchez Top Paire Top Kicker. Check pour laisser c-bet ?',
         referenceRailActionLabel: 'Check au Chip Leader agressif',
         options: [
@@ -570,7 +570,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         phase: 'pression',
         streetLabel: 'Turn 5s — CL part à tapis 18bb',
         heroCards: ['As', 'Qs'],
-        board: ['Qs', '7c', '2h', '5s'],
+        board: ['Qd', '7s', '2h', '5s'],
         prompt: 'Sur 5s, vous avez TPTK + tirage couleur max ! Le CL shove.',
         referenceRailActionLabel: 'Snap Call (équité écrasante)',
         options: [
@@ -627,7 +627,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         phase: 'pression',
         streetLabel: 'River 9s (Pot 32bb — Nit mise 20bb)',
         heroCards: ['6s', '6h'],
-        board: ['Kh', '6d', '2c', 'Td', '9s'],
+        board: ['Kh', '6d', '2c', '3d', '9s'],
         prompt: 'River 9s. Vous avez 666, le Nit bet 20bb (il reste 50bb derrière).',
         referenceRailActionLabel: 'Raise All-in Value',
         options: [
@@ -637,7 +637,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         unit: 'mbb',
         ev: { allin: 4100, call: 2100 },
         defaultAction: 'call',
-        explanation: 'La range de 3-barrel d’un Nit sur K-high est composée d’AK/AA/KK : il faut tout prendre river.',
+        explanation: 'La range de 3-barrel d’un Nit sur K-6-2-3-9 est composée d’AK/AA/KQ (avec un faible risque de KK) : il faut prendre le maximum de value river.',
       }),
     ],
   },

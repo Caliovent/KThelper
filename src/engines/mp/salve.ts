@@ -43,7 +43,9 @@ export function computeSalveSpotEv(model: SalveVillainModel): {
     const v = model.villainIndex ?? 1;
     const stacks = [...model.stacksBb];
     const eff = Math.min(stacks[h], stacks[v]);
-    const dead = Math.max(0, model.potBeforeBb - 1); // hors investissement héro
+    const deadBlinds = [0, 0.5, 1.0];
+    const other = [0, 1, 2].find((i) => i !== h && i !== v) ?? 2;
+    const dead = deadBlinds[other] ?? 0;
 
     const icmBefore = icm(stacks, payouts)[h];
     const ifFold = [...stacks];
@@ -51,12 +53,15 @@ export function computeSalveSpotEv(model: SalveVillainModel): {
 
     const fPct = model.foldToActionPct / 100;
     const eqCall = model.heroEqWhenCalledPct / 100;
-    const vSum = model.potBeforeBb / Math.max(1, stacks.length - 1);
     const ifFoldVillain = stacks.map((s, i) =>
-      i === h ? s + model.potBeforeBb : Math.max(0.1, s - vSum)
+      i === h ? s + model.potBeforeBb : Math.max(0.1, s - (deadBlinds[i] ?? 0))
     );
-    const ifWin = stacks.map((s, i) => (i === h ? s + eff + dead : i === v ? Math.max(0, s - eff) : s));
-    const ifLose = stacks.map((s, i) => (i === h ? Math.max(0, s - eff) : i === v ? s + eff : s));
+    const ifWin = stacks.map((s, i) =>
+      i === h ? s + eff + dead : i === v ? Math.max(0, s - eff) : Math.max(0.1, s - dead)
+    );
+    const ifLose = stacks.map((s, i) =>
+      i === h ? Math.max(0, s - eff) : i === v ? s + eff + dead : Math.max(0.1, s - dead)
+    );
 
     const eqFoldVillain = icm(ifFoldVillain, payouts)[h];
     const eqWin = icmWithBusts(ifWin, payouts, stacks)[h];
@@ -78,7 +83,11 @@ export function computeSalveSpotEv(model: SalveVillainModel): {
 
   const fPct = model.foldToActionPct / 100;
   const eq = model.heroEqWhenCalledPct / 100;
-  const totalPotWhenCalled = model.potBeforeBb + 2 * model.heroCostBb;
+  const deadOtherBlindBb =
+    model.format === '3max' && (model.heroCostBb === model.effectiveBb || model.foldToActionPct === 0)
+      ? 0.5
+      : 0;
+  const totalPotWhenCalled = 2 * model.effectiveBb + deadOtherBlindBb;
   const evIfCalledBb = eq * totalPotWhenCalled - model.heroCostBb;
   const evActBb = fPct * model.potBeforeBb + (1 - fPct) * evIfCalledBb;
 
@@ -366,7 +375,7 @@ const RAW_SALVE_CASES: readonly RawSalveCase[] = [
     actionLabel: 'Push 14bb (Jackpot 80/12/8)',
     suddenDeath: true,
     model: {
-      name: 'Mort Subite — Expresso 80/12/8 (25/25/25)',
+      name: 'Mort Subite — Expresso 80/12/8 (14/14/14)',
       format: '3max',
       effectiveBb: 14,
       foldToActionPct: 70,
@@ -374,10 +383,10 @@ const RAW_SALVE_CASES: readonly RawSalveCase[] = [
       potBeforeBb: 1.5,
       heroCostBb: 14,
       isJackpot80128: true,
-      stacksBb: [25, 25, 25],
+      stacksBb: [14, 14, 14],
       heroIndex: 0,
       villainIndex: 2,
-      displayedFreqs: 'Jackpot 80/12/8 (tapis égaux 25/25/25) • Fold 70% • KQo = 44,5% vs call',
+      displayedFreqs: 'Jackpot 80/12/8 (tapis égaux 14/14/14) • Fold 70% • KQo = 44,5% vs call',
     },
   },
 ];

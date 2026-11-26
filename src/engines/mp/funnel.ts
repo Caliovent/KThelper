@@ -117,7 +117,7 @@ export const FUNNEL_CASES: readonly FunnelCaseSpec[] = [
       },
       {
         street: 'River',
-        observedAction: 'River Js (complète QT/KTs et pique) — Vilain donk-bet 75% pot',
+        observedAction: 'River Js (complète KTs/T8s et pique) — Vilain donk-bet 75% pot',
         board: ['Qh', '9s', '4d', '2s', 'Js'],
         referenceWeights: {
           valeur_forte: 65,

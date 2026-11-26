@@ -73,7 +73,7 @@ export const V2_WEIGHTED_RANGES: V2WeightedRangeSpec[] = [
     scenario: 'Cash 6-Max 100bb — BB vs BTN Open 2.5x (3-Bet Polarisé)',
     line: ['3bet', 'call', 'fold'],
     provenance: {
-      origin: 'computed',
+      origin: 'heuristic',
       note: 'Table mixte pondérée sur 1 326 combos (heuristique de référence V2, hors solveur complet)',
       confidence: 'medium',
     },
@@ -111,7 +111,7 @@ export const V2_WEIGHTED_RANGES: V2WeightedRangeSpec[] = [
     scenario: 'Cash 6-Max 100bb — CO vs BTN 3-Bet 7.5bb (4-Bet Polarisé)',
     line: ['4bet', 'call', 'fold'],
     provenance: {
-      origin: 'computed',
+      origin: 'heuristic',
       note: 'Table mixte pondérée sur l’éventail d’ouverture CO (54 combos 4-Bet / 77 combos Call)',
       confidence: 'medium',
     },
@@ -242,7 +242,7 @@ export const V2_WEIGHTED_RANGES: V2WeightedRangeSpec[] = [
     scenario: 'Expresso 3-Max 25bb — SB vs BB (Mix Raise 2.5–3x / Limp-Trap / Limp-Stab)',
     line: ['raise', 'limp', 'fold'],
     provenance: {
-      origin: 'computed',
+      origin: 'heuristic',
       note: 'Bataille de blindes Expresso 25bb (208,7 combos Raise / 529,3 combos Limp)',
       confidence: 'medium',
     },
@@ -279,7 +279,7 @@ export const V2_WEIGHTED_RANGES: V2WeightedRangeSpec[] = [
     scenario: 'Expresso 3-Max 25bb — Défense BB vs BTN Min-Raise 2x (61,38%)',
     line: ['3bet', 'allin', 'call', 'fold'],
     provenance: {
-      origin: 'computed',
+      origin: 'heuristic',
       note: 'Défense large BB vs Min-Raise 2x en Expresso 25bb (814 combos défendus)',
       confidence: 'medium',
     },
@@ -299,7 +299,7 @@ export const V2_WEIGHTED_RANGES: V2WeightedRangeSpec[] = [
           '98s', '97s', '96s', '95s', '87s', '85s', '84s', '76s', '74s', '64s', '63s', '53s', '52s', '43s', '42s', '32s',
           'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
           'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o',
-          'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o',
+          'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o', 'Q6o',
           'JTo', 'J9o', 'J8o', 'J7o', 'T9o', 'T8o', 'T7o', '98o', '97o', '87o', '86o', '76o',
         ],
         freq: { c: 1.0 },

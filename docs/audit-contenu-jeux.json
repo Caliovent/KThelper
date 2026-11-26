@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-26T20:44:26.442Z",
+    "generatedAt": "2026-11-26T20:57:33.556Z",
     "rulesVersion": "mp-rules-1",
     "localCorpusVersion": "mp-corpus-maths-v1",
     "localGeneratorVersion": "mp-gen-v1",
@@ -21448,7 +21448,7 @@
           "displayedFreqs": "Jackpot 80/12/8 • Fold combiné 82% • Call 18% (AQs = 45% vs call)"
         },
         "suddenDeath": false,
-        "explanation": "Reg Expresso 80/12/8 (Modèle équilibré) : EV(Push All-in 25bb) = 6432 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+6432 ppm_pp).",
+        "explanation": "Reg Expresso 80/12/8 (Modèle équilibré) : EV(Push All-in 25bb) = 7045 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+7045 ppm_pp).",
         "template": {
           "id": "salve_01_jackpot_3eq",
           "skillId": "exp.salve.s1",
@@ -21506,7 +21506,7 @@
             "kind": "ev",
             "unit": "ppm_pp",
             "ev": {
-              "allin": 6432,
+              "allin": 7045,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21522,7 +21522,7 @@
         },
         "computedEvCheck": {
           "unit": "ppm_pp",
-          "evShoveOrCall": 6432,
+          "evShoveOrCall": 7045,
           "evFold": 0,
           "riskPremiumPct": 1.35
         }
@@ -21539,7 +21539,7 @@
           "displayedFreqs": "Fold to Shove 64% • Call 36% (77+, A8+, KQ)"
         },
         "suddenDeath": false,
-        "explanation": "Nit Passif BB : EV(Open Shove 14bb) = -206 mbb vs Fold = 0 mbb.",
+        "explanation": "Nit Passif BB : EV(Open Shove 14bb) = -271 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_02_sb_vs_bb_nit",
           "skillId": "exp.salve.s2",
@@ -21592,7 +21592,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": -206,
+              "allin": -271,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21608,7 +21608,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": -206,
+          "evShoveOrCall": -271,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -21625,7 +21625,7 @@
           "displayedFreqs": "Fold to Shove 28% • Call très large 72%"
         },
         "suddenDeath": false,
-        "explanation": "Calling Station HU : EV(Open Shove 12bb) = -1862 mbb vs Fold = 0 mbb.",
+        "explanation": "Calling Station HU : EV(Open Shove 12bb) = -1985 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_03_hu_cs_shove",
           "skillId": "exp.salve.s3",
@@ -21678,7 +21678,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": -1862,
+              "allin": -1985,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21694,7 +21694,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": -1862,
+          "evShoveOrCall": -1985,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -21711,7 +21711,7 @@
           "displayedFreqs": "Shove 75% (tous Ax, Kx, Qx, SC) • A8o a 56,4% d’équité"
         },
         "suddenDeath": false,
-        "explanation": "Maniac SB 11bb (Shove 75%) : EV(Call Shove 11bb) = 2126 mbb vs Fold = 0 mbb.",
+        "explanation": "Maniac SB 11bb (Shove 75%) : EV(Call Shove 11bb) = 2408 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_04_bb_call_aggro",
           "skillId": "exp.salve.s4",
@@ -21770,7 +21770,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "call": 2126,
+              "call": 2408,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21786,7 +21786,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 2126,
+          "evShoveOrCall": 2408,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -21803,7 +21803,7 @@
           "displayedFreqs": "Fold combiné SB+BB 72% • Call 28% (QTs = 38%)"
         },
         "suddenDeath": false,
-        "explanation": "Blindes Serrées 3-Max : EV(Open Shove 18bb) = 30 mbb vs Fold = 0 mbb.",
+        "explanation": "Blindes Serrées 3-Max : EV(Open Shove 18bb) = -76 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_05_3max_btn_18bb",
           "skillId": "exp.salve.s5",
@@ -21856,7 +21856,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": 30,
+              "allin": -76,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21872,7 +21872,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 30,
+          "evShoveOrCall": -76,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -21889,7 +21889,7 @@
           "displayedFreqs": "Shove ultra serré 18% (55+, A9+, KQ) • K9o = 34,2% vs cette range"
         },
         "suddenDeath": false,
-        "explanation": "Nit 3-Max Shove 10bb (18%) : EV(Call Shove 10bb) = -2331 mbb vs Fold = 0 mbb.",
+        "explanation": "Nit 3-Max Shove 10bb (18%) : EV(Call Shove 10bb) = -1989 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_06_bb_vs_iso_nit",
           "skillId": "exp.salve.s6",
@@ -21948,7 +21948,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "call": -2331,
+              "call": -1989,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -21964,7 +21964,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": -2331,
+          "evShoveOrCall": -1989,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -21981,7 +21981,7 @@
           "displayedFreqs": "Fold to Shove 48% • Call 52% (A3o = 45,2%)"
         },
         "suddenDeath": false,
-        "explanation": "Reg Équilibré HU 9bb : EV(Open Shove 9bb) = 648 mbb vs Fold = 0 mbb.",
+        "explanation": "Reg Équilibré HU 9bb : EV(Open Shove 9bb) = 531 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_07_hu_9bb_ace",
           "skillId": "exp.salve.s7",
@@ -22034,7 +22034,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": 648,
+              "allin": 531,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22050,7 +22050,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 648,
+          "evShoveOrCall": 531,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22067,7 +22067,7 @@
           "displayedFreqs": "Fold 45% • Call large 55% (T6o = 31,8%)"
         },
         "suddenDeath": false,
-        "explanation": "Trap Reg BB (Call 55%) : EV(Open Shove 15bb) = -2066 mbb vs Fold = 0 mbb.",
+        "explanation": "Trap Reg BB (Call 55%) : EV(Open Shove 15bb) = -2241 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_08_btn_15bb_trap",
           "skillId": "exp.salve.s8",
@@ -22120,7 +22120,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": -2066,
+              "allin": -2241,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22136,7 +22136,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": -2066,
+          "evShoveOrCall": -2241,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22153,7 +22153,7 @@
           "displayedFreqs": "Fold 42% • Call 58% (86s = 40,5%)"
         },
         "suddenDeath": false,
-        "explanation": "Reg HU 6bb : EV(Open Shove 6bb) = 376 mbb vs Fold = 0 mbb.",
+        "explanation": "Reg HU 6bb : EV(Open Shove 6bb) = 259 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_09_hu_6bb_su",
           "skillId": "exp.salve.s9",
@@ -22206,7 +22206,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": 376,
+              "allin": 259,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22222,7 +22222,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 376,
+          "evShoveOrCall": 259,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22239,7 +22239,7 @@
           "displayedFreqs": "Shove 62% • QJo = 52,8% vs range de shove"
         },
         "suddenDeath": false,
-        "explanation": "Reg Aggro SB 8bb (Shove 62%) : EV(Call Shove 8bb) = 1184 mbb vs Fold = 0 mbb.",
+        "explanation": "Reg Aggro SB 8bb (Shove 62%) : EV(Call Shove 8bb) = 1448 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_10_bb_8bb_call",
           "skillId": "exp.salve.s10",
@@ -22298,7 +22298,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "call": 1184,
+              "call": 1448,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22314,7 +22314,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 1184,
+          "evShoveOrCall": 1448,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22331,7 +22331,7 @@
           "displayedFreqs": "Fold 40% • Call 60% (72o = 29,5%)"
         },
         "suddenDeath": false,
-        "explanation": "BB Récréatif Call 60% : EV(Open Shove 13bb) = -2209 mbb vs Fold = 0 mbb.",
+        "explanation": "BB Récréatif Call 60% : EV(Open Shove 13bb) = -2298 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_11_3max_13bb_fold",
           "skillId": "exp.salve.s11",
@@ -22384,7 +22384,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": -2209,
+              "allin": -2298,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22400,7 +22400,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": -2209,
+          "evShoveOrCall": -2298,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22417,7 +22417,7 @@
           "displayedFreqs": "Fold 58% • Call 42% (KJs = 46,1%)"
         },
         "suddenDeath": false,
-        "explanation": "Reg Passif HU 16bb : EV(Open Shove 16bb) = 653 mbb vs Fold = 0 mbb.",
+        "explanation": "Reg Passif HU 16bb : EV(Open Shove 16bb) = 556 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_12_hu_16bb_kjs",
           "skillId": "exp.salve.s12",
@@ -22470,7 +22470,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": 653,
+              "allin": 556,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22486,7 +22486,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 653,
+          "evShoveOrCall": 556,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22503,7 +22503,7 @@
           "displayedFreqs": "Fold 56% • Call 44% (A2o = 42,8%)"
         },
         "suddenDeath": true,
-        "explanation": "Mort Subite — Nit HU 7bb : EV(Open Shove 7bb) = 711 mbb vs Fold = 0 mbb.",
+        "explanation": "Mort Subite — Nit HU 7bb : EV(Open Shove 7bb) = 616 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_13_sd_jackpot_7bb",
           "skillId": "exp.salve.s13",
@@ -22556,7 +22556,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "allin": 711,
+              "allin": 616,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22572,7 +22572,7 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 711,
+          "evShoveOrCall": 616,
           "evFold": 0,
           "riskPremiumPct": null
         }
@@ -22589,7 +22589,7 @@
           "displayedFreqs": "Shove 55% en SB • 55 possède 54,1% d’équité"
         },
         "suddenDeath": true,
-        "explanation": "Mort Subite — Reg Shove 55% : EV(Call Shove 12bb) = 1714 mbb vs Fold = 0 mbb.",
+        "explanation": "Mort Subite — Reg Shove 55% : EV(Call Shove 12bb) = 1984 mbb vs Fold = 0 mbb.",
         "template": {
           "id": "salve_14_sd_bb_call_12bb",
           "skillId": "exp.salve.s14",
@@ -22648,7 +22648,7 @@
             "kind": "ev",
             "unit": "mbb",
             "ev": {
-              "call": 1714,
+              "call": 1984,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22664,14 +22664,14 @@
         },
         "computedEvCheck": {
           "unit": "mbb",
-          "evShoveOrCall": 1714,
+          "evShoveOrCall": 1984,
           "evFold": 0,
           "riskPremiumPct": null
         }
       },
       {
         "model": {
-          "name": "Mort Subite — Expresso 80/12/8 (25/25/25)",
+          "name": "Mort Subite — Expresso 80/12/8 (14/14/14)",
           "format": "3max",
           "effectiveBb": 14,
           "foldToActionPct": 70,
@@ -22680,16 +22680,16 @@
           "heroCostBb": 14,
           "isJackpot80128": true,
           "stacksBb": [
-            25,
-            25,
-            25
+            14,
+            14,
+            14
           ],
           "heroIndex": 0,
           "villainIndex": 2,
-          "displayedFreqs": "Jackpot 80/12/8 (tapis égaux 25/25/25) • Fold 70% • KQo = 44,5% vs call"
+          "displayedFreqs": "Jackpot 80/12/8 (tapis égaux 14/14/14) • Fold 70% • KQo = 44,5% vs call"
         },
         "suddenDeath": true,
-        "explanation": "Mort Subite — Expresso 80/12/8 (25/25/25) : EV(Push 14bb (Jackpot 80/12/8)) = 262 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+262 ppm_pp).",
+        "explanation": "Mort Subite — Expresso 80/12/8 (14/14/14) : EV(Push 14bb (Jackpot 80/12/8)) = 9134 ppm_pp vs Fold = 0 ppm_pp. En Expresso 80/12/8 à trois tapis égaux, son Risk Premium n’est que de 1.35 point (+9134 ppm_pp).",
         "template": {
           "id": "salve_15_sd_jackpot_3max",
           "skillId": "exp.salve.s15",
@@ -22715,9 +22715,9 @@
                 8
               ],
               "stacksBb": [
-                25,
-                25,
-                25
+                14,
+                14,
+                14
               ]
             },
             "limitMs": 4000,
@@ -22740,14 +22740,14 @@
                   "label": "Fold"
                 }
               ],
-              "villainModel": "Mort Subite — Expresso 80/12/8 (25/25/25) — Jackpot 80/12/8 (tapis égaux 25/25/25) • Fold 70% • KQo = 44,5% vs call"
+              "villainModel": "Mort Subite — Expresso 80/12/8 (14/14/14) — Jackpot 80/12/8 (tapis égaux 14/14/14) • Fold 70% • KQo = 44,5% vs call"
             }
           },
           "solution": {
             "kind": "ev",
             "unit": "ppm_pp",
             "ev": {
-              "allin": 262,
+              "allin": 9134,
               "fold": 0
             },
             "defaultAction": "fold",
@@ -22763,7 +22763,7 @@
         },
         "computedEvCheck": {
           "unit": "ppm_pp",
-          "evShoveOrCall": 262,
+          "evShoveOrCall": 9134,
           "evFold": 0,
           "riskPremiumPct": 1.35
         }
@@ -23169,7 +23169,7 @@
             },
             {
               "street": "River",
-              "observedAction": "River Js (complète QT/KTs et pique) — Vilain donk-bet 75% pot",
+              "observedAction": "River Js (complète KTs/T8s et pique) — Vilain donk-bet 75% pot",
               "board": [
                 "Qh",
                 "9s",
@@ -23685,7 +23685,7 @@
                 "6c",
                 "2d"
               ],
-              "prompt": "Vous avez tirage couleur max + deux overcards.",
+              "prompt": "Vous avez tirage couleur au Roi (2e couleur max) + deux overcards.",
               "referenceRailActionLabel": "Semi-bluff C-Bet 66%",
               "options": [
                 {
@@ -23707,7 +23707,7 @@
                 "defaultAction": "check",
                 "trivial": false
               },
-              "explanation": "Tirage couleur max + 2 overs garde une énorme équité même payé."
+              "explanation": "Tirage couleur au Roi + 2 overcards garde une énorme équité même payé."
             },
             {
               "phase": "pression",
@@ -23954,7 +23954,7 @@
             },
             {
               "phase": "pression",
-              "streetLabel": "Turn Jh (Vilain x/shove après C-Bet)",
+              "streetLabel": "Turn Jh (Vilain donk-shove après C-Bet)",
               "heroCards": [
                 "As",
                 "5s"
@@ -24005,7 +24005,7 @@
                 "Jc"
               ],
               "board": [],
-              "prompt": "Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Risk Premium énorme (68.9% requis vs range serrée ou call ?). Contre range 45% shove AJo a 59%.",
+              "prompt": "Le Chip Leader (40bb) open shove en SB sur Hero en BB (25bb) avec AJo. Contre sa range de shove large (45%), AJo possède 59% d’équité. Call ou Fold ICM ?",
               "referenceRailActionLabel": "Fold ICM discipliné",
               "options": [
                 {
@@ -24150,14 +24150,14 @@
             },
             {
               "phase": "postflop",
-              "streetLabel": "Si call OOP — Flop Qs 7c 2h",
+              "streetLabel": "Si call OOP — Flop Qd 7s 2h",
               "heroCards": [
                 "As",
                 "Qs"
               ],
               "board": [
-                "Qs",
-                "7c",
+                "Qd",
+                "7s",
                 "2h"
               ],
               "prompt": "Vous avez check-call et touchez Top Paire Top Kicker. Check pour laisser c-bet ?",
@@ -24192,8 +24192,8 @@
                 "Qs"
               ],
               "board": [
-                "Qs",
-                "7c",
+                "Qd",
+                "7s",
                 "2h",
                 "5s"
               ],
@@ -24313,7 +24313,7 @@
                 "Kh",
                 "6d",
                 "2c",
-                "Td",
+                "3d",
                 "9s"
               ],
               "prompt": "River 9s. Vous avez 666, le Nit bet 20bb (il reste 50bb derrière).",
@@ -24338,7 +24338,7 @@
                 "defaultAction": "call",
                 "trivial": false
               },
-              "explanation": "La range de 3-barrel d’un Nit sur K-high est composée d’AK/AA/KK : il faut tout prendre river."
+              "explanation": "La range de 3-barrel d’un Nit sur K-6-2-3-9 est composée d’AK/AA/KQ (avec un faible risque de KK) : il faut prendre le maximum de value river."
             }
           ]
         },
@@ -24473,7 +24473,7 @@
           "fold"
         ],
         "provenance": {
-          "origin": "computed",
+          "origin": "heuristic",
           "note": "Table mixte pondérée sur 1 326 combos (heuristique de référence V2, hors solveur complet)",
           "confidence": "medium"
         },
@@ -24912,7 +24912,7 @@
           "fold"
         ],
         "provenance": {
-          "origin": "computed",
+          "origin": "heuristic",
           "note": "Table mixte pondérée sur l’éventail d’ouverture CO (54 combos 4-Bet / 77 combos Call)",
           "confidence": "medium"
         },
@@ -26304,7 +26304,7 @@
           "fold"
         ],
         "provenance": {
-          "origin": "computed",
+          "origin": "heuristic",
           "note": "Bataille de blindes Expresso 25bb (208,7 combos Raise / 529,3 combos Limp)",
           "confidence": "medium"
         },
@@ -26899,7 +26899,7 @@
           "fold"
         ],
         "provenance": {
-          "origin": "computed",
+          "origin": "heuristic",
           "note": "Défense large BB vs Min-Raise 2x en Expresso 25bb (814 combos défendus)",
           "confidence": "medium"
         },
@@ -27055,6 +27055,7 @@
               "Q9o",
               "Q8o",
               "Q7o",
+              "Q6o",
               "JTo",
               "J9o",
               "J8o",
@@ -27073,7 +27074,7 @@
             }
           }
         ],
-        "expandedHandsCount": 120,
+        "expandedHandsCount": 121,
         "expandedHands": {
           "22": {
             "c": 1
@@ -27437,6 +27438,9 @@
             "c": 1
           },
           "Q7o": {
+            "c": 1
+          },
+          "Q6o": {
             "c": 1
           },
           "JTo": {
