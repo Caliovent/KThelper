@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { comboCount } from '../../src/engines/chunk';
 import {
   BOSS_HAND_VARIANTS,
+  FRESQUE_DRILL_SETS,
   FUNNEL_CASES,
   SALVE_SPOTS,
   TEXTURE_TWIN_BOARDS,
@@ -128,6 +129,28 @@ describe('Audit anti-régression du contenu des jeux', () => {
             Math.abs(actionTotals[action] - spec.summary[key]),
             `${spec.id} -> ${key} attendu ${spec.summary[key]}, calculé ${actionTotals[action].toFixed(2)}`
           ).toBeLessThanOrEqual(0.2);
+        }
+      }
+    }
+  });
+
+  it('vérifie les planchers/îlots Fresque Axo et le baseline fold = 0 sur la Table des Boss', () => {
+    const co = FRESQUE_DRILL_SETS.find((s) => s.id === 'fresque_co_open_100bb')!;
+    const coAxo = co.lines.find((l) => l.id === 'Axo')!;
+    expect(coAxo.reference.floorIndex).not.toBeNull();
+    expect(coAxo.hands[coAxo.reference.floorIndex!]).toBe('ATo');
+    expect(coAxo.reference.islands.map((idx) => coAxo.hands[idx])).toEqual(['A5o']);
+
+    const btn = FRESQUE_DRILL_SETS.find((s) => s.id === 'fresque_btn_open_100bb')!;
+    const btnAxo = btn.lines.find((l) => l.id === 'Axo')!;
+    expect(btnAxo.reference.floorIndex).not.toBeNull();
+    expect(btnAxo.hands[btnAxo.reference.floorIndex!]).toBe('A7o');
+    expect(btnAxo.reference.islands).toEqual([]);
+
+    for (const hand of BOSS_HAND_VARIANTS) {
+      for (const step of hand.steps) {
+        if ('fold' in step.solution.ev) {
+          expect(step.solution.ev.fold, `${hand.id} (${step.streetLabel}) fold EV`).toBe(0);
         }
       }
     }

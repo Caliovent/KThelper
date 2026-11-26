@@ -210,7 +210,7 @@ export const FRESQUE_DRILL_SETS: readonly FresqueDuelSet[] = [
         id: 'Axo',
         label: 'As dépareillés (AKo → A2o)',
         hands: getLineHands('Axo'),
-        reference: { floorIndex: 4, islands: [7] }, // AKo..ATo + îlot A5o (exemple îlot pédagogique)
+        reference: { floorIndex: 3, islands: [8] }, // AKo..ATo + îlot A5o (exemple îlot pédagogique)
         note: 'Plancher ATo+ (A9o frontière) + îlot A5o pour la jouabilité quinte/bloqueur.',
       },
       {
@@ -261,7 +261,7 @@ export const FRESQUE_DRILL_SETS: readonly FresqueDuelSet[] = [
         id: 'Axo',
         label: 'As dépareillés (AKo → A2o)',
         hands: getLineHands('Axo'),
-        reference: { floorIndex: 7, islands: [] }, // A7o+ (donc plus d'îlot isolé)
+        reference: { floorIndex: 6, islands: [] }, // A7o+ (donc plus d'îlot isolé)
         note: 'Au Bouton on ouvre directement A7o+ sans trou.',
       },
       {

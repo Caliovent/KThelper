@@ -222,7 +222,8 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
         unit: 'mbb',
         ev: { bet: 480, check: 120 },
         defaultAction: 'check',
-        explanation: 'Sur board A-high dry, le Nit fold toutes ses pocket pairs sous-As et broadways ratés.',
+        explanation:
+          'Sur A-8-3 rainbow, BTN possède un fort avantage de range : K9s (avec backdoor couleur pique et bloqueur Kx) C-Bet 33% en semi-bluff pour faire coucher les pocket pairs sous-As et broadways ratés du Nit.',
       }),
       makeDecision({
         phase: 'pression',
@@ -392,7 +393,7 @@ export const BOSS_HAND_VARIANTS: readonly BossHandSpec[] = [
           { id: 'fold', label: 'Fold' },
         ],
         unit: 'mbb',
-        ev: { call: 1180, raise: 740, fold: -350 },
+        ev: { call: 1180, raise: 740, fold: 0 },
         defaultAction: 'fold',
         explanation: 'Top paire top kicker sur board sec bloque les Qx et veut laisser Vilain continuer à bluffer.',
       }),

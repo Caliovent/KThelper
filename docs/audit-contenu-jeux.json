@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-11-26T20:57:33.556Z",
+    "generatedAt": "2026-11-26T21:08:05.439Z",
     "rulesVersion": "mp-rules-1",
     "localCorpusVersion": "mp-corpus-maths-v1",
     "localGeneratorVersion": "mp-gen-v1",
@@ -21251,9 +21251,9 @@
               "A2o"
             ],
             "reference": {
-              "floorIndex": 4,
+              "floorIndex": 3,
               "islands": [
-                7
+                8
               ]
             },
             "note": "Plancher ATo+ (A9o frontière) + îlot A5o pour la jouabilité quinte/bloqueur."
@@ -21397,7 +21397,7 @@
               "A2o"
             ],
             "reference": {
-              "floorIndex": 7,
+              "floorIndex": 6,
               "islands": []
             },
             "note": "Au Bouton on ouvre directement A7o+ sans trou."
@@ -23470,7 +23470,7 @@
                 "defaultAction": "check",
                 "trivial": false
               },
-              "explanation": "Sur board A-high dry, le Nit fold toutes ses pocket pairs sous-As et broadways ratés."
+              "explanation": "Sur A-8-3 rainbow, BTN possède un fort avantage de range : K9s (avec backdoor couleur pique et bloqueur Kx) C-Bet 33% en semi-bluff pour faire coucher les pocket pairs sous-As et broadways ratés du Nit."
             },
             {
               "phase": "pression",
@@ -23826,7 +23826,7 @@
                 "ev": {
                   "call": 1180,
                   "raise": 740,
-                  "fold": -350
+                  "fold": 0
                 },
                 "defaultAction": "fold",
                 "trivial": false

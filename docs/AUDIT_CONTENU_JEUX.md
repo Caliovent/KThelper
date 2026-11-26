@@ -1,6 +1,6 @@
 # Audit Complet du Contenu Pédagogique & des Jeux — Kill Tilt Poker Suite
 
-> Généré automatiquement le `2026-11-26T20:57:33.556Z` via `npm run export:audit`.
+> Généré automatiquement le `2026-11-26T21:08:05.439Z` via `npm run export:audit`.
 > Destiné à la relecture poker (EV, ICM, PKO, ChipEV, MDF, Alpha, textures, ranges) par un joueur pro, un coach ou un analyseur externe.
 
 ## 1. Synthèse & Vérifications Automatiques
@@ -125,7 +125,7 @@
 - **As assortis (AKs → A2s)** : Référence = `AKs, AQs, AJs, ATs, A9s, A8s, A7s, A6s, A5s, A4s, A3s, A2s` — *Tous les As assortis jouent très bien IP grâce aux tirages couleur max et bloqueurs.*
 - **Rois assortis (KQs → K2s)** : Référence = `KQs, KJs, KTs, K9s, K8s, K7s, K6s` — *Plancher standard autour de K6s+ (K5s/K4s en option selon les blindes).*
 - **Dames assorties (QJs → Q2s)** : Référence = `QJs, QTs, Q9s, Q8s` — *Q8s+ reste jouable IP ; Q7s- devient souvent trop dominé contre BTN/BB.*
-- **As dépareillés (AKo → A2o)** : Référence = `AKo, AQo, AJo, ATo, A9o + îlots: A6o` — *Plancher ATo+ (A9o frontière) + îlot A5o pour la jouabilité quinte/bloqueur.*
+- **As dépareillés (AKo → A2o)** : Référence = `AKo, AQo, AJo, ATo + îlots: A5o` — *Plancher ATo+ (A9o frontière) + îlot A5o pour la jouabilité quinte/bloqueur.*
 - **Rois dépareillés (KQo → K2o)** : Référence = `KQo, KJo, KTo` — *KTo+ suffit ; K9o- perd trop d’EV hors-équité face aux 3-bets du BTN.*
 
 ### Open Raise BTN 6-Max 100bb (Contraste vs CO) (`fresque_btn_open_100bb` — BTN)
@@ -134,7 +134,7 @@
 - **As assortis (AKs → A2s)** : Référence = `AKs, AQs, AJs, ATs, A9s, A8s, A7s, A6s, A5s, A4s, A3s, A2s` — *Tous les Axs sont des opens automatiques au Bouton.*
 - **Rois assortis (KQs → K2s)** : Référence = `KQs, KJs, KTs, K9s, K8s, K7s, K6s, K5s, K4s, K3s, K2s` — *Au BTN, on descend jusqu’à K2s pour attaquer les blindes.*
 - **Dames assorties (QJs → Q2s)** : Référence = `QJs, QTs, Q9s, Q8s, Q7s, Q6s, Q5s` — *On élargit de Q8s à Q5s au Bouton.*
-- **As dépareillés (AKo → A2o)** : Référence = `AKo, AQo, AJo, ATo, A9o, A8o, A7o, A6o` — *Au Bouton on ouvre directement A7o+ sans trou.*
+- **As dépareillés (AKo → A2o)** : Référence = `AKo, AQo, AJo, ATo, A9o, A8o, A7o` — *Au Bouton on ouvre directement A7o+ sans trou.*
 - **Rois dépareillés (KQo → K2o)** : Référence = `KQo, KJo, KTo, K9o, K8o` — *K8o+ s’ajoute grâce à l’avantage de position absolu postflop.*
 
 ---
@@ -201,7 +201,7 @@
   - Explication : K9s imprime de la fold equity contre un Nit en blinde.
 - **Décision 2 (Flop Ac 8d 3h (Pot 5.5bb) / postflop)** : Héro `[Ks 9s]` Board `[Ac 8d 3h]` — Le Nit check sur A-8-3 rainbow.
   - Ligne de référence : *C-Bet 33% (range advantage)* | EV exactes -> bet: 480 | check: 120
-  - Explication : Sur board A-high dry, le Nit fold toutes ses pocket pairs sous-As et broadways ratés.
+  - Explication : Sur A-8-3 rainbow, BTN possède un fort avantage de range : K9s (avec backdoor couleur pique et bloqueur Kx) C-Bet 33% en semi-bluff pour faire coucher les pocket pairs sous-As et broadways ratés du Nit.
 - **Décision 3 (Turn Tc (Le Nit lead 75% pot) / pression)** : Héro `[Ks 9s]` Board `[Ac 8d 3h Tc]` — Sur le donk-bet 75% pot du Nit au Turn Tc, vous avez K9s (roi hauteur).
   - Ligne de référence : *Fold immédiat* | EV exactes -> fold: 0 | call: -640
   - Explication : Un donk 75% d’un joueur Nit signifie Ax fort ou brelan : aucune cote pour float K-high.
@@ -233,7 +233,7 @@
   - Ligne de référence : *Call IP 10bb* | EV exactes -> call: 610 | 4bet: 380 | fold: 0
   - Explication : Contre un Reg Aggro (3-bet 11.5%), call AQs IP garde ses bluffs et domine son AQ/KQ.
 - **Décision 2 (Flop Qh 8c 3d (Pot 21bb) / postflop)** : Héro `[Ac Qc]` Board `[Qh 8c 3d]` — Vilain C-Bet 33% en pot 3-bet. Votre ligne ?
-  - Ligne de référence : *Call pour garder ses bluffs* | EV exactes -> call: 1180 | raise: 740 | fold: -350
+  - Ligne de référence : *Call pour garder ses bluffs* | EV exactes -> call: 1180 | raise: 740 | fold: 0
   - Explication : Top paire top kicker sur board sec bloque les Qx et veut laisser Vilain continuer à bluffer.
 - **Décision 3 (River 7s (Vilain 3-barrel 75% pot) / pression)** : Héro `[Ac Qc]` Board `[Qh 8c 3d 2s 7s]` — Board sans tirage complété, le Reg Aggro envoie un 3e barrel à 75%.
   - Ligne de référence : *Call (bluff-catch optimal)* | EV exactes -> call: 920 | fold: 0
