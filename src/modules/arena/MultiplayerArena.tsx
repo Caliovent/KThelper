@@ -421,7 +421,7 @@ export const MultiplayerArena: React.FC = () => {
       let oppLabel = completed.baselineLabel;
       let oppScores = completed.baselineScores;
       if (completed.ghostCreatorRecords && completed.ghostCreatorPseudo) {
-        oppLabel = `${completed.ghostCreatorPseudo} (Ghost L0 non vérifié)`;
+        oppLabel = `${completed.ghostCreatorPseudo} (Fantôme amical)`;
         oppScores = completed.ghostCreatorRecords.map((rec, i) => ({
           loss: rec.loss ?? 0,
           pd: rec.pd,
@@ -616,7 +616,7 @@ export const MultiplayerArena: React.FC = () => {
   const requireAttestation = (): boolean => {
     if (arena.antiTilt.roomClosedAttested) return true;
     setStatusBanner(
-      '⚠️ Confirmez d’abord l’engagement ci-dessous (fermer votre logiciel Winamax/PokerStars avant de lancer un run).'
+      '⚠️ Confirmez d’abord que vos rooms de poker (Winamax, PokerStars…) sont fermées avant de lancer ce duel.'
     );
     return false;
   };
@@ -700,7 +700,7 @@ export const MultiplayerArena: React.FC = () => {
       currentCertainty: 'sur',
       lockedBanner: false,
       showHint: false,
-      baselineLabel: `${decodedGhost.creatorPseudo} (Ghost L0 non vérifié)`,
+      baselineLabel: `${decodedGhost.creatorPseudo} (Fantôme amical)`,
       baselineScores: [],
       ghostCreatorPseudo: decodedGhost.creatorPseudo,
       ghostCreatorRecords: decodedGhost.creatorResults?.records ?? null,
@@ -818,7 +818,7 @@ export const MultiplayerArena: React.FC = () => {
             }
           : null,
       }));
-      setStatusBanner('✅ Main vérifiée (> 24h), pseudonymisée par liste blanche et ajoutée au mur de l’écurie.');
+      setStatusBanner('✅ Main vérifiée (> 24h), pseudonymisée et ajoutée au mur du groupe.');
     } catch (err: unknown) {
       setSharedPreviewJson(null);
       setShareError(err instanceof Error ? err.message : 'Main invalide ou jouée il y a moins de 24 h.');
@@ -829,9 +829,9 @@ export const MultiplayerArena: React.FC = () => {
   if (!mpActive) {
     return (
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 text-center space-y-3">
-        <h2 className="text-base font-extrabold text-white">Mode Multijoueur désactivé (`mpEnabled = false`)</h2>
+        <h2 className="text-base font-extrabold text-white">Arène Poker masquée (Mode Solo actif)</h2>
         <p className="text-xs text-slate-400">
-          La suite solo V1/V2 fonctionne de manière inchangée. Vous pouvez réactiver le jalon M0 Local à tout moment.
+          Tous vos outils d’entraînement solo restent disponibles. Vous pouvez réouvrir l’Arène Poker à tout moment.
         </p>
         <button
           type="button"
@@ -841,7 +841,7 @@ export const MultiplayerArena: React.FC = () => {
           }}
           className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold"
         >
-          Réactiver le mode multijoueur (M0 Local)
+          Réouvrir l’Arène Poker
         </button>
       </div>
     );
@@ -863,7 +863,7 @@ export const MultiplayerArena: React.FC = () => {
           <div className="flex items-center gap-2 font-semibold">
             <Lock className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
-              Run en cours (L0 local) — Calculateurs, explorateur de ranges et Coach IA verrouillés. Aucune correction avant la fin.
+              Duel d’entraînement en cours — Calculateurs, explorateur de ranges et Coach IA verrouillés. Correction révélée à la fin de la série.
             </span>
           </div>
           <button
@@ -889,7 +889,7 @@ export const MultiplayerArena: React.FC = () => {
                 {spot.family}
               </span>
               <span className="px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[11px] font-bold">
-                L0 Hors-ligne
+                Entraînement libre
               </span>
             </div>
             <span
@@ -981,7 +981,7 @@ export const MultiplayerArena: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <div className="text-[11px] font-bold text-slate-400">
-                    Marqueur de certitude (sans effet sur le score, Bible p.18)
+                    Niveau de confiance (repère pour votre débriefing, sans effet sur le score)
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1080,17 +1080,17 @@ export const MultiplayerArena: React.FC = () => {
 
     const verdictLabel =
       debrief.outcome === 1
-        ? 'Meilleure précision que la référence (L0 hors MMR)'
+        ? 'Précision supérieure à l’étalon (hors classement)'
         : debrief.outcome === 0.5
-          ? `Égalité dans la bande de nul (≤ ${DRAW_BAND_PD} PD)`
-          : 'En dessous de la référence sur cette série (L0 hors MMR)';
+          ? `Égalité dans la marge de nul (≤ ${DRAW_BAND_PD} PD)`
+          : 'Sous le niveau étalon sur cette série (hors classement)';
 
     return (
       <div className="bg-slate-900/95 border border-slate-700 rounded-2xl p-4 sm:p-6 space-y-5 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-xl bg-sky-500/15 text-sky-300 border border-sky-500/30 text-xs font-extrabold">
-              L0 Local Hors-Ligne (sans effet MMR)
+              Entraînement libre (sans impact sur votre classement)
             </span>
             <span className="text-sm font-extrabold text-white">
               Total : {debrief.heroTotals.pd} PD • {debrief.heroTotals.perfects}/{debrief.templates.length} Perfects •{' '}
@@ -1159,7 +1159,7 @@ export const MultiplayerArena: React.FC = () => {
         {debrief.dailyMedals.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 bg-amber-950/30 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200">
             <Award className="w-4 h-4 text-amber-400" />
-            <span>Médailles (Daily local) :</span>
+            <span>Médailles du Warm-up :</span>
             {debrief.dailyMedals.map((m) => (
               <span key={m} className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 font-bold">
                 {m === 'chirurgien' ? '🩺 Chirurgien (0 PD)' : '⚡ Éclair (< 50 PD & < 2.5s)'}
@@ -1229,29 +1229,29 @@ export const MultiplayerArena: React.FC = () => {
           <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-bold text-sky-300">
-                👻 Ghost Amical KT2. — Non vérifié (L0 hors-ligne, spoil/falsification possibles)
+                👻 Partager ce Défi Fantôme à un ami (partie amicale hors-ligne, non vérifiée)
               </span>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     void navigator.clipboard?.writeText(debrief.ghostToken!);
-                    setStatusBanner('Code KT2. copié dans le presse-papiers !');
+                    setStatusBanner('Code du défi copié dans le presse-papiers !');
                   }}
                   className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white inline-flex items-center gap-1"
                 >
-                  <Copy className="w-3.5 h-3.5" /> Copier code KT2.
+                  <Copy className="w-3.5 h-3.5" /> Copier le code
                 </button>
                 {!debrief.ghostIsLarge ? (
                   <button
                     type="button"
                     onClick={() => {
                       void navigator.clipboard?.writeText(fullUrl);
-                      setStatusBanner('Lien ?challenge=KT2... copié !');
+                      setStatusBanner('Lien du défi copié dans le presse-papiers !');
                     }}
                     className="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white inline-flex items-center gap-1"
                   >
-                    <Share2 className="w-3.5 h-3.5" /> Copier URL
+                    <Share2 className="w-3.5 h-3.5" /> Copier le lien
                   </button>
                 ) : (
                   <button
@@ -1259,7 +1259,7 @@ export const MultiplayerArena: React.FC = () => {
                     onClick={() => downloadKtghostFile(debrief.ghostToken!)}
                     className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white inline-flex items-center gap-1"
                   >
-                    <Download className="w-3.5 h-3.5" /> Télécharger .ktghost (&gt; 2000 car.)
+                    <Download className="w-3.5 h-3.5" /> Télécharger .ktghost
                   </button>
                 )}
               </div>
@@ -1308,14 +1308,14 @@ export const MultiplayerArena: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
                 <Swords className="w-5 h-5 text-emerald-400" />
-                Arène Multijoueur — Jalon M0 Local
+                Arène Poker
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30">
-                L0 Hors-ligne • Sans serveur • Sans MMR
+                Duels &amp; Entraînement • Zéro variance de tirage
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Sans variance de tirage entre adversaires. Toutes les vérités de la ligue Maths &amp; ICM sont calculées exactement par les moteurs purs V2.
+              Affrontez d’autres grinders sur exactement les mêmes spots. Ici, seule la précision EV &amp; ICM fait la différence — pas le run-good.
             </p>
           </div>
 
@@ -1347,9 +1347,10 @@ export const MultiplayerArena: React.FC = () => {
                 setMpEnabledFlag(false);
                 setMpActive(false);
               }}
+              title="Masquer l’Arène et rester sur les outils solo"
               className="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-bold text-slate-400 hover:text-white"
             >
-              Couper MP
+              Mode Solo
             </button>
           </div>
         </div>
@@ -1368,36 +1369,61 @@ export const MultiplayerArena: React.FC = () => {
             className="mt-0.5 accent-amber-500"
           />
           <span>
-            <strong>Engagement d’étude hors session :</strong> je m’engage à fermer cette application lorsqu’un client de poker (Winamax, PokerStars…) est ouvert. Les calculateurs et le Coach IA restent bloqués pendant tout run (mesure de réduction du risque, sans garantie réglementaire automatique).
+            <strong>Étude hors-table uniquement :</strong> je confirme que mes rooms de poker (Winamax, PokerStars…) sont fermées. Les calculateurs, ranges et le Coach IA restent verrouillés pendant chaque duel (outil d’étude hors session, sans garantie réglementaire automatique).
           </span>
         </label>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-950/90 border border-slate-800 rounded-2xl p-1.5">
-          {(
-            [
-              ['duel', '⚔️ Duel & Ghost Amical (L0)'],
-              ['aws', '☁️ Cloud AWS (L0)'],
-              ['l1', '🌐 Classé L1 & Daily Officiel'],
-              ['live', '⚡ Live Arena & Revue (M2)'],
-              ['games', '🎨 Fresque & Salve (MP-19)'],
-              ['m2games', '🔭 Radar & Détectives (M2)'],
-              ['social', '🏰 Boss, Raids & Écuries L1 (M3)'],
-              ['daily', '🏆 Daily Local (L0)'],
-              ['elo', '📊 Ligues & Journal FSRS V3'],
-              ['quests', '🎯 Quêtes & Écuries'],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
-                activeTab === id ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="space-y-1.5 bg-slate-950/90 border border-slate-800 rounded-2xl p-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">
+              Compétition &amp; Duels
+            </span>
+            {(
+              [
+                ['duel', '⚔️ Duel Libre'],
+                ['l1', '🏆 Arène Classée'],
+                ['live', '⚡ Heads-Up Live'],
+                ['aws', '🌐 Défis Rapides'],
+                ['daily', '🔥 Warm-up du Jour'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  activeTab === id ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-900 pt-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">
+              Drills, Boss &amp; Progression
+            </span>
+            {(
+              [
+                ['games', '🎨 Ranges & Sprint 3-Max'],
+                ['m2games', '🔭 Board & Hand Reading'],
+                ['social', '👑 Table des Boss & Club'],
+                ['elo', '📊 Divisions & Maîtrise'],
+                ['quests', '🎯 Quêtes & Hand Reviews'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  activeTab === id ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {statusBanner && (
@@ -1412,16 +1438,16 @@ export const MultiplayerArena: React.FC = () => {
 
       {renderDebrief()}
 
-      {/* TAB 1: DUEL & GHOST L0 */}
+      {/* TAB 1: DUEL LIBRE & DEFI FANTOME */}
       {activeTab === 'duel' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
             {!arena.antiTilt.firstExperienceDone && (
               <div className="bg-sky-950/40 border border-sky-500/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div>
-                  <div className="font-extrabold text-sky-200">🎓 Première expérience guidée (6 spots)</div>
+                  <div className="font-extrabold text-sky-200">🎓 Prise en main rapide (6 spots)</div>
                   <div className="text-slate-300">
-                    Testez les Points de Déviation (PD) contre un adversaire de référence étiqueté, sans MMR.
+                    Découvrez le score en Points de Déviation (PD) face à un bot étalon, sans impact sur votre classement.
                   </div>
                 </div>
                 <button
@@ -1429,19 +1455,19 @@ export const MultiplayerArena: React.FC = () => {
                   onClick={() => void startMathsDuelL0(6, 'onboarding_l0')}
                   className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold"
                 >
-                  Démarrer (6 spots)
+                  Démarrer l’échauffement (6 spots)
                 </button>
               </div>
             )}
 
             <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
               <Play className="w-4 h-4 text-emerald-400" />
-              Série Déterministe &amp; Ghost Amical KT2. (L0 Hors-ligne)
+              Série d’Entraînement &amp; Défi Fantôme (Hors classement)
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Ligue</label>
+                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Format / Ligue</label>
                 <select
                   value={league}
                   onChange={(e) => setLeague(e.target.value as League)}
@@ -1449,27 +1475,27 @@ export const MultiplayerArena: React.FC = () => {
                 >
                   {leagueStatuses.map((ls) => (
                     <option key={ls.league} value={ls.league} disabled={!ls.rankedOpen}>
-                      {ls.label} {ls.rankedOpen ? `(${ls.eligibleCount} gabarits)` : '— Bientôt'}
+                      {ls.label} {ls.rankedOpen ? `(${ls.eligibleCount} spots)` : '— Prochainement'}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Spots (60/25/15%)</label>
+                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Longueur de série</label>
                 <select
                   value={spotCount}
                   onChange={(e) => setSpotCount(Number(e.target.value) as 12 | 15 | 20)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white"
                 >
-                  <option value={12}>12 spots (7/3/2)</option>
-                  <option value={15}>15 spots (9/4/2)</option>
-                  <option value={20}>20 spots (12/5/3)</option>
+                  <option value={12}>12 spots • Express</option>
+                  <option value={15}>15 spots • Standard</option>
+                  <option value={20}>20 spots • Deep</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Horloge (Accessibilité)</label>
+                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Temps de réflexion</label>
                 <select
                   value={arena.antiTilt.clockMultiplier}
                   onChange={(e) =>
@@ -1480,15 +1506,17 @@ export const MultiplayerArena: React.FC = () => {
                   }
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs font-bold text-white"
                 >
-                  <option value={1}>×1 Standard (20s)</option>
-                  <option value={1.5}>×1.5 Confort (30s)</option>
-                  <option value={0}>Sans limite (amical)</option>
+                  <option value={1}>Standard (20s / spot)</option>
+                  <option value={1.5}>Confort (30s / spot)</option>
+                  <option value={0}>Sans chrono (libre)</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Graine (Seed)</label>
+              <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">
+                Code de tirage (identique pour deux joueurs)
+              </label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1501,7 +1529,7 @@ export const MultiplayerArena: React.FC = () => {
                   onClick={() => setSeedInput(`kt-${Date.now().toString(36)}`)}
                   className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200"
                 >
-                  🎲 Aléatoire
+                  🎲 Nouveau tirage
                 </button>
               </div>
             </div>
@@ -1512,17 +1540,17 @@ export const MultiplayerArena: React.FC = () => {
               className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-extrabold shadow-lg transition flex items-center justify-center gap-2"
             >
               <Swords className="w-4 h-4" />
-              Lancer une série L0 Maths &amp; ICM ({spotCount} spots)
+              Lancer la série Maths &amp; ICM ({spotCount} spots)
             </button>
 
             <div className="border-t border-slate-800 pt-4 space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-sky-300">
-                  Importer un Ghost Amical (`KT2.` ou fichier `.ktghost`)
+                  Relever le Défi Fantôme d’un ami
                 </span>
                 <div className="flex gap-2">
                   <label className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 cursor-pointer inline-flex items-center gap-1">
-                    <Upload className="w-3.5 h-3.5" /> .ktghost
+                    <Upload className="w-3.5 h-3.5" /> Importer .ktghost
                     <input type="file" accept=".ktghost,.txt" onChange={handleKtghostFileUpload} className="hidden" />
                   </label>
                   <button
@@ -1530,7 +1558,7 @@ export const MultiplayerArena: React.FC = () => {
                     onClick={() => void handleDecodeGhostText()}
                     className="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white"
                   >
-                    Valider Zod
+                    Charger le défi
                   </button>
                 </div>
               </div>
@@ -1538,7 +1566,7 @@ export const MultiplayerArena: React.FC = () => {
                 rows={2}
                 value={ghostInput}
                 onChange={(e) => setGhostInput(e.target.value)}
-                placeholder="Collez ici un code KT2.... ou chargez un fichier .ktghost"
+                placeholder="Collez le code partagé par un ami (KT2.…) ou importez un fichier .ktghost"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-[11px] font-mono text-white"
               />
               {ghostError && <div className="text-xs text-rose-400">{ghostError}</div>}
@@ -1547,8 +1575,8 @@ export const MultiplayerArena: React.FC = () => {
                   <div className="flex items-center gap-2 text-emerald-200">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>
-                      Défi L0 de <strong>{decodedGhost.creatorPseudo}</strong> ({decodedGhost.series.templateIds.length} spots) —{' '}
-                      <strong>Non vérifié (L0 hors-ligne)</strong>
+                      Défi de <strong>{decodedGhost.creatorPseudo}</strong> ({decodedGhost.series.templateIds.length} spots) —{' '}
+                      <strong>Partie amicale hors-ligne (non vérifiée)</strong>
                     </span>
                   </div>
                   <button
@@ -1556,7 +1584,7 @@ export const MultiplayerArena: React.FC = () => {
                     onClick={() => void startImportedGhostL0()}
                     className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold"
                   >
-                    Relever ce Ghost
+                    Affronter ce Fantôme
                   </button>
                 </div>
               )}
@@ -1564,7 +1592,10 @@ export const MultiplayerArena: React.FC = () => {
           </div>
 
           <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
-            <h3 className="text-sm font-extrabold text-white">Statut des Ligues (Seuil : 150 gabarits sourcés)</h3>
+            <div>
+              <h3 className="text-sm font-extrabold text-white">Ligues de l’Arène</h3>
+              <p className="text-[11px] text-slate-400">Ouverture en Classé dès 150 spots calibrés</p>
+            </div>
             <div className="space-y-2 text-xs">
               {leagueStatuses.map((ls) => (
                 <div
@@ -1574,7 +1605,7 @@ export const MultiplayerArena: React.FC = () => {
                   <div>
                     <div className="font-bold text-white">{ls.label}</div>
                     <div className="text-[10px] font-mono text-slate-400">
-                      {ls.eligibleCount} éligibles ({ls.frontierCount}F/{ls.transferCount}T/{ls.mixedCount}M • {ls.familyCount} familles)
+                      {ls.eligibleCount} spots calibrés • {ls.familyCount} familles de spots
                     </div>
                   </div>
                   <span
@@ -1584,7 +1615,7 @@ export const MultiplayerArena: React.FC = () => {
                         : 'bg-slate-800 text-slate-400 border-slate-700'
                     }`}
                   >
-                    {ls.rankedOpen ? 'Prête (L1 en M1)' : 'Bientôt'}
+                    {ls.rankedOpen ? 'Ouverte en Classé' : 'Prochainement'}
                   </span>
                 </div>
               ))}
@@ -1593,20 +1624,20 @@ export const MultiplayerArena: React.FC = () => {
         </div>
       )}
 
-      {/* TAB AWS : CLOUD AMICAL L0 (AWS ktp-backend + IndexedDB) */}
+      {/* TAB AWS : DEFIS RAPIDES (CLOUD AMICAL) */}
       {activeTab === 'aws' && (
         <AwsCloudPanel
           roomClosedAttested={arena.antiTilt.roomClosedAttested}
           onRunLockChange={setL1RunLocked}
           onRequireAttestation={() =>
             setStatusBanner(
-              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de démarrer un défi Cloud AWS.'
+              'Confirmez d’abord que vos rooms de poker sont fermées avant de lancer un Défi Rapide.'
             )
           }
         />
       )}
 
-      {/* TAB L1 : CLASSE L1 & DAILY OFFICIEL (MP-12..MP-18) */}
+      {/* TAB L1 : ARENE CLASSEE & DEFI DU JOUR OFFICIEL */}
       {activeTab === 'l1' && (
         <RankedL1Panel
           roomClosedAttested={arena.antiTilt.roomClosedAttested}
@@ -1614,20 +1645,20 @@ export const MultiplayerArena: React.FC = () => {
           onRunLockChange={setL1RunLocked}
           onRequireAttestation={() =>
             setStatusBanner(
-              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de démarrer en L1.'
+              'Confirmez d’abord que vos rooms de poker sont fermées avant de lancer un duel classé.'
             )
           }
         />
       )}
 
-      {/* TAB LIVE : LIVE ARENA WS & CONSOLE DE REVUE (MP-20..MP-21) */}
+      {/* TAB LIVE : HEADS-UP LIVE & FAIR-PLAY */}
       {activeTab === 'live' && (
         <LiveArenaPanel
           roomClosedAttested={arena.antiTilt.roomClosedAttested}
           onRunLockChange={setL1RunLocked}
           onRequireAttestation={() =>
             setStatusBanner(
-              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de rejoindre la Live Arena.'
+              'Confirmez d’abord que vos rooms de poker sont fermées avant de rejoindre une table Heads-Up Live.'
             )
           }
         />
@@ -1647,22 +1678,22 @@ export const MultiplayerArena: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: DAILY LOCAL L0 */}
+      {/* TAB 2: WARM-UP DU JOUR */}
       {activeTab === 'daily' && dailyLocal && (
         <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <Flame className="w-5 h-5 text-amber-400" />
-                {dailyLocal.label}
+                Warm-up du Jour ({dailyLocal.dayKey}) — Entraînement libre sans classement officiel
               </h3>
               <p className="text-xs text-slate-400">
-                15 spots exacts (cotes/outs, bloqueurs/combos, ICM/PKO). En M0 hors-ligne : aucun leaderboard officiel ni fausse statistique communautaire ; Spot Piège masqué sous 30 réponses serveur.
+                15 spots clés pour vous mettre en jambes (cotes &amp; outs, bloqueurs &amp; combos, pression ICM/PKO). Mode hors-ligne sans classement officiel ni statistiques fictives.
               </p>
             </div>
             {arena.dailyLocalRuns[dailyLocal.dayKey] && (
               <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-xs font-mono text-emerald-300">
-                Meilleur local : {arena.dailyLocalRuns[dailyLocal.dayKey].bestPd} PD ({arena.dailyLocalRuns[dailyLocal.dayKey].bestPerfects}/15)
+                Meilleur score du jour : {arena.dailyLocalRuns[dailyLocal.dayKey].bestPd} PD ({arena.dailyLocalRuns[dailyLocal.dayKey].bestPerfects}/15)
               </span>
             )}
           </div>
@@ -1673,35 +1704,35 @@ export const MultiplayerArena: React.FC = () => {
             className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-extrabold shadow-lg transition flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4" />
-            Lancer le Daily local d’entraînement (15 spots)
+            Lancer le Warm-up du Jour (15 spots)
           </button>
         </div>
       )}
 
-      {/* TAB 3: LIGUES, FSRS V3 & HISTORIQUE L0 */}
+      {/* TAB 3: DIVISIONS & MAITRISE */}
       {activeTab === 'elo' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
-            <h3 className="text-sm font-extrabold text-white">Intégration FSRS V3 &amp; Score M ({masteryM}%)</h3>
+            <h3 className="text-sm font-extrabold text-white">Maîtrise à Froid &amp; Divisions (Score M : {masteryM}%)</h3>
             <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs">
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
-                <div className="text-[10px] text-amber-400 font-bold">PROVISIONAL</div>
+                <div className="text-[10px] text-amber-400 font-bold">À CONFIRMER</div>
                 <div className="text-lg font-extrabold text-white mt-0.5">{reviewCounts.provisionalSuccesses}</div>
-                <div className="text-[9px] text-slate-500">Hors M (&lt;7j)</div>
+                <div className="text-[9px] text-slate-500">En attente +7j</div>
               </div>
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
-                <div className="text-[10px] text-emerald-400 font-bold">CONFIRMED</div>
+                <div className="text-[10px] text-emerald-400 font-bold">ACQUIS À FROID</div>
                 <div className="text-lg font-extrabold text-white mt-0.5">{reviewCounts.confirmedSuccesses}</div>
-                <div className="text-[9px] text-slate-500">Validés à froid</div>
+                <div className="text-[9px] text-slate-500">Validés dans M</div>
               </div>
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
-                <div className="text-[10px] text-rose-400 font-bold">ÉCHECS</div>
+                <div className="text-[10px] text-rose-400 font-bold">LEAKS À REVOIR</div>
                 <div className="text-lg font-extrabold text-white mt-0.5">{reviewCounts.failures}</div>
-                <div className="text-[9px] text-slate-500">Comptés direct</div>
+                <div className="text-[9px] text-slate-500">Prioritaires</div>
               </div>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Conformément à la Bible (p.8), toute réussite multijoueur met à jour FSRS mais reste <code className="text-amber-300">provisional</code> sans compter dans M avant une confirmation solo à froid à +7 jours.
+              Une bonne décision en duel est enregistrée comme acquise provisoirement : elle entre dans votre Score de Maîtrise M dès qu’elle est confirmée à froid en révision solo 7 jours plus tard.
             </p>
             <div className="pt-1 space-y-1.5 text-xs">
               {DIVISIONS.map((d) => {
@@ -1728,7 +1759,7 @@ export const MultiplayerArena: React.FC = () => {
               })}
             </div>
             <div className="text-[10px] text-slate-500">
-              MMR de départ : {GLICKO.r0} ± {GLICKO.rd0}. Aucun match L0 ne modifie le MMR avant le serveur L1 (jalon M1).
+              Score de départ en Arène Classée : {GLICKO.r0}. Les séries d’entraînement libre ne modifient pas votre classement.
             </div>
           </div>
 
@@ -1736,7 +1767,7 @@ export const MultiplayerArena: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <History className="w-4 h-4 text-sky-400" />
-                Historique Local L0 ({arena.localRuns.length}) &amp; Journal V3 ({arena.reviewLog.length})
+                Mes Séries Récentes ({arena.localRuns.length})
               </h3>
               <button
                 type="button"
@@ -1753,9 +1784,9 @@ export const MultiplayerArena: React.FC = () => {
                   }));
                 }}
                 className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-200"
-                title="Simuler une confirmation solo à froid à J+7 pour le contrôle M0"
+                title="Valider une confirmation solo à froid à J+7"
               >
-                Vérifier confirmation +7j
+                Vérifier acquis +7j
               </button>
             </div>
             {arena.localRuns.length === 0 ? (
@@ -1783,13 +1814,13 @@ export const MultiplayerArena: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: QUETES & ECURIES (ZERO STAKING / ZERO ARGENT) */}
+      {/* TAB 4: QUETES & HAND REVIEWS (ZERO ARGENT / ZERO MISE) */}
       {activeTab === 'quests' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
             <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              3 Quêtes Actives Anti-Leaks (sans expiration)
+              3 Quêtes Anti-Leaks Actives (sans limite de temps)
             </h3>
             <div className="space-y-2.5">
               {DEFAULT_ARENA_QUESTS.map((q) => {
@@ -1830,7 +1861,7 @@ export const MultiplayerArena: React.FC = () => {
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <Users className="w-4 h-4 text-sky-400" />
-                Écurie d’Entraide (4–20 membres • sans argent ni mise)
+                Écurie d’Entraide Locale (4–20 joueurs • 100 % gratuit)
               </h3>
               {!arena.ecurie ? (
                 <div className="flex flex-wrap gap-2">
@@ -1858,7 +1889,7 @@ export const MultiplayerArena: React.FC = () => {
                   <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 flex justify-between">
                     <span className="font-extrabold text-white">{arena.ecurie.name}</span>
                     <span className="font-mono text-slate-400">
-                      {arena.ecurie.members.length}/20 membres • Cible L1 (en M3) : 100×N révisions
+                      {arena.ecurie.members.length}/20 joueurs • Objectif collectif Club : 100 spots/joueur
                     </span>
                   </div>
                 </div>
@@ -1869,10 +1900,10 @@ export const MultiplayerArena: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-extrabold text-white">
-                    🛡️ Partage de Main par Liste Blanche (`share.ts` • ≥ 24h)
+                    🛡️ Partager une Main Anonymisée (≥ 24h)
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Pseudonymisation uniquement (non anonymisation absolue) : remplace les noms par BTN/SB/BB, arrondit à 0,5 bb et bloque toute main datant de moins de 24 h.
+                    Pseudonymisation stricte (sans garantie d’anonymat absolu) : remplace les pseudos par BTN/SB/BB, arrondit les stacks à 0,5 bb et bloque toute main jouée depuis moins de 24 h.
                   </p>
                 </div>
                 <button
@@ -1897,7 +1928,7 @@ export const MultiplayerArena: React.FC = () => {
                   value={shareNoteInput}
                   onChange={(e) => setShareNoteInput(e.target.value)}
                   className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white"
-                  placeholder="Question ou thème..."
+                  placeholder="Question pour le groupe..."
                 />
                 <input
                   type="text"
@@ -1912,7 +1943,7 @@ export const MultiplayerArena: React.FC = () => {
                 onClick={handlePreviewAndShareHand}
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold"
               >
-                Vérifier Aperçu &amp; Publier (Discussion non notée)
+                Prévisualiser &amp; Publier (Avis du groupe)
               </button>
 
               {shareError && (

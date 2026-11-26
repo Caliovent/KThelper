@@ -108,14 +108,14 @@ export const SalvePanel: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-extrabold text-white flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-400" />
-              Salve — Rafale 3-Max & Expresso (MP-19)
+              Sprint Expresso &amp; 3-Max — Rafale 15 Spots
             </h3>
             <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold">
-              Meilleure réponse exacte au modèle affiché
+              Solutions Push/Fold exactes (ChipEV &amp; Jackpot)
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            15 spots (12 en rafale + 3 « Mort Subite » de même barème PD) • 4 s/spot • Inclut Jackpot 80/12/8 (Risk Premium 1,35 pt).
+            12 décisions en rafale + 3 spots « Mort Subite » • 4 s/spot • Inclut un spot Jackpot 80/12/8 (Risk Premium 1,35 pt).
           </p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export const SalvePanel: React.FC = () => {
       {!running && !done && (
         <div className="space-y-3">
           <p className="text-xs text-slate-300">
-            Raccourcis clavier pendant la rafale : <code className="px-1.5 py-0.5 bg-slate-800 rounded">R</code> ou{' '}
+            Raccourcis clavier pendant le sprint : <code className="px-1.5 py-0.5 bg-slate-800 rounded">R</code> ou{' '}
             <code className="px-1.5 py-0.5 bg-slate-800 rounded">C</code> (Push / Call),{' '}
             <code className="px-1.5 py-0.5 bg-slate-800 rounded">F</code> (Fold).
           </p>
@@ -133,7 +133,7 @@ export const SalvePanel: React.FC = () => {
             className="min-h-[44px] px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-extrabold flex items-center gap-2 shadow-lg"
           >
             <Play className="w-4 h-4" />
-            Démarrer Salve 3-Max (15 spots)
+            Démarrer le Sprint 3-Max (15 spots)
           </button>
         </div>
       )}
@@ -195,7 +195,7 @@ export const SalvePanel: React.FC = () => {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
             <div className="text-xs sm:text-sm font-extrabold text-white">
-              Résultat Salve : {sumTotals.pd} PD • {sumTotals.perfects}/{SALVE_SPOTS.length} Perfects •{' '}
+              Bilan Sprint 3-Max : {sumTotals.pd} PD • {sumTotals.perfects}/{SALVE_SPOTS.length} Perfects •{' '}
               {(sumTotals.ms / 1000).toFixed(1)}s
             </div>
             <button

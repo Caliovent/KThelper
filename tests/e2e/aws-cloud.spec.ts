@@ -73,13 +73,13 @@ test.describe('Cloud AWS (L0 Amical ktp-backend + File IndexedDB)', () => {
     const arenaRoot = page.locator('#suite-tab-arena');
     await arenaRoot.locator('input[type="checkbox"]').first().check();
 
-    await arenaRoot.getByRole('button', { name: /Cloud AWS \(L0\)/i }).click();
-    await expect(arenaRoot.getByText(/Cloud Amical L0 \(AWS eu-north-1/i)).toBeVisible();
+    await arenaRoot.getByRole('button', { name: /Défis Rapides/i }).click();
+    await expect(arenaRoot.getByText(/Défis Rapides Partagés • Mode Amical/i)).toBeVisible();
     await expect(arenaRoot.getByText(/seed_leader/i)).toBeVisible();
 
     // Créer et jouer en ligne
-    await arenaRoot.getByRole('button', { name: /Créer un défi AWS/i }).click();
-    await expect(arenaRoot.getByText(/ID : awsDemo01/i)).toBeVisible();
+    await arenaRoot.getByRole('button', { name: /Créer un défi à partager/i }).click();
+    await expect(arenaRoot.getByText(/Code du défi : awsDemo01/i)).toBeVisible();
     await arenaRoot.getByRole('button', { name: /Jouer ce défi \(6 spots/i }).click();
 
     // Anti-RTA actif pendant le run AWS
@@ -93,11 +93,11 @@ test.describe('Cloud AWS (L0 Amical ktp-backend + File IndexedDB)', () => {
       await input.press('Enter');
     }
 
-    await expect(arenaRoot.getByText(/Soumission acceptée sur AWS/i)).toBeVisible();
-    await expect(arenaRoot.getByText(/ELO 1512/i).first()).toBeVisible();
+    await expect(arenaRoot.getByText(/Score enregistré sur le classement amical/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/ELO Amical : 1512/i).first()).toBeVisible();
     expect(submittedChecksum).toMatch(/^[a-f0-9]{64}$/);
 
-    // Simulation hors-ligne -> mise en file IndexedDB
+    // Simulation hors-ligne -> mise en file locale
     offlineMode = true;
     await arenaRoot.getByRole('button', { name: /Jouer ce défi \(6 spots/i }).click();
     for (let i = 0; i < 6; i++) {
@@ -105,12 +105,12 @@ test.describe('Cloud AWS (L0 Amical ktp-backend + File IndexedDB)', () => {
       await input.fill('45');
       await input.press('Enter');
     }
-    await expect(arenaRoot.getByText(/IndexedDB : 1 en attente/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/En attente d’envoi : 1/i)).toBeVisible();
 
     // Rétablissement réseau + flush manuel
     offlineMode = false;
-    await arenaRoot.getByRole('button', { name: /Synchroniser la file/i }).click();
-    await expect(arenaRoot.getByText(/IndexedDB : 0 en attente/i)).toBeVisible();
+    await arenaRoot.getByRole('button', { name: /^Synchroniser$/i }).click();
+    await expect(arenaRoot.getByText(/En attente d’envoi : 0/i)).toBeVisible();
 
     expect(errors).toHaveLength(0);
   });

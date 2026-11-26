@@ -131,7 +131,7 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
           setRunId(null);
           void loadReviewCases();
         } else if (msg.t === 'error') {
-          setWsError(`Erreur WS : ${msg.code}`);
+          setWsError(`Connexion Live interrompue : ${msg.code}`);
         }
       },
     });
@@ -193,34 +193,34 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
     }
   };
 
-  const activeWindowLabel = waitSec < 10 ? '±75 MMR' : waitSec < 20 ? '±150 MMR' : waitSec < 40 ? '±300 MMR' : 'Fenêtre élargie (Ghost conseillé)';
+  const activeWindowLabel = waitSec < 10 ? '±75 MMR' : waitSec < 20 ? '±150 MMR' : waitSec < 40 ? '±300 MMR' : 'Recherche élargie (Duel Fantôme conseillé)';
 
   return (
     <div className="space-y-5">
-      {/* Statut WebSocket Live Arena (MP-20) */}
+      {/* Heads-Up Live en Direct */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h3 className="text-base font-extrabold text-white flex items-center gap-2">
               <Radio className="w-4 h-4 text-emerald-400" />
-              Live Arena Synchrone (/v1/ws • MP-20)
+              Heads-Up Live en Direct (15 spots)
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Reprise automatique sur coupure (`resumeRunId`) • Barre de progression adverse seule (zéro score en direct).
+              Affrontez un joueur en temps réel sur exactement les mêmes spots. Reconnexion automatique en cas de coupure ; seule l’avancée adverse s’affiche pendant le duel.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs">
             {!token ? (
               <span className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold">
-                Connectez un compte dans « Classé L1 » pour activer le WS
+                Connectez votre Profil Classé pour jouer en Direct
               </span>
             ) : wsStatus === 'connected' ? (
               <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold inline-flex items-center gap-1.5">
-                <Wifi className="w-3.5 h-3.5" /> WebSocket Connecté {rttMs !== null ? `• ${rttMs} ms` : ''}
+                <Wifi className="w-3.5 h-3.5" /> Salle Live prête {rttMs !== null ? `• ${rttMs} ms` : ''}
               </span>
             ) : (
               <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/40 text-rose-300 font-bold inline-flex items-center gap-1.5">
-                <WifiOff className="w-3.5 h-3.5" /> WebSocket {wsStatus === 'connecting' ? 'Connexion…' : 'Déconnecté'}
+                <WifiOff className="w-3.5 h-3.5" /> Salle Live : {wsStatus === 'connecting' ? 'connexion…' : 'déconnectée'}
               </span>
             )}
           </div>
@@ -242,7 +242,7 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
               className="min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs sm:text-sm font-extrabold inline-flex items-center gap-2"
             >
               <Swords className="w-4 h-4" />
-              {inQueue ? `Recherche d’adversaire… (${waitSec}s • ${activeWindowLabel})` : 'Entrer en File Live Arena (15 spots)'}
+              {inQueue ? `Recherche d’adversaire… (${waitSec}s • ${activeWindowLabel})` : 'Entrer en table Heads-Up Live (15 spots)'}
             </button>
             {inQueue && (
               <button
@@ -250,7 +250,7 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
                 onClick={() => setInQueue(false)}
                 className="px-3 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-200"
               >
-                Quitter la file
+                Quitter la table d’attente
               </button>
             )}
           </div>
@@ -261,14 +261,14 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                  <Lock className="w-3 h-3 inline mr-1" /> Live vs {opponent?.pseudo ?? 'Adversaire'} ({opponent?.mmr ?? 1500})
+                  <Lock className="w-3 h-3 inline mr-1" /> En direct vs {opponent?.pseudo ?? 'Adversaire'} ({opponent?.mmr ?? 1500})
                 </span>
                 <span className="font-bold text-white">
                   Spot {currentSpot.i + 1} / {spotCount}
                 </span>
               </div>
               <div className="flex items-center gap-3 font-mono">
-                <span className="text-sky-300">Progression adverse : {oppDone} / {spotCount} (score masqué)</span>
+                <span className="text-sky-300">Avancée adverse : {oppDone} / {spotCount} (score masqué)</span>
                 <span className="text-amber-300 font-extrabold">{(remainingMs / 1000).toFixed(1)}s</span>
               </div>
             </div>
@@ -299,7 +299,7 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
                     onClick={handleSubmitWsAnswer}
                     className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold"
                   >
-                    Verrouiller Live ({estimateVal}%)
+                    Valider ({estimateVal}%)
                   </button>
                   {runId && (
                     <button
@@ -320,27 +320,26 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
           <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-xl p-3 text-xs text-emerald-200 space-y-1">
             <div className="font-extrabold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Match Live réglé (reçu Ed25519 reçu pour {matchId}) !
+              Match Heads-Up terminé et certifié ({matchId}) !
             </div>
-            <div className="font-mono text-[10px] break-all text-slate-300">{settledReceipt.slice(0, 180)}…</div>
           </div>
         )}
       </div>
 
-      {/* Console de Revue & Signaux d'intégrité (MP-21) */}
+      {/* Fair-Play & Vérification des Matchs */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
             <Scale className="w-4 h-4 text-sky-400" />
-            Console de Revue &amp; Signaux d’Intégrité (MP-21)
+            Fair-Play &amp; Vérification des Matchs
           </h3>
           <span className="px-2.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 text-sky-300 font-bold">
-            0 sanction automatique • Revue humaine journalisée uniquement
+            Aucune sanction automatique • Contrôle humain uniquement
           </span>
         </div>
 
         <p className="text-slate-400">
-          Conformément à la Bible (p. 32), aucun signal temporel ou statistique ne modifie jamais un MMR automatiquement : toute correction passe par une revue humaine journalisée avec droit de recours.
+          Aucun rythme de réponse ni aucune statistique ne modifie votre classement automatiquement : toute éventuelle vérification passe par un contrôle humain journalisé avec droit de réponse.
         </p>
 
         {reviewBanner && (
@@ -352,7 +351,7 @@ export const LiveArenaPanel: React.FC<LiveArenaPanelProps> = ({
         {reviewCases.length === 0 ? (
           <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-400 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-emerald-400 shrink-0" />
-            Aucun signal de revue ouvert sur votre compte.
+            Aucun dossier de vérification en cours sur votre compte.
           </div>
         ) : (
           <div className="space-y-2">

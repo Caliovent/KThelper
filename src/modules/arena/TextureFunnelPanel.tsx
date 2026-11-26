@@ -123,14 +123,14 @@ export const TextureFunnelPanel: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <Layers className="w-4 h-4 text-sky-400" />
-                Radar de Board — Texture Sprint (MP-22)
+                Lecture de Board — Sprint Textures Flop
               </h3>
               <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-bold">
-                Sans EV — Non éligible au classé
+                Entraînement tactique — Hors classement
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Phase 1 (3 s) : Avantage Range &amp; Nuts • Phase 2 (5 s) : Fréquence &amp; Sizing • Débriefing Boards jumeaux côte à côte.
+              Étape 1 (3 s) : avantage de Range &amp; de Nuts • Étape 2 (5 s) : fréquence &amp; sizing de C-Bet • Débriefing sur flops jumeaux.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export const TextureFunnelPanel: React.FC = () => {
             onClick={startTexture}
             className="min-h-[44px] px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-sm font-extrabold inline-flex items-center gap-2"
           >
-            <Play className="w-4 h-4" /> Démarrer Radar de Board ({TEXTURE_TWIN_BOARDS.length} boards)
+            <Play className="w-4 h-4" /> Démarrer Lecture de Board ({TEXTURE_TWIN_BOARDS.length} flops)
           </button>
         )}
 
@@ -152,7 +152,7 @@ export const TextureFunnelPanel: React.FC = () => {
                 Board {texIdx + 1} / {TEXTURE_TWIN_BOARDS.length} — {curTex.template.public.state.potType}
               </span>
               <span className="font-mono text-amber-300">
-                {texStep === 'phase1' ? 'Phase 1 (3s) : Jauges' : 'Phase 2 (5s) : Action & Sizing'}
+                {texStep === 'phase1' ? 'Étape 1 (3s) : Jauges' : 'Étape 2 (5s) : Action & Sizing'}
               </span>
             </div>
 
@@ -207,7 +207,7 @@ export const TextureFunnelPanel: React.FC = () => {
                   onClick={() => setTexStep('phase2')}
                   className="min-h-[44px] px-4 py-2 rounded-xl bg-sky-600 text-white font-extrabold"
                 >
-                  Passer à Phase 2 (Fréquence &amp; Action)
+                  Passer à l’étape 2 (Fréquence &amp; Action)
                 </button>
               </div>
             ) : (
@@ -268,7 +268,7 @@ export const TextureFunnelPanel: React.FC = () => {
         {texDone && (
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center bg-slate-950 border border-slate-800 rounded-xl p-3">
-              <span className="font-extrabold text-white">Débriefing Boards Jumeaux côte à côte (Non classé)</span>
+              <span className="font-extrabold text-white">Débriefing Flops Jumeaux côte à côte</span>
               <button type="button" onClick={startTexture} className="px-3 py-1 rounded bg-slate-800 text-slate-200 font-bold">
                 Rejouer
               </button>
@@ -302,14 +302,14 @@ export const TextureFunnelPanel: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                 <Filter className="w-4 h-4 text-amber-400" />
-                Détectives — Entonnoir de Range &amp; Contre-enquête (MP-22)
+                Hand Reading — L’Entonnoir de Range
               </h3>
               <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-bold">
-                Non classé (Modèle de profil affiché)
+                Lecture adverse — Hors classement
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              6 blocs par rue (Flop → Turn → River) • Contre-enquête avec comparaison et révision unique • PD = 1000 × (1 − recouvrement).
+              Affinez la range de Vilain rue par rue (Flop → Turn → River), puis confrontez votre lecture à celle d’un autre joueur avant de verrouiller.
             </p>
           </div>
         </div>
@@ -326,7 +326,7 @@ export const TextureFunnelPanel: React.FC = () => {
               onClick={startFunnel}
               className="min-h-[44px] px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-extrabold inline-flex items-center gap-2"
             >
-              <Play className="w-4 h-4" /> Ouvrir l’enquête ({funnelCase.streets.length} rues)
+              <Play className="w-4 h-4" /> Analyser la main ({funnelCase.streets.length} rues)
             </button>
           </div>
         )}
@@ -343,12 +343,12 @@ export const TextureFunnelPanel: React.FC = () => {
             {funSubStage === 'counter_inquiry' && (
               <div className="bg-sky-950/35 border border-sky-500/40 rounded-xl p-3 space-y-1.5">
                 <div className="font-bold text-sky-200 flex items-center gap-1.5">
-                  <Eye className="w-4 h-4" /> Contre-enquête : aperçu de l’entonnoir d’un pair (1 révision autorisée avant correction)
+                  <Eye className="w-4 h-4" /> Comparaison : lecture d’un autre joueur (1 ajustement possible avant la correction)
                 </div>
                 <div className="flex flex-wrap gap-2 font-mono text-[11px] text-slate-300">
                   {FUNNEL_BLOCKS.map((b) => (
                     <span key={b.id} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-                      {b.id} : {curFunStreet.peerInitialWeights[b.id] ?? 0}%
+                      {b.label} : {curFunStreet.peerInitialWeights[b.id] ?? 0}%
                     </span>
                   ))}
                 </div>
@@ -381,7 +381,7 @@ export const TextureFunnelPanel: React.FC = () => {
                 onClick={lockInitialFunnel}
                 className="min-h-[44px] px-4 py-2 rounded-xl bg-sky-600 text-white font-extrabold"
               >
-                Soumettre estimation initiale → Contre-enquête
+                Verrouiller ma 1re lecture → Comparer
               </button>
             ) : (
               <button
@@ -389,7 +389,7 @@ export const TextureFunnelPanel: React.FC = () => {
                 onClick={lockRevisedFunnel}
                 className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 text-white font-extrabold"
               >
-                Valider version finale {curFunStreet.street}
+                Valider ma lecture finale ({curFunStreet.street})
               </button>
             )}
           </div>
@@ -398,7 +398,7 @@ export const TextureFunnelPanel: React.FC = () => {
         {funDone && (
           <div className="space-y-2.5 text-xs">
             <div className="flex justify-between items-center bg-slate-950 border border-slate-800 rounded-xl p-3">
-              <span className="font-extrabold text-white">Bilan Entonnoir &amp; Contre-enquête</span>
+              <span className="font-extrabold text-white">Bilan Hand Reading (Flop → River)</span>
               <button type="button" onClick={startFunnel} className="px-3 py-1 rounded bg-slate-800 text-slate-200 font-bold">
                 Rejouer
               </button>
@@ -408,7 +408,7 @@ export const TextureFunnelPanel: React.FC = () => {
                 <div className="flex justify-between font-bold">
                   <span className="text-white">{h.street}</span>
                   <span className="font-mono text-emerald-300">
-                    Initial : {h.initialPd} PD → Révisé : {h.revisedPd} PD {h.improved ? '(amélioré)' : ''}
+                    1re lecture : {h.initialPd} PD → Finale : {h.revisedPd} PD {h.improved ? '(affinée)' : ''}
                   </span>
                 </div>
                 <div className="text-slate-300">{funnelCase.streets[i]?.explanation}</div>
@@ -416,7 +416,7 @@ export const TextureFunnelPanel: React.FC = () => {
             ))}
             <div className="flex items-center gap-2 text-[11px] text-amber-300">
               <ShieldAlert className="w-4 h-4 shrink-0" />
-              Les épreuves Radar de Board (sans EV) et Détectives restent strictement hors classement L1.
+              Les ateliers Lecture de Board et Hand Reading sont des entraînements tactiques hors classement officiel.
             </div>
           </div>
         )}

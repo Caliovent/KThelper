@@ -172,10 +172,10 @@ export const SocialM3Panel: React.FC = () => {
     setSocialError(null);
     try {
       await mpApi.createStable(token, stableNameInput.trim());
-      setSocialBanner('Écurie L1 créée !');
+      setSocialBanner('Club créé !');
       await refreshSocial();
     } catch (err) {
-      setSocialError(err instanceof Error ? err.message : 'Erreur création écurie.');
+      setSocialError(err instanceof Error ? err.message : 'Erreur lors de la création du Club.');
     }
   };
 
@@ -184,10 +184,10 @@ export const SocialM3Panel: React.FC = () => {
     setSocialError(null);
     try {
       await mpApi.joinStable(token, id);
-      setSocialBanner('Écurie rejointe !');
+      setSocialBanner('Vous avez rejoint le Club !');
       await refreshSocial();
     } catch (err) {
-      setSocialError(err instanceof Error ? err.message : 'Impossible de rejoindre cette écurie.');
+      setSocialError(err instanceof Error ? err.message : 'Impossible de rejoindre ce Club.');
     }
   };
 
@@ -211,7 +211,7 @@ export const SocialM3Panel: React.FC = () => {
         tags,
         hand: shared,
       });
-      setSocialBanner('Main pseudonymisée (>= 24h) publiée en discussion non notée !');
+      setSocialBanner('Main anonymisée (≥ 24h) publiée pour avis du Club !');
       await refreshSocial();
     } catch (err) {
       setSocialError(err instanceof Error ? err.message : 'Main invalide ou trop récente (< 24h).');
@@ -251,20 +251,20 @@ export const SocialM3Panel: React.FC = () => {
         </div>
       )}
 
-      {/* 1. BOSS SUR RAILS (VALIDATION SOLO V2, MP-25) */}
+      {/* 1. TABLE DES BOSS (DEFI MULTI-STREETS) */}
       <div className="bg-slate-900/95 border border-rose-500/30 rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h3 className="text-base font-extrabold text-white flex items-center gap-2">
               <Crown className="w-4 h-4 text-rose-400" />
-              Boss sur Rails (Validation Solo V2 • MP-25)
+              Table des Boss — Défi Multi-Streets
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              3 mains tirées parmi {BOSS_HAND_VARIANTS.length} variantes • Moyenne &lt; 500 PD/main et aucune décision &gt; 500 PD.
+              3 mains complètes (Préflop → River) tirées parmi {BOSS_HAND_VARIANTS.length} scénarios • Objectif : moyenne &lt; 500 PD/main et aucune grosse erreur (&gt; 500 PD).
             </p>
           </div>
           <span className="px-2.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px] font-bold">
-            Hors MMR • Raid Coopératif 72h en Écurie
+            Hors classement • Raids d’Équipe 72h en Club
           </span>
         </div>
 
@@ -300,7 +300,7 @@ export const SocialM3Panel: React.FC = () => {
                 onClick={startBossSolo}
                 className="min-h-[44px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold inline-flex items-center gap-2"
               >
-                <Swords className="w-4 h-4" /> Affronter ce Boss (3 mains sur rails)
+                <Swords className="w-4 h-4" /> Affronter ce Boss (3 mains)
               </button>
             </div>
 
@@ -369,24 +369,24 @@ export const SocialM3Panel: React.FC = () => {
         )}
       </div>
 
-      {/* 2. ÉCURIE L1 & PARTAGES D'HISTORIQUES >=24H (MP-23 & MP-24) */}
+      {/* 2. MON CLUB / ECURIE & HAND REVIEWS (>=24H) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
           <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
             <Users className="w-4 h-4 text-sky-400" />
-            Écurie L1 (4–20 membres • Plafond 100/sem.)
+            Mon Club / Écurie (4 à 20 joueurs)
           </h3>
 
           {!token ? (
             <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-400">
-              Connectez-vous dans l’onglet « Classé L1 » pour créer ou rejoindre une écurie persistante sur le serveur.
+              Connectez votre Profil Classé dans « Arène Classée » pour créer ou rejoindre un Club et lancer des Raids de Boss en équipe.
             </div>
           ) : !myStable ? (
             <div className="space-y-3">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  aria-label="Nom de l’écurie L1"
+                  aria-label="Nom du Club"
                   value={stableNameInput}
                   onChange={(e) => setStableNameInput(e.target.value)}
                   className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold"
@@ -396,12 +396,12 @@ export const SocialM3Panel: React.FC = () => {
                   onClick={() => void handleCreateStable()}
                   className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold"
                 >
-                  Créer Écurie L1
+                  Créer le Club
                 </button>
               </div>
               {allStables.length > 0 && (
                 <div className="space-y-1.5">
-                  <div className="font-bold text-slate-300">Écuries existantes :</div>
+                  <div className="font-bold text-slate-300">Clubs ouverts :</div>
                   {allStables.map((s) => (
                     <div key={s.id} className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex justify-between items-center">
                       <span>{s.name} ({s.memberCount}/20)</span>
@@ -422,11 +422,11 @@ export const SocialM3Panel: React.FC = () => {
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1.5">
                 <div className="flex justify-between font-extrabold text-white">
                   <span>{myStable.stable.name} ({myStable.myRole})</span>
-                  <span className="text-sky-300">{myStable.members.length}/20 membres</span>
+                  <span className="text-sky-300">{myStable.members.length}/20 joueurs</span>
                 </div>
                 <div className="text-slate-400">
-                  Statut : {myStable.active ? 'Active (≥ 4 membres)' : `En attente (${myStable.members.length}/4 min)`} • Objectif L1 hebdo :{' '}
-                  <strong className="text-emerald-300">{myStable.weeklyTotal}/{myStable.weeklyTarget}</strong> (zéro FSRS solo compté)
+                  Statut : {myStable.active ? 'Club actif (≥ 4 joueurs)' : `En formation (${myStable.members.length}/4 min)`} • Objectif hebdo :{' '}
+                  <strong className="text-emerald-300">{myStable.weeklyTotal}/{myStable.weeklyTarget} spots</strong> (plafond 100/joueur)
                 </div>
               </div>
               <div className="space-y-1 max-h-36 overflow-y-auto">
@@ -441,12 +441,12 @@ export const SocialM3Panel: React.FC = () => {
           )}
         </div>
 
-        {/* Défis d'historiques serveur (>= 24h, MP-24) */}
+        {/* Hand Reviews du Club (>= 24h) */}
         <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
           <div className="flex flex-wrap justify-between items-center gap-2">
             <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Défis d’Historiques Serveur (Liste Blanche ≥ 24h • MP-24)
+              Hand Reviews du Club (Mains ≥ 24h)
             </h3>
             <button
               type="button"
@@ -461,7 +461,7 @@ export const SocialM3Panel: React.FC = () => {
             rows={3}
             value={rawHandText}
             onChange={(e) => setRawHandText(e.target.value)}
-            placeholder="Collez une main Winamax/PokerStars (>= 24h)…"
+            placeholder="Collez une main Winamax/PokerStars jouée depuis ≥ 24h…"
             className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-[11px] text-white"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -470,14 +470,14 @@ export const SocialM3Panel: React.FC = () => {
               value={handQuestion}
               onChange={(e) => setHandQuestion(e.target.value)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-white"
-              placeholder="Question pour l’écurie…"
+              placeholder="Votre question pour le Club…"
             />
             <input
               type="text"
               value={handTagsText}
               onChange={(e) => setHandTagsText(e.target.value)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 font-mono text-white"
-              placeholder="Max 3 étiquettes"
+              placeholder="Max 3 étiquettes (ex: cbet, value)"
             />
           </div>
           <button
@@ -486,7 +486,7 @@ export const SocialM3Panel: React.FC = () => {
             onClick={() => void handlePublishHand()}
             className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold inline-flex items-center gap-2"
           >
-            <Play className="w-4 h-4" /> Publier en discussion non notée
+            <Play className="w-4 h-4" /> Publier pour avis du Club
           </button>
 
           {whitelistPreview && (
@@ -524,8 +524,11 @@ export const SocialM3Panel: React.FC = () => {
                   ) : (
                     <div className="text-emerald-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4" />
-                      Votre vote : <strong>{sh.myVote}</strong> • Totaux ({sh.totalVotes}) :{' '}
-                      {JSON.stringify(sh.voteCounts)} (une majorité n’est pas une solution).
+                      Votre vote : <strong>{sh.myVote}</strong> • Avis du Club ({sh.totalVotes}) :{' '}
+                      {Object.entries(sh.voteCounts ?? {})
+                        .map(([k, n]) => `${k.toUpperCase()} (${n})`)
+                        .join(' • ')}{' '}
+                      (une majorité n’est pas une solution).
                     </div>
                   )}
                 </div>
@@ -535,11 +538,11 @@ export const SocialM3Panel: React.FC = () => {
 
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>Pseudonymisation stricte : aucun pseudo réel, identifiant de main ou horodatage conservé sur le serveur.</span>
+            <span>Protection des joueurs : seuls les spots vieux d’au moins 24 h sont acceptés ; pseudos, n° de main et heures exactes sont automatiquement masqués.</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <ShieldAlert className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span>Les Raids Boss 72h (10 mains/membre, Barre du Boss 3 phases, roster figé 4–20) s’ouvrent dès 4 membres.</span>
+            <span>Les Raids de Boss en équipe (72h, 10 mains par joueur) se débloquent dès 4 membres dans le Club.</span>
           </div>
         </div>
       </div>

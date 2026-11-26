@@ -117,7 +117,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
         if (err instanceof MpApiClientError && err.offline) {
           setOfflineMsg(err.message);
         } else {
-          setOfflineMsg('API L1 indisponible (mode hors-ligne L0 actif).');
+          setOfflineMsg('Serveur Classé temporairement inaccessible (les modes libres restent actifs).');
         }
         return;
       }
@@ -196,12 +196,12 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
       if (res.devLinkToken) {
         setPendingDevLink(res.devLinkToken);
         setManualTokenInput(res.devLinkToken);
-        setBanner('Lien de connexion généré (mode dev local prêt à valider en 1 clic).');
+        setBanner('Accès rapide généré — confirmez en un clic ci-dessous.');
       } else {
-        setBanner('Si l’e-mail est valide, un lien de connexion vient d’être préparé.');
+        setBanner('Si l’adresse e-mail est valide, un lien de connexion vient d’être préparé.');
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Erreur auth/link');
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur lors de la demande de connexion.');
     }
   };
 
@@ -213,10 +213,10 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
       setToken(res.sessionToken);
       setPendingDevLink(null);
       setManualTokenInput('');
-      setBanner(`Connecté en L1 sous le pseudo ${res.player.pseudo}.`);
+      setBanner(`Connecté à l’Arène Classée sous le pseudo ${res.player.pseudo}.`);
       await refreshAll(res.sessionToken);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Jeton invalide ou expiré.');
+      setErrorMsg(err instanceof Error ? err.message : 'Lien ou code de connexion invalide ou expiré.');
     }
   };
 
@@ -304,13 +304,13 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
         if (kind === 'ghost_duel' && ans.matchState === 'settled') {
           const res = await mpApi.getMatchResult(token, matchId);
           setSettledResult(res);
-          setBanner('Match Ghost L1 réglé ! Reçu Ed25519 vérifié.');
+          setBanner('Duel Classé réglé ! Résultat officiel certifié.');
         } else if (kind === 'ghost_duel') {
           setBanner(
-            'Votre série Ghost L1 est enregistrée (awaiting_second_run, expire sous 48h). Aucun score révélé avant le second joueur.'
+            'Votre série classée est enregistrée (en attente d’un adversaire sous 48h). Score masqué jusqu’au résultat final.'
           );
         } else {
-          setBanner('Daily Top L1 terminé ! Vos réponses restent masquées jusqu’à la clôture UTC.');
+          setBanner('Défi du Jour terminé ! Vos réponses restent masquées jusqu’à minuit UTC.');
         }
         return;
       }
@@ -409,14 +409,14 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold">
               <Lock className="w-3.5 h-3.5 inline mr-1" />
-              Run Autoritaire L1 ({activeRun.kind === 'daily_top' ? 'Daily Top Officiel' : 'Ghost Classé'})
+              {activeRun.kind === 'daily_top' ? 'Défi du Jour Officiel' : 'Duel Classé en cours'}
             </span>
             <span className="text-xs font-bold text-white">
               Spot {activeRun.currentSpotIndex + 1} / {activeRun.spotCount}
             </span>
             {activeRun.openedSpot.ghostProgressSpot !== null && (
               <span className="px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 text-[11px] font-mono">
-                👻 {activeRun.opponentPseudo ?? 'Ghost'} au spot {activeRun.openedSpot.ghostProgressSpot} (sans réponses)
+                👻 {activeRun.opponentPseudo ?? 'Adversaire'} au spot {activeRun.openedSpot.ghostProgressSpot} (réponses masquées)
               </span>
             )}
           </div>
@@ -443,7 +443,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
 
         {activeRun.lockedBanner && (
           <div className="text-center text-xs font-bold text-sky-300 py-2">
-            Verrouillé côté serveur — transition vers le spot suivant…
+            Réponse enregistrée — passage au spot suivant…
           </div>
         )}
 
@@ -452,7 +452,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
             <div className="lg:col-span-7 space-y-3">
               <p className="text-sm sm:text-base font-bold text-white leading-relaxed">{sp.state.question}</p>
               <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-1">
-                <div className="text-[11px] font-bold uppercase text-sky-400">Hypothèses serveur</div>
+                <div className="text-[11px] font-bold uppercase text-sky-400">Données du spot</div>
                 <ul className="list-disc list-inside text-xs text-slate-300 space-y-0.5">
                   {sp.state.assumptions.map((a) => (
                     <li key={a}>{a}</li>
@@ -460,7 +460,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                 </ul>
               </div>
               <div className="text-[11px] text-amber-300/90">
-                Mode classé L1 : aucun indice autorisé ; aucune correction avant règlement du match / clôture UTC.
+                Mode Classé : aucun indice autorisé ; correction révélée à la fin du duel ou à minuit UTC.
               </div>
             </div>
 
@@ -501,7 +501,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                 onClick={() => void submitL1Answer(String(activeRun.estimateValue))}
                 className="w-full min-h-[44px] py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-extrabold"
               >
-                Verrouiller L1 ({activeRun.estimateValue}%)
+                Valider ({activeRun.estimateValue}%)
               </button>
             </div>
           </div>
@@ -512,25 +512,26 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Statut serveur & Qualité réseau (Bible p.13) */}
+      {/* Statut Arène Classée */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-2">
           {offlineMsg ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/40 text-rose-300 font-bold flex items-center gap-1.5">
-                <WifiOff className="w-4 h-4" /> Hors-ligne ({offlineMsg})
+                <WifiOff className="w-4 h-4" /> Arène Classée indisponible ({offlineMsg})
               </span>
               <span className="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/40 text-sky-200 font-bold">
-                💡 Sans serveur dédié, utilisez l’onglet « ☁️ Cloud AWS (L0) » ou le mode hors-ligne L0.
+                💡 Vous pouvez continuer en Défis Rapides ou en Duel Libre.
               </span>
             </div>
           ) : (
             <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold flex items-center gap-1.5">
-              <Wifi className="w-4 h-4" /> Serveur L1 connecté • Latence RTT {meta?.rttMs ?? 0} ms • Saison {meta?.season ?? SEASON_CONFIG.currentSeason}
+              <Wifi className="w-4 h-4" /> Arène Classée en ligne • Saison {meta?.season ?? SEASON_CONFIG.currentSeason}
+              {meta?.rttMs ? ` (${meta.rttMs} ms)` : ''}
             </span>
           )}
           <span className="text-slate-400">
-            Corpus serveur L1 isolé (Maths &amp; ICM : {mathsLeagueInfo.eligibleCount} gabarits vérifiés).
+            Ligue Maths &amp; ICM ouverte ({mathsLeagueInfo.eligibleCount} spots officiels).
           </span>
         </div>
         <button
@@ -538,7 +539,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
           onClick={() => void refreshAll()}
           className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold inline-flex items-center gap-1.5"
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Actualiser L1
+          <RefreshCw className="w-3.5 h-3.5" /> Actualiser
         </button>
       </div>
 
@@ -563,15 +564,15 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold">
-                {settledResult.receiptVerified ? '✓ Reçu Ed25519 vérifié' : 'Reçu non vérifié'}
+                {settledResult.receiptVerified ? '✓ Résultat officiel certifié' : 'Résultat non certifié'}
               </span>
               <span className="text-sm font-extrabold text-white">
-                Match L1 réglé vs {settledResult.opponentPseudo} : {settledResult.heroTotals.pd} PD vs{' '}
+                Duel Classé vs {settledResult.opponentPseudo} : {settledResult.heroTotals.pd} PD vs{' '}
                 {settledResult.oppTotals.pd} PD
               </span>
               {settledResult.heroRatingBefore && settledResult.heroRatingAfter && (
                 <span className="text-xs font-mono text-sky-300">
-                  Rating de précision : {Math.round(settledResult.heroRatingBefore.r)} →{' '}
+                  Score de précision : {Math.round(settledResult.heroRatingBefore.r)} →{' '}
                   {Math.round(settledResult.heroRatingAfter.r)}
                 </span>
               )}
@@ -612,17 +613,19 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
 
       {/* Grille principale M1 : Compte + Ghost Classé + Daily Top + Classement */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Colonne gauche : Compte L1 & RGPD (MP-12) */}
+        {/* Colonne gauche : Mon Profil Classé */}
         <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
           <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-sky-400" />
-            Compte L1, Attestation 18+ &amp; RGPD (MP-12)
+            Mon Profil Classé (100 % gratuit)
           </h3>
 
           {!me ? (
             <form onSubmit={handleRequestLink} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">E-mail (haché HMAC côté serveur)</label>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                  Adresse e-mail <span className="text-slate-500 font-normal">(protégée et jamais visible)</span>
+                </label>
                 <input
                   type="email"
                   required
@@ -633,7 +636,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1">Pseudo unique (3..24 car.)</label>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">Pseudo de table (3 à 24 car.)</label>
                 <input
                   type="text"
                   required
@@ -653,19 +656,19 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                   onChange={(e) => setAdultChecked(e.target.checked)}
                   className="accent-sky-500"
                 />
-                <span>J’atteste avoir 18 ans ou plus (sans droit d’entrée ni lot à valeur).</span>
+                <span>J’atteste avoir 18 ans ou plus (100 % gratuit, sans droit d’entrée ni gain en argent).</span>
               </label>
               <button
                 type="submit"
                 disabled={Boolean(offlineMsg)}
                 className="w-full min-h-[44px] py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold"
               >
-                Demander lien de connexion L1
+                Recevoir mon accès rapide
               </button>
 
               {(pendingDevLink || manualTokenInput) && (
                 <div className="bg-sky-950/40 border border-sky-500/40 rounded-xl p-3 space-y-2">
-                  <div className="font-bold text-sky-200">Valider le jeton de connexion L1 :</div>
+                  <div className="font-bold text-sky-200">Confirmer votre connexion :</div>
                   <input
                     type="text"
                     value={manualTokenInput}
@@ -677,7 +680,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                     onClick={() => void handleExchangeToken(manualTokenInput || pendingDevLink || '')}
                     className="w-full min-h-[44px] py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold"
                   >
-                    Valider la connexion L1
+                    Confirmer la connexion
                   </button>
                 </div>
               )}
@@ -700,12 +703,12 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                   </button>
                 </div>
                 <div className="font-mono text-emerald-300">
-                  Rating de précision (Maths &amp; ICM) : {Math.round(me.ratings.maths_icm.r)} ±{' '}
-                  {Math.round(me.ratings.maths_icm.rd)} ({me.ratings.maths_icm.provisional ? 'provisoire' : 'classé'})
+                  Score de précision (Maths &amp; ICM) : {Math.round(me.ratings.maths_icm.r)} ±{' '}
+                  {Math.round(me.ratings.maths_icm.rd)} ({me.ratings.maths_icm.provisional ? 'placement en cours' : 'classé'})
                 </div>
                 <div className="text-slate-400">
-                  Division affichée : <strong className="text-white">{me.ratings.maths_icm.division.label}</strong> • Polyvalent :{' '}
-                  {me.allRounder.eligible ? `${me.allRounder.r}` : 'Verrouillé (RD ≤ 110 sur Cash/MTT/Expresso)'}
+                  Division actuelle : <strong className="text-white">{me.ratings.maths_icm.division.label}</strong> • Polyvalent :{' '}
+                  {me.allRounder.eligible ? `${me.allRounder.r}` : 'Débloqué après calibrage Cash, MTT et Expresso'}
                 </div>
               </div>
 
@@ -715,7 +718,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                   onClick={handleExportRgpd}
                   className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold inline-flex items-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5" /> Exporter RGPD
+                  <Download className="w-3.5 h-3.5" /> Exporter mes données
                 </button>
                 {!confirmDelete ? (
                   <button
@@ -738,7 +741,7 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
 
               {me.matches.length > 0 && (
                 <div className="space-y-1.5">
-                  <div className="font-bold text-slate-300">Mes matchs L1 ({me.matches.length})</div>
+                  <div className="font-bold text-slate-300">Mes Duels Classés ({me.matches.length})</div>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {me.matches.map((m) => (
                       <div
@@ -770,15 +773,15 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
 
         {/* Colonne droite : Ghost Classé L1 & Daily Top Officiel */}
         <div className="lg:col-span-7 space-y-5">
-          {/* Ghost Classé L1 (MP-16) */}
+          {/* Duel Fantôme Classé */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <Swords className="w-4 h-4 text-emerald-400" />
-                Ghost Classé L1 — Ligue Maths &amp; ICM (15 spots)
+                Duel Fantôme Classé — Maths &amp; ICM (15 spots)
               </h3>
               <span className="text-[11px] font-mono text-slate-400">
-                Max 3 matchs / paire / 30j • Expiration 48h
+                Max 3 duels / adversaire / 30j • Expiration 48h
               </span>
             </div>
 
@@ -789,20 +792,20 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                 onClick={() => void startQueueGhost()}
                 className="min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs sm:text-sm font-extrabold inline-flex items-center gap-2"
               >
-                <Play className="w-4 h-4" /> Lancer / Apparier un Ghost Classé L1
+                <Play className="w-4 h-4" /> Trouver un Duel Classé (15 spots)
               </button>
             </div>
 
             {openMatches.length > 0 && (
               <div className="space-y-1.5 text-xs">
-                <div className="font-bold text-sky-300">Ghosts en attente d’adversaire :</div>
+                <div className="font-bold text-sky-300">Adversaires en attente de revanche :</div>
                 {openMatches.map((gm) => (
                   <div
                     key={gm.matchId}
                     className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2"
                   >
                     <span>
-                      <strong>{gm.creatorPseudo}</strong> (Rating {gm.creatorMmr})
+                      <strong>{gm.creatorPseudo}</strong> (Score {gm.creatorMmr})
                     </span>
                     <button
                       type="button"
@@ -817,31 +820,34 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
             )}
           </div>
 
-          {/* Daily Top Officiel L1 (MP-17) */}
+          {/* Défi du Jour Officiel */}
           <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
                 <Flame className="w-4 h-4 text-amber-400" />
-                Daily Top Officiel L1 ({daily?.dailyKey ?? 'UTC'})
+                Défi du Jour Officiel ({daily?.dailyKey ?? 'UTC'})
               </h3>
               <span className="text-[11px] font-mono text-amber-300">
-                {daily?.revealed ? 'Clôturé & Révélé' : 'Correction différée à la clôture UTC'}
+                {daily?.revealed ? 'Clôturé & Corrigé' : 'Correction publiée à minuit UTC'}
               </span>
             </div>
 
             {daily && (
               <div className="space-y-2.5 text-xs">
                 <div className="text-slate-300">{daily.compositionLabel}</div>
-                <div className="font-mono text-[10px] text-slate-400 break-all bg-slate-950 border border-slate-800 rounded-lg p-2">
-                  Empreinte graine (SHA-256) : {daily.seedCommitment}
-                </div>
+                <details className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-400">
+                  <summary className="cursor-pointer font-bold text-slate-300">
+                    Preuve d’équité du tirage (empreinte cryptographique)
+                  </summary>
+                  <div className="font-mono break-all mt-1">{daily.seedCommitment}</div>
+                </details>
 
                 {daily.myProvisionalSummary && (
                   <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-xl p-3 text-emerald-200 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>
                       Essai enregistré : {daily.myProvisionalSummary.totalPd} PD • Rang provisoire #
-                      {daily.myProvisionalSummary.provisionalRank ?? '-'} (réponses masquées jusqu’à clôture).
+                      {daily.myProvisionalSummary.provisionalRank ?? '-'} (réponses masquées jusqu’à minuit UTC).
                     </span>
                   </div>
                 )}
@@ -853,8 +859,8 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
                   className="min-h-[44px] px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-extrabold"
                 >
                   {daily.alreadyPlayed
-                    ? 'Essai officiel du jour déjà consommé'
-                    : 'Démarrer mon essai officiel Daily Top (15 spots)'}
+                    ? 'Essai du jour déjà joué'
+                    : 'Jouer mon essai du jour (15 spots)'}
                 </button>
               </div>
             )}
@@ -862,16 +868,16 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
         </div>
       </div>
 
-      {/* Classement L1 & Divisions / Saisons (MP-18) */}
+      {/* Classement de la Saison & Divisions */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <div className="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
           <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-400" />
-            Classement Officiel L1 — {leaderboard?.ratingLabel ?? 'Rating de précision'}
+            Classement de la Saison — {leaderboard?.ratingLabel ?? 'Score de précision'}
           </h3>
           {!leaderboard || leaderboard.entries.length === 0 ? (
             <div className="text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-3">
-              Aucun match classé L1 réglé pour cette saison pour l’instant.
+              Aucun duel classé réglé pour cette saison pour l’instant.
             </div>
           ) : (
             <div className="space-y-1.5 text-xs font-mono">
@@ -895,12 +901,12 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
         <div className="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
           <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
             <Award className="w-4 h-4 text-sky-400" />
-            Règles Divisions &amp; Saisons (MP-18)
+            Fonctionnement des Divisions &amp; Saisons
           </h3>
           <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-slate-300">
-                Simulateur double seuil (exemple MMR 1800 avec M = {simM}%) :
+                Simulateur double exigence (Score 1800 avec Maîtrise M = {simM}%) :
               </span>
               <input
                 type="range"
@@ -912,20 +918,18 @@ export const RankedL1Panel: React.FC<RankedL1PanelProps> = ({
               />
             </div>
             <div className="text-sky-300 font-bold">
-              Division affichée : {simDiv.label} (Master exige MMR ≥ 1700 ET M ≥ 85)
+              Division obtenue : {simDiv.label} (Master exige Score ≥ 1700 ET Maîtrise M ≥ 85%)
             </div>
           </div>
           <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-300 space-y-1">
             <div>
-              • <strong>Changement de saison :</strong> MMR conservé (1620 → {sampleSeasonRoll.r}), RD = min(350, √(85² + 100²)) ={' '}
-              <strong>{sampleSeasonRoll.rd.toFixed(1)}</strong>.
+              • <strong>Changement de saison :</strong> votre score est conservé ({sampleSeasonRoll.r}), seule la marge d’incertitude s’élargit légèrement pour recalibrer votre forme.
             </div>
             <div>
-              • <strong>Inactivité (2 semaines sans match) :</strong> aucune perte de MMR (1620), RD passe de 85 à{' '}
-              <strong>{sampleInactive.rd.toFixed(1)}</strong>.
+              • <strong>Pause / Inactivité :</strong> aucune perte de points de classement après 2 semaines sans jouer ; votre marge de confiance passe simplement de 85 à <strong>{sampleInactive.rd.toFixed(0)}</strong>.
             </div>
             <div>
-              • <strong>Ligues solveur :</strong> {DIVISION_LABELS.master} / Cash / MTT / Expresso restent « Bientôt en classé » sans export relu.
+              • <strong>Ligues {DIVISION_LABELS.master} / Cash / MTT / Expresso :</strong> en cours de calibrage avant ouverture officielle en Classé.
             </div>
           </div>
         </div>

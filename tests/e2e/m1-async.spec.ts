@@ -63,22 +63,22 @@ test.describe('Jalon M1 Asynchrone — Classé L1, Daily Officiel, Fresque Duel 
     // Cocher l'engagement Anti-RTA (hors session room)
     await arenaRoot.locator('input[type="checkbox"]').first().check();
 
-    // Basculer sur Classé L1 & Daily Officiel
-    await arenaRoot.getByRole('button', { name: /Classé L1 & Daily Officiel/i }).click();
-    await expect(arenaRoot.getByText(/Serveur L1 connecté/i)).toBeVisible();
+    // Basculer sur Arène Classée
+    await arenaRoot.getByRole('button', { name: /Arène Classée/i }).click();
+    await expect(arenaRoot.getByText(/Arène Classée en ligne/i)).toBeVisible();
 
     const uniq = `${testInfo.project.name}_${browserName}_${Date.now().toString(36)}`.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18);
     await arenaRoot.getByPlaceholder('joueur@exemple.fr').fill(`${uniq}@test.fr`);
     await arenaRoot.getByPlaceholder('Shark_KT').fill(uniq);
-    await arenaRoot.getByRole('button', { name: /Demander lien de connexion L1/i }).click();
-    await arenaRoot.getByRole('button', { name: /Valider la connexion L1/i }).click();
+    await arenaRoot.getByRole('button', { name: /Recevoir mon accès rapide/i }).click();
+    await arenaRoot.getByRole('button', { name: /Confirmer la connexion/i }).click();
     await expect(arenaRoot.getByText(uniq)).toBeVisible();
 
-    // Lancer un Ghost Classé L1 et jouer les 15 spots avec vérification d'absence de fuite réseau
-    await arenaRoot.getByRole('button', { name: /Lancer \/ Apparier un Ghost Classé L1/i }).click();
-    await expect(arenaRoot.getByText(/Run Autoritaire L1 \(Ghost Classé\)/i)).toBeVisible();
+    // Lancer un Duel Fantôme Classé et jouer les 15 spots avec vérification d'absence de fuite réseau
+    await arenaRoot.getByRole('button', { name: /Trouver un Duel Classé/i }).click();
+    await expect(arenaRoot.getByText(/Duel Classé en cours/i)).toBeVisible();
 
-    // Anti-RTA actif sur onglet externe pendant le run L1
+    // Anti-RTA actif sur onglet externe pendant le duel classé
     await page.locator('#tab-btn-icm').click();
     await expect(page.locator('#suite-tab-icm')).toBeHidden();
 
@@ -90,20 +90,20 @@ test.describe('Jalon M1 Asynchrone — Classé L1, Daily Officiel, Fresque Duel 
     }
 
     await expect(
-      arenaRoot.getByText(/Votre série Ghost L1 est enregistrée|Match Ghost L1 réglé ! Reçu Ed25519 vérifié/i)
+      arenaRoot.getByText(/Votre série classée est enregistrée|Duel Classé réglé ! Résultat officiel certifié/i)
     ).toBeVisible();
     expect(leakedKeys).toHaveLength(0);
 
-    // Démarrer le Daily Top Officiel et vérifier la consommation unique après 15 spots
-    await arenaRoot.getByRole('button', { name: /Démarrer mon essai officiel Daily Top/i }).click();
-    await expect(arenaRoot.getByText(/Run Autoritaire L1 \(Daily Top Officiel\)/i)).toBeVisible();
+    // Démarrer le Défi du Jour Officiel et vérifier la consommation unique après 15 spots
+    await arenaRoot.getByRole('button', { name: /Jouer mon essai du jour/i }).click();
+    await expect(arenaRoot.getByText(/Défi du Jour Officiel/i).first()).toBeVisible();
     for (let i = 0; i < 15; i++) {
       await expect(arenaRoot.getByText(new RegExp(`Spot ${i + 1} / 15`))).toBeVisible();
       const input = arenaRoot.locator('input[type="number"]');
       await input.fill('48');
       await input.press('Enter');
     }
-    await expect(arenaRoot.getByText(/Essai officiel du jour déjà consommé/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/Essai du jour déjà joué/i)).toBeVisible();
 
     // Suppression RGPD (MP-12)
     await arenaRoot.getByRole('button', { name: /Supprimer mon compte/i }).click();
@@ -120,23 +120,23 @@ test.describe('Jalon M1 Asynchrone — Classé L1, Daily Officiel, Fresque Duel 
     await page.goto('/');
     await page.locator('#tab-btn-arena').click();
     const arenaRoot = page.locator('#suite-tab-arena');
-    await arenaRoot.getByRole('button', { name: /Fresque & Salve/i }).click();
+    await arenaRoot.getByRole('button', { name: /Ranges & Sprint 3-Max/i }).click();
 
-    await expect(arenaRoot.getByText(/Fresque impossible en classé/i)).toBeVisible();
-    await arenaRoot.getByRole('button', { name: /Lancer Fresque Duel/i }).click();
+    await expect(arenaRoot.getByText(/Entraînement libre — Hors classement/i)).toBeVisible();
+    await arenaRoot.getByRole('button', { name: /Lancer Peins ta Range/i }).click();
 
     for (let l = 1; l <= 6; l++) {
       await arenaRoot.getByRole('button', { name: new RegExp(`Valider cette ligne \\(${l}/6\\)`) }).click();
     }
-    await expect(arenaRoot.getByText(/Score Fresque Duel \(Amical L0\)/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/Score Peins ta Range/i)).toBeVisible();
 
-    // Salve 3-Max (15 spots)
-    await arenaRoot.getByRole('button', { name: /Démarrer Salve 3-Max/i }).click();
+    // Sprint 3-Max (15 spots)
+    await arenaRoot.getByRole('button', { name: /Démarrer le Sprint 3-Max/i }).click();
     for (let i = 1; i <= 15; i++) {
       await expect(arenaRoot.getByText(new RegExp(`Spot ${i} / 15`))).toBeVisible();
       await arenaRoot.getByRole('button', { name: /Fold/i }).click();
     }
-    await expect(arenaRoot.getByText(/Résultat Salve/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/Bilan Sprint 3-Max/i)).toBeVisible();
     await expect(arenaRoot.getByText(/1\.35 point/i).first()).toBeVisible();
 
     expect(errors).toHaveLength(0);

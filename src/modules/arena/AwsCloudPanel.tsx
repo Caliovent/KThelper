@@ -54,6 +54,13 @@ interface ActiveAwsRun {
   totalReactionMs: number;
 }
 
+const LEAGUE_LABELS: Record<KtpLeague, string> = {
+  all_around: 'Tous formats',
+  cash: 'Cash Game',
+  mtt_icm: 'MTT & ICM',
+  expresso: 'Expresso',
+};
+
 const DEFAULT_GAME_CONTEXTS: Record<KtpLeague, KtpGameContext> = {
   cash: { stacksBb: [100, 100, 100], positions: ['BTN', 'SB', 'BB'], street: 'preflop', board: [] },
   mtt_icm: { stacksBb: [40, 25, 20, 15], positions: ['CO', 'BTN', 'SB', 'BB'], street: 'preflop', board: [] },
@@ -119,7 +126,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
     const detachSync = attachKtpOnlineSync((summary) => {
       setPendingCount(summary.remaining);
       if (summary.flushed > 0) {
-        setBanner(`${summary.flushed} soumission(s) hors-ligne synchronisée(s) vers AWS !`);
+        setBanner(`${summary.flushed} résultat(s) envoyé(s) vers le classement amical !`);
         void refreshLeaderboard(leaderboardLeague);
       }
     });
@@ -149,9 +156,9 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
         expiresAt: created.expiresAt,
       });
       setJoinIdInput(created.challengeId);
-      setBanner(`Défi AWS créé : ID ${created.challengeId} (expire dans 24 h).`);
+      setBanner(`Défi créé ! Code à partager : ${created.challengeId} (valable 24 h).`);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Erreur création défi AWS.');
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur lors de la création du défi.');
     } finally {
       setBusy(false);
     }
@@ -166,9 +173,9 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
     try {
       const meta = await getChallenge(id, playerId);
       setLoadedChallenge(meta);
-      setBanner(`Défi ${meta.challengeId} chargé (graine déterministe prête).`);
+      setBanner(`Défi ${meta.challengeId} prêt — même tirage de spots garanti.`);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Défi introuvable sur AWS.');
+      setErrorMsg(err instanceof Error ? err.message : 'Code de défi introuvable.');
     } finally {
       setBusy(false);
     }
@@ -243,7 +250,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
       await refreshQueueCount();
       if (outcome.queued) {
         setLastSubmitOutcome({ kind: 'queued', challengeId, evLossBb, reactionMs: nextReactionMs });
-        setBanner(`Hors-ligne : résultat (${evLossBb} bb) mis en file IndexedDB (${outcome.pendingCount} en attente).`);
+        setBanner(`Hors-ligne : score (${evLossBb} bb) sauvegardé localement (${outcome.pendingCount} en attente d’envoi automatique).`);
       } else {
         setLastSubmitOutcome({
           kind: 'submitted',
@@ -252,11 +259,11 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
           reactionMs: nextReactionMs,
           res: outcome.result,
         });
-        setBanner(`Score envoyé sur AWS ! ELO ${outcome.result.gtoElo} (${outcome.result.gtoEloDelta >= 0 ? '+' : ''}${outcome.result.gtoEloDelta}).`);
+        setBanner(`Score enregistré ! ELO Amical ${outcome.result.gtoElo} (${outcome.result.gtoEloDelta >= 0 ? '+' : ''}${outcome.result.gtoEloDelta}).`);
         await refreshLeaderboard(leaderboardLeague);
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Erreur soumission AWS.');
+      setErrorMsg(err instanceof Error ? err.message : 'Impossible d’enregistrer le score.');
     } finally {
       setBusy(false);
     }
@@ -269,12 +276,12 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
       const summary = await flushQueue();
       setPendingCount(summary.remaining);
       if (summary.flushed > 0) {
-        setBanner(`${summary.flushed} soumission(s) synchronisée(s) vers AWS !`);
+        setBanner(`${summary.flushed} résultat(s) synchronisé(s) !`);
         await refreshLeaderboard(leaderboardLeague);
       } else if (summary.errors.length > 0) {
         setErrorMsg(summary.errors[0]);
       } else {
-        setBanner('File IndexedDB déjà vide.');
+        setBanner('Tous vos scores sont déjà à jour.');
       }
     } finally {
       setBusy(false);
@@ -290,7 +297,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/40 text-sky-300 text-xs font-extrabold">
               <Lock className="w-3.5 h-3.5 inline mr-1" />
-              Défi AWS {activeRun.challengeId} (Cloud Amical L0)
+              Défi Rapide {activeRun.challengeId} • Mode Amical
             </span>
             <span className="text-xs font-bold text-white">
               Spot {activeRun.spotIdx + 1} / {activeRun.templates.length}
@@ -362,12 +369,12 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* En-tête statut AWS + IndexedDB */}
+      {/* En-tête Défis Rapides */}
       <div className="bg-slate-900/90 border border-sky-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-2">
           <span className="px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/40 text-sky-300 font-extrabold inline-flex items-center gap-1.5">
             <Cloud className="w-4 h-4" />
-            Cloud Amical L0 (AWS eu-north-1 • Calcul client — Hors Classé L1)
+            Défis Rapides Partagés • Mode Amical
           </span>
           <span
             className={`px-2 py-0.5 rounded font-bold inline-flex items-center gap-1 ${
@@ -377,12 +384,11 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
             {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
             {isOnline ? 'En ligne' : 'Hors-ligne'}
           </span>
-          <span className="font-mono text-slate-400">ID opaque : {playerId.slice(0, 12)}…</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 font-mono text-amber-300">
-            IndexedDB : {pendingCount} en attente
+            En attente d’envoi : {pendingCount}
           </span>
           <button
             type="button"
@@ -390,7 +396,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
             onClick={() => void handleManualFlush()}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold inline-flex items-center gap-1.5"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Synchroniser la file
+            <RefreshCw className="w-3.5 h-3.5" /> Synchroniser
           </button>
         </div>
       </div>
@@ -415,27 +421,27 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
           {lastSubmitOutcome.kind === 'submitted' ? (
             <>
               <div className="font-extrabold text-emerald-300">
-                ✓ Soumission acceptée sur AWS (`{lastSubmitOutcome.challengeId}`)
+                ✓ Score enregistré sur le classement amical (`{lastSubmitOutcome.challengeId}`)
               </div>
               <div className="font-mono text-slate-200">
-                Perte : {lastSubmitOutcome.evLossBb} bb • Temps : {lastSubmitOutcome.reactionMs} ms • ELO Cloud :{' '}
+                Perte : {lastSubmitOutcome.evLossBb} bb • Temps : {lastSubmitOutcome.reactionMs} ms • ELO Amical :{' '}
                 <strong>{lastSubmitOutcome.res.gtoElo}</strong> ({lastSubmitOutcome.res.gtoEloDelta >= 0 ? '+' : ''}
-                {lastSubmitOutcome.res.gtoEloDelta}) • Rang #{lastSubmitOutcome.res.rank} ({lastSubmitOutcome.res.leagueId})
+                {lastSubmitOutcome.res.gtoEloDelta}) • Rang #{lastSubmitOutcome.res.rank} ({LEAGUE_LABELS[lastSubmitOutcome.res.leagueId as KtpLeague] ?? lastSubmitOutcome.res.leagueId})
               </div>
             </>
           ) : (
             <div className="font-bold text-amber-300">
               <Download className="w-4 h-4 inline mr-1" />
-              Mis en file IndexedDB hors-ligne (`{lastSubmitOutcome.challengeId}`, {lastSubmitOutcome.evLossBb} bb) — envoi automatique au retour réseau.
+              Hors-ligne : score sauvegardé localement (`{lastSubmitOutcome.challengeId}`, {lastSubmitOutcome.evLossBb} bb) — envoi automatique dès le retour d’Internet.
             </div>
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Création / Chargement Défi Cloud */}
+        {/* Création / Chargement Défi Rapide */}
         <div className="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 text-xs">
-          <h3 className="text-sm font-extrabold text-white">Défis Cloud Partagés (ID court &amp; Graine AWS)</h3>
+          <h3 className="text-sm font-extrabold text-white">Créer ou Rejoindre un Défi Rapide</h3>
 
           <div className="flex flex-wrap gap-2">
             <select
@@ -443,7 +449,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
               onChange={(e) => setVariant(e.target.value as KtpLeague)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 font-bold text-white"
             >
-              <option value="all_around">All-Around</option>
+              <option value="all_around">Tous formats</option>
               <option value="cash">Cash Game</option>
               <option value="mtt_icm">MTT &amp; ICM</option>
               <option value="expresso">Expresso</option>
@@ -454,7 +460,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
               onClick={() => void handleCreateChallenge()}
               className="min-h-[44px] px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold"
             >
-              Créer un défi AWS
+              Créer un défi à partager
             </button>
           </div>
 
@@ -463,7 +469,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
               type="text"
               value={joinIdInput}
               onChange={(e) => setJoinIdInput(e.target.value)}
-              placeholder="Entrer un challengeId AWS (ex: 2Ds4kL...)"
+              placeholder="Coller le code d’un défi (ex : 2Ds4kL…)"
               className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 font-mono text-white"
             />
             <button
@@ -472,7 +478,7 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
               onClick={() => void handleLoadChallenge()}
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold inline-flex items-center gap-1"
             >
-              <Search className="w-3.5 h-3.5" /> Charger le défi
+              <Search className="w-3.5 h-3.5" /> Rejoindre
             </button>
           </div>
 
@@ -480,39 +486,36 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
             <div className="bg-slate-950 border border-sky-500/30 rounded-xl p-3.5 space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono font-bold text-sky-300">
-                  ID : {loadedChallenge.challengeId} ({loadedChallenge.variant})
+                  Code du défi : {loadedChallenge.challengeId} ({LEAGUE_LABELS[loadedChallenge.variant] ?? loadedChallenge.variant})
                 </span>
                 <button
                   type="button"
                   onClick={() => {
                     void navigator.clipboard?.writeText(loadedChallenge.challengeId);
-                    setBanner(`ID ${loadedChallenge.challengeId} copié.`);
+                    setBanner(`Code ${loadedChallenge.challengeId} copié.`);
                   }}
                   className="px-2 py-1 rounded bg-slate-800 text-slate-200 font-bold inline-flex items-center gap-1"
                 >
-                  <Copy className="w-3 h-3" /> Copier ID
+                  <Copy className="w-3 h-3" /> Copier le code
                 </button>
-              </div>
-              <div className="font-mono text-[10px] text-slate-400 break-all">
-                Seed : {loadedChallenge.seed} • Statut : {loadedChallenge.status}
               </div>
               <button
                 type="button"
                 onClick={() => void handleStartChallengeRun(loadedChallenge)}
                 className="w-full min-h-[44px] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold inline-flex items-center justify-center gap-2"
               >
-                <Play className="w-4 h-4" /> Jouer ce défi (6 spots déterministes)
+                <Play className="w-4 h-4" /> Jouer ce défi (6 spots identiques)
               </button>
             </div>
           )}
         </div>
 
-        {/* Leaderboard Cloud AWS */}
+        {/* Classement Amical (Défis Rapides) */}
         <div className="lg:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-400" />
-              Classement Cloud Amical L0 (AWS)
+              Classement Amical (Défis Rapides)
             </h3>
             <div className="flex items-center gap-2">
               <select
@@ -520,10 +523,10 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
                 onChange={(e) => setLeaderboardLeague(e.target.value as KtpLeague)}
                 className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 font-bold text-white"
               >
-                <option value="all_around">all_around</option>
-                <option value="cash">cash</option>
-                <option value="mtt_icm">mtt_icm</option>
-                <option value="expresso">expresso</option>
+                <option value="all_around">Tous formats</option>
+                <option value="cash">Cash Game</option>
+                <option value="mtt_icm">MTT &amp; ICM</option>
+                <option value="expresso">Expresso</option>
               </select>
               <button
                 type="button"
@@ -536,12 +539,12 @@ export const AwsCloudPanel: React.FC<AwsCloudPanelProps> = ({
           </div>
 
           <p className="text-[11px] text-slate-400">
-            Calculé côté client avec checksum SHA-256 et file hors-ligne IndexedDB (distinct du classement autoritaire L1).
+            Classement communautaire libre (distinct de l’Arène Classée). Vos scores joués hors-ligne sont sauvegardés et synchronisés dès le retour d’Internet.
           </p>
 
           {!leaderboard || leaderboard.entries.length === 0 ? (
             <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-400">
-              Aucune entrée ou serveur hors-ligne.
+              Aucun score enregistré ou connexion indisponible.
             </div>
           ) : (
             <div className="space-y-1.5 max-h-60 overflow-y-auto font-mono">

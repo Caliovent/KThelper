@@ -76,15 +76,15 @@ test.describe('Pro Poker Suite V2 & Arène M0 Local — Tests graphiques E2E', (
     await expect(arenaRoot).toBeVisible();
 
     // Sans engagement coché, refus de lancer
-    await arenaRoot.getByRole('button', { name: 'Démarrer (6 spots)' }).click();
-    await expect(arenaRoot.getByText(/Confirmez d’abord l’engagement/i)).toBeVisible();
+    await arenaRoot.getByRole('button', { name: 'Démarrer l’échauffement (6 spots)' }).click();
+    await expect(arenaRoot.getByText(/Confirmez d’abord que vos rooms/i)).toBeVisible();
 
     // Cocher l'engagement et démarrer
     await arenaRoot.locator('input[type="checkbox"]').first().check();
-    await arenaRoot.getByRole('button', { name: 'Démarrer (6 spots)' }).click();
+    await arenaRoot.getByRole('button', { name: 'Démarrer l’échauffement (6 spots)' }).click();
 
     // Run actif : verrouillage Anti-RTA des onglets externes & taille tactile >= 44px
-    await expect(arenaRoot.getByText(/Run en cours \(L0 local\)/i)).toBeVisible();
+    await expect(arenaRoot.getByText(/Duel d’entraînement en cours/i)).toBeVisible();
     await page.locator('#tab-btn-icm').click();
     await expect(page.locator('#suite-tab-icm')).toBeHidden();
 
@@ -113,10 +113,10 @@ test.describe('Pro Poker Suite V2 & Arène M0 Local — Tests graphiques E2E', (
 
     // Fermer débriefing et réimporter le code KT2. (MP-09)
     await arenaRoot.getByRole('button', { name: 'Fermer' }).click();
-    await arenaRoot.getByPlaceholder(/Collez ici un code KT2/i).fill(kt2Token);
-    await arenaRoot.getByRole('button', { name: 'Valider Zod' }).click();
-    await expect(arenaRoot.getByText(/Non vérifié \(L0 hors-ligne\)/i)).toBeVisible();
-    await expect(arenaRoot.getByRole('button', { name: 'Relever ce Ghost' })).toBeVisible();
+    await arenaRoot.getByPlaceholder(/Collez le code partagé par un ami/i).fill(kt2Token);
+    await arenaRoot.getByRole('button', { name: 'Charger le défi' }).click();
+    await expect(arenaRoot.getByText(/Partie amicale hors-ligne \(non vérifiée\)/i)).toBeVisible();
+    await expect(arenaRoot.getByRole('button', { name: 'Affronter ce Fantôme' })).toBeVisible();
 
     expect(errors).toHaveLength(0);
   });
@@ -131,21 +131,21 @@ test.describe('Pro Poker Suite V2 & Arène M0 Local — Tests graphiques E2E', (
     await page.locator('#tab-btn-arena').click();
     const arenaRoot = page.locator('#suite-tab-arena');
 
-    // Daily local L0 sans classement
-    await arenaRoot.getByRole('button', { name: /Daily Local \(L0\)/i }).click();
-    await expect(arenaRoot.getByText(/sans classement officiel/i)).toBeVisible();
+    // Warm-up du Jour sans classement
+    await arenaRoot.getByRole('button', { name: /Warm-up du Jour/i }).click();
+    await expect(arenaRoot.getByText(/Entraînement libre sans classement officiel/i)).toBeVisible();
 
-    // FSRS V3 stats
-    await arenaRoot.getByRole('button', { name: /Ligues & Journal FSRS V3/i }).click();
-    await expect(arenaRoot.getByText('PROVISIONAL', { exact: true })).toBeVisible();
-    await expect(arenaRoot.getByText('CONFIRMED', { exact: true })).toBeVisible();
+    // Maîtrise à froid & Divisions
+    await arenaRoot.getByRole('button', { name: /Divisions & Maîtrise/i }).click();
+    await expect(arenaRoot.getByText('À CONFIRMER', { exact: true })).toBeVisible();
+    await expect(arenaRoot.getByText('ACQUIS À FROID', { exact: true })).toBeVisible();
 
-    // Quêtes & Écuries + share.ts >= 24h sans fuite de pseudo
-    await arenaRoot.getByRole('button', { name: /Quêtes & Écuries/i }).click();
+    // Quêtes & Hand Reviews + anonymisation >= 24h sans fuite de pseudo
+    await arenaRoot.getByRole('button', { name: /Quêtes & Hand Reviews/i }).click();
     await expect(arenaRoot.getByText('Zéro Tilt')).toBeVisible();
     await arenaRoot.getByRole('button', { name: /Créer mon Écurie/i }).click();
     await arenaRoot.getByRole('button', { name: /Exemple Winamax/i }).click();
-    await arenaRoot.getByRole('button', { name: /Vérifier Aperçu & Publier/i }).click();
+    await arenaRoot.getByRole('button', { name: /Prévisualiser & Publier/i }).click();
 
     const preJson = await arenaRoot.locator('pre').textContent();
     expect(preJson).toBeTruthy();

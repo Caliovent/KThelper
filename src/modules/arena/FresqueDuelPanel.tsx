@@ -109,14 +109,14 @@ export const FresqueDuelPanel: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-extrabold text-white flex items-center gap-2">
               <Layers className="w-4 h-4 text-violet-400" />
-              Fresque Duel — Peins la Range (MP-19)
+              Peins ta Range — Matrice 13×13
             </h3>
             <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] font-bold">
-              Amical L0 uniquement — Fresque impossible en classé
+              Entraînement libre — Hors classement
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            6 lignes de la matrice 13×13 • 25 s/ligne • Frontière (±1 case) comptée ×2 • Pondération combos (6/4/12).
+            Reconstituez 6 lignes d’une range préflop • 25 s/ligne • Les mains frontières comptent double (pondérées en combos).
           </p>
         </div>
       </div>
@@ -160,7 +160,7 @@ export const FresqueDuelPanel: React.FC = () => {
             className="min-h-[44px] px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-extrabold flex items-center gap-2 shadow-lg"
           >
             <Play className="w-4 h-4" />
-            Lancer Fresque Duel (6 lignes • Amical)
+            Lancer Peins ta Range (6 lignes)
           </button>
         </div>
       )}
@@ -248,7 +248,7 @@ export const FresqueDuelPanel: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl p-3">
             <div className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-emerald-400" />
-              Score Fresque Duel (Amical L0) : {debrief.totalPd} PD • {debrief.perfectLines}/6 lignes parfaites
+              Score Peins ta Range : {debrief.totalPd} PD • {debrief.perfectLines}/6 lignes parfaites
             </div>
             <button
               type="button"
@@ -307,7 +307,7 @@ export const FresqueDuelPanel: React.FC = () => {
 
           <div className="flex items-center gap-2 text-[11px] text-amber-300">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            Rappel : Fresque Duel repose sur des seuils heuristiques (aucun classement MMR).
+            Rappel : cet atelier s’appuie sur des ranges pédagogiques et reste strictement hors classement.
           </div>
         </div>
       )}
