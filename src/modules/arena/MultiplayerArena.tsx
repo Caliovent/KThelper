@@ -1343,6 +1343,18 @@ export const MultiplayerArena: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('propoker-open-guide', { detail: { tourId: 'arena-mastery' } })
+                )
+              }
+              title="Lancer le tutoriel interactif de l’Arène Poker"
+              className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold text-amber-300 hover:text-white"
+            >
+              📖 Tuto Arène
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setMpEnabledFlag(false);
                 setMpActive(false);

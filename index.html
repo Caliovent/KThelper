@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="fr" class="dark overflow-x-hidden">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden">
 
   <!-- Toast Notification Banner (No alert() used anywhere) -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -58,6 +58,9 @@
         </button>
         <button id="tab-btn-coach" onclick="switchSuiteTab('coach')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
           🤖 Coach IA Poker
+        </button>
+        <button id="nav-btn-guide" type="button" onclick="openGuidePortal()" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-amber-300 hover:text-white hover:bg-amber-600/20 border border-amber-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5" title="Ouvrir le Centre d'Aide, les Formules et les Tutoriels Interactifs">
+          📖 Guide &amp; Tutos
         </button>
         <button id="nav-btn-videos" type="button" onclick="openCoachVideosModal('all')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-rose-300 hover:text-white hover:bg-rose-600/20 border border-rose-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5" title="Ouvrir le parcours séquentiel des 30 vidéos Kill Tilt">
           📺 Vidéos <span id="nav-videos-progress" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-mono text-[10px]">0/30</span>
@@ -105,7 +108,7 @@
       <div id="v2-range-bar" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
         <div class="flex flex-wrap items-center gap-2">
           <label for="v2-range-catalog" class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Catalogue V2 :</label>
-          <select id="v2-range-catalog" onchange="selectV2Range(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+          <select id="v2-range-catalog" onchange="selectV2Range(this.value)" class="w-full sm:w-auto max-w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
             <option value="">📘 Tables V1 Kill Tilt NL2 (Presets ci-dessous)</option>
           </select>
           <span id="v2-provenance-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
@@ -9728,8 +9731,15 @@ Hero folds
       }
     });
 
+    function openGuidePortal(opts) {
+      window.dispatchEvent(new CustomEvent('propoker-open-guide', { detail: opts || {} }));
+    }
+
     // Couch-friendly keyboard shortcuts when Quiz or Jeux de Ranges is active
     window.addEventListener('keydown', (e) => {
+      if (document.getElementById('guide-docs-modal')) {
+        return;
+      }
       const backupModal = document.getElementById('v2-backup-modal');
       if (backupModal && !backupModal.classList.contains('hidden')) {
         if (e.key === 'Escape') {
@@ -9800,6 +9810,8 @@ Hero folds
       }
     });
   </script>
+  <!-- React Guide Portal & Interactive Tours (top-level body portal) -->
+  <div id="guide-portal-root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
