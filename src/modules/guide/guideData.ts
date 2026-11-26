@@ -100,7 +100,7 @@ export const INTERACTIVE_TOURS: InteractiveTour[] = [
         proTip:
           'À la bulle d’un 4-Max, votre Bubble Factor dépasse souvent 2,3 : vous avez besoin de beaucoup plus d’équité pour payer un tapis que pour mettre all-in.',
         actionLabel: 'Tester le scénario Bulle 4-Max',
-        actionTriggerSelector: '#suite-tab-icm button[onclick*="bubble"]',
+        actionTriggerSelector: '#suite-tab-icm button[onclick*="bulle4max"]',
       },
       {
         id: 'overview-bankroll',
@@ -214,7 +214,7 @@ export const INTERACTIVE_TOURS: InteractiveTour[] = [
         proTip:
           'Cliquez sur le scénario Bulle 4-Max (40/25/20/15 bb) : le Bubble Factor grimpe à 2.377, obligeant un resserrement massif en défense.',
         actionLabel: 'Appliquer le scénario Bulle 4-Max',
-        actionTriggerSelector: '#suite-tab-icm button[onclick*="bubble"]',
+        actionTriggerSelector: '#suite-tab-icm button[onclick*="bulle4max"]',
       },
       {
         id: 'icm-pko',
@@ -267,6 +267,231 @@ export const INTERACTIVE_TOURS: InteractiveTour[] = [
           'Collez une main jouée la veille dans le Coach IA (ou générez un scénario ciblé sur vos erreurs récentes) pour valider votre ligne Flop/Turn/River avant de jouer.',
         proTip:
           'Même sans connexion ou sans clé Gemini, le mode hors-ligne analyse automatiquement votre hand history et vous donne les repères EV essentiels.',
+      },
+    ],
+  },
+  {
+    id: 'ranges-mastery',
+    title: '📊 Ranges 13×13, Bloqueurs & Mini-Jeux',
+    badge: 'Préflop • Cash / MTT / Spin',
+    duration: '3 min',
+    audience: 'Tous formats',
+    description:
+      'Maîtrisez la matrice 13×13, le Catalogue Multi-Formats, le Calque Bloqueurs, l’Éditeur personnalisé et les Mini-Jeux anti-leaks.',
+    steps: [
+      {
+        id: 'ranges-matrix',
+        title: '1. Lire la Matrice 13×13 et les fréquences pondérées',
+        suiteTab: 'ranges',
+        appMode: 'explore',
+        targetSelector: '#hand-matrix',
+        summary:
+          'Chaque case affiche l’action recommandée (Open, 3-Bet, 4-Bet ou Call) et sa fréquence. Survolez ou cliquez sur une main pour voir ses combos (6 paires / 4 suited / 12 offsuit) et sa justification.',
+        proTip:
+          'Utilisez les boutons UTG à BB en haut pour comparer d’un coup d’œil l’élargissement progressif selon la position.',
+      },
+      {
+        id: 'ranges-v2bar',
+        title: '2. Catalogue V2, GTO Simplifié 25 % & Bloqueurs',
+        suiteTab: 'ranges',
+        appMode: 'explore',
+        targetSelector: '#v2-range-bar',
+        summary:
+          'Changez de format (Cash 100bb, MTT 20bb/15bb, Expresso 25bb) via le Catalogue V2. Activez « GTO Simplifié 25 % » pour mémoriser facilement, ou « Calque Bloqueurs » pour voir les mains qui bloquent AA/KK/AK.',
+        proTip:
+          'A5s en 3-Bet ou 4-Bet bluff est un grand classique : il bloque 25 % des As adverses tout en gardant un tirage couleur.',
+        actionLabel: 'Tester le Calque Bloqueurs',
+        actionTriggerSelector: '#v2-blocker-layer-btn',
+      },
+      {
+        id: 'ranges-edit',
+        title: '3. Personnaliser et importer vos propres ranges',
+        suiteTab: 'ranges',
+        appMode: 'edit',
+        targetSelector: '#btn-mode-edit',
+        summary:
+          'En mode Éditeur, peignez directement vos cases ou collez une notation texte (Equilab / Flopzilla) pour adapter vos ranges au field de votre limite. Tout est sauvegardé localement.',
+        proTip:
+          'Resserrez légèrement UTG/MP sur des tables très passives et élargissez vos iso-raises BTN face aux limpers.',
+      },
+      {
+        id: 'ranges-games',
+        title: '4. Ancrer vos réflexes en Jeux Ranges & Quiz',
+        suiteTab: 'ranges',
+        appMode: 'games',
+        targetSelector: '#btn-mode-games',
+        summary:
+          'Basculer vers Jeux Ranges lance le Daily Warm-up 5 min, le Chunking 25 lignes, le mode Blitz chronométré et le drill ciblé sur vos erreurs récentes.',
+        proTip:
+          'Quelques minutes de Blitz avant de lancer vos tables suffisent à éliminer les hésitations sur les frontières de range.',
+      },
+    ],
+  },
+  {
+    id: 'hud-outs-mastery',
+    title: '🎯 Décodeur HUD, Outs & Cotes',
+    badge: 'Lecture rapide & Calcul Mental',
+    duration: '2 min',
+    audience: 'Cash Game & Live',
+    description:
+      'Exploitez instantanément les stats HUD de vos adversaires et automatisez la conversion Outs → Équité avec la règle ×2 / ×4.',
+    steps: [
+      {
+        id: 'hud-profile',
+        title: '1. Décoder le profil adverse via VPIP / PFR / 3-Bet',
+        suiteTab: 'hud',
+        targetSelector: '#hud-profile-title',
+        summary:
+          'Entrez les stats de votre tracker (VPIP, PFR, 3-Bet, AF, nombre de mains) ou testez un profil type. Le décodeur révèle l’écart VPIP–PFR et liste les ajustements immédiats à appliquer.',
+        proTip:
+          'Un écart VPIP – PFR supérieur à 15 points signale un joueur très passif préflop qui call trop et bluffe trop peu.',
+        actionLabel: 'Tester le profil Fish Passif (38/8)',
+        actionTriggerSelector: '#suite-tab-hud button[onclick*="applyHudPreset(38"]',
+      },
+      {
+        id: 'hud-outs-slider',
+        title: '2. Ajuster le nombre d’Outs au Flop ou à la Turn',
+        suiteTab: 'hud',
+        targetSelector: '#outs-slider',
+        summary:
+          'Faites glisser le curseur de 1 à 20 outs (ex : 4 outs ventrale, 8 outs quinte bilatérale, 9 outs couleur, 15 outs combo draw) pour voir les probabilités exactes.',
+        proTip:
+          'Un tirage couleur + 2 overcards vous donne souvent 15 outs : vous êtes favori ou en flip face à une simple top paire au flop.',
+      },
+      {
+        id: 'hud-outs-result',
+        title: '3. Comparer calcul exact et règle ×2 / ×4',
+        suiteTab: 'hud',
+        targetSelector: '#outs-flop-exact',
+        summary:
+          'Visualisez à la fois l’équité mathématique exacte et l’astuce rapide à la table (Outs × 4 au flop sur 2 rues, Outs × 2 + 2 à la turn).',
+        proTip:
+          'Au-delà de 9 outs au flop, l’approximation ×4 surestime légèrement : retranchez 1 % par out au-dessus de 9 pour rester exact.',
+      },
+    ],
+  },
+  {
+    id: 'bankroll-import-mastery',
+    title: '📈 Bankroll & Import Winamax / PokerStars',
+    badge: 'Gestion & Tracker Local',
+    duration: '3 min',
+    audience: 'Tous grinders',
+    description:
+      'Suivez votre bankroll en caves, surveillez votre winrate réel et importez vos fichiers .txt Winamax/PokerStars sans rien envoyer sur Internet.',
+    steps: [
+      {
+        id: 'brm-kpi',
+        title: '1. Surveiller votre Bankroll en euros et en caves',
+        suiteTab: 'bankroll',
+        targetSelector: '#kpi-bankroll',
+        summary:
+          'Les compteurs en haut suivent votre bankroll actuelle, son équivalent en caves NL2, votre profit net, votre volume de mains et votre winrate en bb/100.',
+        proTip:
+          'Respectez une marge de sécurité de 40 à 50 caves en Cash Game (et 100+ buy-ins en MTT/Expresso) pour absorber les downswings sereinement.',
+      },
+      {
+        id: 'brm-config',
+        title: '2. Configurer votre Bankroll initiale & Exporter en CSV',
+        suiteTab: 'bankroll',
+        targetSelector: '#starting-bankroll-input',
+        summary:
+          'Indiquez votre bankroll de départ ici et enregistrez vos sessions manuellement ou via import/export CSV pour garder votre historique sur la durée.',
+        proTip:
+          'Le volume bat la variance : visez des blocs de 25 000 à 100 000 mains avant de juger votre vrai winrate.',
+      },
+      {
+        id: 'brm-import',
+        title: '3. Importer vos Hand Histories .txt Winamax / PokerStars',
+        suiteTab: 'bankroll',
+        targetSelector: '#v2-hh-summary',
+        summary:
+          'Glissez vos fichiers bruts .txt Winamax ou PokerStars (Cash, MTT, Expresso). L’analyse tourne 100 % dans votre navigateur, calcule Net/bb100/ChipEV et détecte vos leaks à réviser.',
+        proTip:
+          'Après l’import, envoyez les leaks détectés vers vos révisions de ranges en un clic pour travailler directement vos vraies erreurs de session.',
+      },
+    ],
+  },
+  {
+    id: 'gto-equity-mastery',
+    title: '🧠 Solver GTO, MDF & Équité Monte-Carlo',
+    badge: 'Postflop & Mathématiques',
+    duration: '3 min',
+    audience: 'Review post-session',
+    description:
+      'Calculez votre équité à 7 cartes en tâche de fond et vérifiez vos fréquences de défense (MDF) et de bluff (Alpha) face à n’importe quel sizing.',
+    steps: [
+      {
+        id: 'gto-equity',
+        title: '1. Calculer l’équité 7 cartes (Hero vs Vilain / Range)',
+        suiteTab: 'gto',
+        targetSelector: '#slot-box-hero',
+        summary:
+          'Sélectionnez vos 2 cartes, les cartes du Board et la main (ou range) adverse via le deck visuel. La simulation sur 10 000 tirages tourne en tâche de fond sans bloquer l’interface.',
+        proTip:
+          'Cliquez sur « Flop Aléatoire » pour vous entraîner à estimer votre équité de tête avant de lire le résultat exact.',
+        actionLabel: 'Tirer un Flop aléatoire',
+        actionTriggerSelector: '#suite-tab-gto button[onclick*="dealRandomFlop"]',
+      },
+      {
+        id: 'gto-mdf-alpha',
+        title: '2. Maîtriser MDF, Alpha et le ratio Value / Bluff',
+        suiteTab: 'gto',
+        targetSelector: '#gto-out-mdf',
+        summary:
+          'Réglez la taille du pot, du stack effectif, du sizing de mise et votre équité estimée. Le solveur calcule la cote du pot, votre fréquence minimale de défense (MDF) et l’Alpha requis pour bluffer.',
+        proTip:
+          'Plus vous misez cher (overbet 125–150 %), plus l’adversaire a le droit de fold souvent, mais plus vous pouvez inclure de bluffs dans votre ratio optimal.',
+      },
+      {
+        id: 'gto-decision',
+        title: '3. Lire le verdict EV + ou Fold instantané',
+        suiteTab: 'gto',
+        targetSelector: '#gto-decision-badge',
+        summary:
+          'Le badge de décision compare votre équité réelle à la cote de pot exigée et tient compte du SPR (Stack-to-Pot Ratio) pour guider l’engagement au tapis.',
+        proTip:
+          'Si votre équité est tout juste sous la cote directe avec un tirage fort au flop, vérifiez si les cotes implicites (argent restant à prendre) comblent l’écart.',
+      },
+    ],
+  },
+  {
+    id: 'coach-videos-mastery',
+    title: '🤖 Coach IA, 30 Vidéos & Sauvegarde JSON',
+    badge: 'Coaching & Progression',
+    duration: '2 min',
+    audience: 'Tous joueurs',
+    description:
+      'Tirez le maximum du Coach IA Poker (avec secours 100 % hors-ligne), du parcours séquentiel des 30 vidéos Kill Tilt et de la sauvegarde complète.',
+    steps: [
+      {
+        id: 'coach-main',
+        title: '1. Scénarios ciblés & Hand History Review',
+        suiteTab: 'coach',
+        targetSelector: '#coach-ia-root',
+        summary:
+          'Demandez au Coach IA de générer des spots multi-streets adaptés à votre niveau ou collez une main Winamax/PokerStars pour obtenir un plan d’action commenté. Un moteur local prend le relais si vous êtes hors-ligne.',
+        proTip:
+          'Précisez toujours le profil de Vilain dans vos reviews : le bon play face à un Nit est souvent une erreur face à un Fish passif.',
+      },
+      {
+        id: 'coach-videos',
+        title: '2. Suivre les 30 Vidéos Kill Tilt pas-à-pas',
+        suiteTab: 'coach',
+        targetSelector: '#nav-btn-videos',
+        summary:
+          'Le bouton Vidéos ouvre le cursus ordonné des 30 vidéos de référence (NL2, mental, cotes, 3-Bet, postflop) et sauvegarde automatiquement chaque vidéo visionnée.',
+        proTip:
+          'Validez une ou deux vidéos par session puis appliquez immédiatement le concept dans le module Ranges ou HUD correspondant.',
+      },
+      {
+        id: 'coach-backup',
+        title: '3. Exporter & Restaurer toute votre progression (JSON V2)',
+        suiteTab: 'coach',
+        targetSelector: '#nav-btn-v2-backup',
+        summary:
+          'Sauvegardez en 1 clic toutes vos ranges personnalisées, sessions Bankroll, vidéos cochées, reviews IA et progression Arène dans un fichier .json portable.',
+        proTip:
+          'Exportez votre sauvegarde avant de changer de navigateur ou de PC pour retrouver votre configuration exacte en 3 secondes.',
       },
     ],
   },

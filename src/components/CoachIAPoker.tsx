@@ -553,6 +553,18 @@ export const CoachIAPoker: React.FC = () => {
             <Cpu className="w-4 h-4" />
             ⚡ Utiliser le Mode Hors-Ligne (Moteur Local V2)
           </button>
+          <button
+            id="tuto-btn-coach"
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent('propoker-open-guide', { detail: { tourId: 'coach-videos-mastery' } })
+              )
+            }
+            className="px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-bold text-amber-300 transition"
+          >
+            📖 Tuto Coach &amp; Vidéos
+          </button>
           <p className="text-[11px] text-slate-500">
             Les autres modules (Ranges, ICM Lab, Jeux, HUD, Tableur Bankroll et Solver GTO) fonctionnent toujours 100 % hors-ligne.
           </p>
@@ -587,6 +599,18 @@ export const CoachIAPoker: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto shrink-0">
+            <button
+              id="tuto-btn-coach"
+              type="button"
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent('propoker-open-guide', { detail: { tourId: 'coach-videos-mastery' } })
+                )
+              }
+              className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-bold text-amber-300 hover:text-white transition"
+            >
+              📖 Tuto Coach &amp; Vidéos
+            </button>
             {/* Offline Toggle / User Badge & Sign Out */}
             {currentUser ? (
               <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5">

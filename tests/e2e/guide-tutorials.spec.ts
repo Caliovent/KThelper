@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Centre d’Aide & Tutoriels Interactifs — Tests E2E', () => {
-  test('Recherche formules (MDF/Bubble Factor), navigation module, tour interactif 6 étapes & verrou Anti-RTA', async ({
+  test('Recherche formules (MDF/Bubble Factor), navigation module, tour interactif 6 étapes, boutons Tuto par section & verrou Anti-RTA', async ({
     page,
   }) => {
     const errors: Error[] = [];
@@ -9,11 +9,11 @@ test.describe('Centre d’Aide & Tutoriels Interactifs — Tests E2E', () => {
 
     await page.goto('/');
 
-    // 1. Ouverture du Centre d'Aide
+    // 1. Ouverture du Centre d'Aide (9 parcours couvrant toutes les sections)
     await page.locator('#nav-btn-guide').click();
     const modal = page.locator('#guide-docs-modal');
     await expect(modal).toBeVisible();
-    await expect(modal.getByText(/0\/4 tutoriels complétés/i)).toBeVisible();
+    await expect(modal.getByText(/0\/9 tutoriels complétés/i)).toBeVisible();
 
     // 2. Recherche instantanée MDF et Bubble Factor
     const searchInput = modal.getByLabel(/Rechercher dans la documentation/i);
@@ -63,12 +63,32 @@ test.describe('Centre d’Aide & Tutoriels Interactifs — Tests E2E', () => {
     await tourCard.getByRole('button', { name: /Terminer le tuto/i }).click();
     await expect(tourCard).toBeHidden();
 
-    // Progression persistée (1/4 complété)
+    // Progression persistée (1/9 complété)
     await page.locator('#nav-btn-guide').click();
-    await expect(modal.getByText(/1\/4 tutoriels complétés/i)).toBeVisible();
+    await expect(modal.getByText(/1\/9 tutoriels complétés/i)).toBeVisible();
     await modal.getByRole('button', { name: /Fermer le Centre d’Aide/i }).click();
 
-    // 5. Verrou Anti-RTA : impossible d'ouvrir le Guide pendant un duel actif
+    // 5. Petits boutons contextuels 📖 Tuto dans chaque section du site
+    const sectionChecks: { navBtn: string; tutoBtn: string; expectedTitle: RegExp }[] = [
+      { navBtn: '#tab-btn-ranges', tutoBtn: '#tuto-btn-ranges', expectedTitle: /Ranges 13×13/i },
+      { navBtn: '#tab-btn-hud', tutoBtn: '#tuto-btn-hud', expectedTitle: /Décodeur HUD, Outs & Cotes/i },
+      { navBtn: '#tab-btn-bankroll', tutoBtn: '#tuto-btn-bankroll', expectedTitle: /Bankroll & Import Winamax/i },
+      { navBtn: '#tab-btn-gto', tutoBtn: '#tuto-btn-gto', expectedTitle: /Solver GTO, MDF & Équité/i },
+      { navBtn: '#tab-btn-icm', tutoBtn: '#tuto-btn-icm', expectedTitle: /Dominer l’ICM/i },
+      { navBtn: '#tab-btn-coach', tutoBtn: '#tuto-btn-coach', expectedTitle: /Coach IA, 30 Vidéos/i },
+      { navBtn: '#tab-btn-arena', tutoBtn: '#tuto-btn-arena', expectedTitle: /Maîtriser l’Arène Poker/i },
+    ];
+
+    for (const sc of sectionChecks) {
+      await page.locator(sc.navBtn).click();
+      await page.locator(sc.tutoBtn).click();
+      await expect(tourCard).toBeVisible();
+      await expect(tourCard.getByText(sc.expectedTitle)).toBeVisible();
+      await tourCard.getByRole('button', { name: /Quitter le tutoriel/i }).click();
+      await expect(tourCard).toBeHidden();
+    }
+
+    // 6. Verrou Anti-RTA : impossible d'ouvrir le Guide pendant un duel actif
     const arenaRoot = page.locator('#suite-tab-arena');
     await arenaRoot.locator('input[type="checkbox"]').first().check();
     await arenaRoot.getByRole('button', { name: 'Démarrer l’échauffement (6 spots)' }).click();

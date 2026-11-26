@@ -1342,6 +1342,7 @@ export const MultiplayerArena: React.FC = () => {
               {arena.antiTilt.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
             <button
+              id="tuto-btn-arena"
               type="button"
               onClick={() =>
                 window.dispatchEvent(
