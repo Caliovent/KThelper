@@ -1,6 +1,6 @@
-import type { CorpusTemplate, Position } from '../../domain/types';
-import { bubbleFactor, icm, icmWithBusts } from '../icm';
-import { CLOCK_MS, SALVE_CONFIG } from './config';
+import type { CorpusTemplate, Position } from '../../domain/types.ts';
+import { bubbleFactor, icm, icmWithBusts } from '../icm.ts';
+import { CLOCK_MS, SALVE_CONFIG } from './config.ts';
 
 export interface SalveVillainModel {
   name: string;

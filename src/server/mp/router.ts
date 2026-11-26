@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { AUTH_LIMITS, RULES_VERSION } from '../../engines/mp/config';
+import { AUTH_LIMITS, RULES_VERSION } from '../../engines/mp/config.ts';
 import {
   AnswerSpotRequestSchema,
   AuthLinkRequestSchema,
@@ -21,9 +21,9 @@ import {
   ReviewDecisionSchema,
   TransferOwnerSchema,
   VoteSharedHandSchema,
-} from '../../engines/mp/schemas';
-import { L1_CORPUS_VERSION, L1_GENERATOR_VERSION } from './corpusL1';
-import { MpHttpError, MpService } from './service';
+} from '../../engines/mp/schemas.ts';
+import { L1_CORPUS_VERSION, L1_GENERATOR_VERSION } from './corpusL1.ts';
+import { MpHttpError, MpService } from './service.ts';
 
 function parseBody<T>(schema: z.ZodType<T>, raw: unknown): T {
   const res = schema.safeParse(raw);

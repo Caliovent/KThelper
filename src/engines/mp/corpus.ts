@@ -5,15 +5,15 @@ import type {
   Provenance,
   SeriesRef,
   SpotPublic,
-} from '../../domain/types';
-import { bubbleFactor, requiredEquityIcm } from '../icm';
-import { bountyAdjusted } from '../formats';
-import { blockerImpact, comboCount } from '../chunk';
-import { CLOCK_MS, LEAGUE_OPEN_THRESHOLD, RULES_VERSION } from './config';
-import { dayKey } from './daily';
-import { int, rngFrom, shuffle } from './rng';
-import { scoreSolution, totals, type SpotScore } from './scoring';
-import { selectSeries, type Bucket } from './series';
+} from '../../domain/types.ts';
+import { bubbleFactor, requiredEquityIcm } from '../icm.ts';
+import { bountyAdjusted } from '../formats.ts';
+import { blockerImpact, comboCount } from '../chunk.ts';
+import { CLOCK_MS, LEAGUE_OPEN_THRESHOLD, RULES_VERSION } from './config.ts';
+import { dayKey } from './daily.ts';
+import { int, rngFrom, shuffle } from './rng.ts';
+import { scoreSolution, totals, type SpotScore } from './scoring.ts';
+import { selectSeries, type Bucket } from './series.ts';
 
 export const CORPUS_VERSION = 'mp-corpus-maths-v1';
 export const GENERATOR_VERSION = 'mp-gen-v1';

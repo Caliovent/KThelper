@@ -1,4 +1,4 @@
-import type { GameContext, Position, Provenance } from '../domain/types';
+import type { GameContext, Position, Provenance } from '../domain/types.ts';
 
 export type Street = 'flop' | 'turn' | 'river';
 

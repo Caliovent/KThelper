@@ -1,6 +1,6 @@
-import type { CorpusTemplate } from '../../domain/types';
-import { CLOCK_MS } from './config';
-import { scoreSolution, type SpotScore } from './scoring';
+import type { CorpusTemplate } from '../../domain/types.ts';
+import { CLOCK_MS } from './config.ts';
+import { scoreSolution, type SpotScore } from './scoring.ts';
 
 export type AdvantageAxis = 'IP' | 'neutre' | 'OOP';
 

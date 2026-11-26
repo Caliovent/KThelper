@@ -3,13 +3,13 @@ import type {
   GameContext,
   Provenance,
   SpotPublic,
-} from '../../domain/types';
-import { blockerImpact, comboCount } from '../../engines/chunk';
-import { bountyAdjusted } from '../../engines/formats';
-import { bubbleFactor, requiredEquityIcm } from '../../engines/icm';
-import { CLOCK_MS, LEAGUE_OPEN_THRESHOLD } from '../../engines/mp/config';
-import { validateCorpus, type CorpusTemplateWithMeta } from '../../engines/mp/corpus';
-import type { Bucket } from '../../engines/mp/series';
+} from '../../domain/types.ts';
+import { blockerImpact, comboCount } from '../../engines/chunk.ts';
+import { bountyAdjusted } from '../../engines/formats.ts';
+import { bubbleFactor, requiredEquityIcm } from '../../engines/icm.ts';
+import { CLOCK_MS, LEAGUE_OPEN_THRESHOLD } from '../../engines/mp/config.ts';
+import { validateCorpus, type CorpusTemplateWithMeta } from '../../engines/mp/corpus.ts';
+import type { Bucket } from '../../engines/mp/series.ts';
 
 /**
  * Corpus autoritaire L1 — STRICTEMENT CÔTÉ SERVEUR (MP-14).

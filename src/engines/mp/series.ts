@@ -1,5 +1,5 @@
-import { QUOTAS } from './config';
-import { rngFrom, shuffle } from './rng';
+import { QUOTAS } from './config.ts';
+import { rngFrom, shuffle } from './rng.ts';
 
 export type Bucket = keyof typeof QUOTAS;
 

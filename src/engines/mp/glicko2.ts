@@ -1,4 +1,4 @@
-import { GLICKO } from './config';
+import { GLICKO } from './config.ts';
 
 export interface Rating {
   r: number;

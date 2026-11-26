@@ -1,4 +1,4 @@
-import { REVIEW_SIGNALS } from './config';
+import { REVIEW_SIGNALS } from './config.ts';
 
 export type IntegritySignalKind =
   | 'timing_const'

@@ -1,6 +1,6 @@
-import type { ProPokerSuiteStateV3, ReviewEvent, ReviewEventV3 } from '../../domain/types';
-import { FSRS_THRESHOLDS } from './config';
-import { ReviewEventV3Schema } from './schemas';
+import type { ProPokerSuiteStateV3, ReviewEvent, ReviewEventV3 } from '../../domain/types.ts';
+import { FSRS_THRESHOLDS } from './config.ts';
+import { ReviewEventV3Schema } from './schemas.ts';
 
 export function makeMultiplayerEventId(matchId: string, spotIndex: number): string {
   return `mp:${matchId}:${spotIndex}`;

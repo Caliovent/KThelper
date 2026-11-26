@@ -1,6 +1,6 @@
-import type { CoachScenario, HandReview, StreetAnalysis } from '../types/coach';
-import { parseHand } from './parser';
-import { texture } from './postflop';
+import type { CoachScenario, HandReview, StreetAnalysis } from '../types/coach.ts';
+import { parseHand } from './parser.ts';
+import { texture } from './postflop.ts';
 
 const OFFLINE_SCENARIO_BANK: CoachScenario[] = [
   {

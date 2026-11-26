@@ -1,5 +1,5 @@
 import express from 'express';
-import { AWS_KTP_ALLOWED_ORIGIN, AWS_KTP_BASE_URL } from '../../services/ktpApi';
+import { AWS_KTP_ALLOWED_ORIGIN, AWS_KTP_BASE_URL } from '../../services/ktpApi.ts';
 
 const VALID_CHALLENGE_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 const VALID_LEAGUES = new Set(['cash', 'mtt_icm', 'expresso', 'all_around']);

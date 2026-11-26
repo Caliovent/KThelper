@@ -2,10 +2,10 @@ import crypto from 'node:crypto';
 import type http from 'node:http';
 import type { IncomingMessage } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
-import type { League } from '../../domain/types';
-import { LIVE_ARENA } from '../../engines/mp/config';
-import { ClientMsgSchema } from '../../engines/mp/schemas';
-import { MpHttpError, MpService } from './service';
+import type { League } from '../../domain/types.ts';
+import { LIVE_ARENA } from '../../engines/mp/config.ts';
+import { ClientMsgSchema } from '../../engines/mp/schemas.ts';
+import { MpHttpError, MpService } from './service.ts';
 
 export interface LiveQueueEntry {
   playerId: string;

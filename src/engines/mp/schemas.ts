@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RULES_VERSION } from './config';
+import { RULES_VERSION } from './config.ts';
 
 export const LeagueSchema = z.enum(['cash', 'mtt_icm', 'expresso', 'maths_icm', 'all_rounder']);
 

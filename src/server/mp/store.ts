@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { League, MatchMode } from '../../domain/types';
-import type { BossId, BossPhase } from '../../engines/mp/boss';
-import type { Rating } from '../../engines/mp/glicko2';
-import type { Run } from '../../engines/mp/match';
-import type { Unit } from '../../engines/mp/scoring';
-import type { SharedHand } from '../../engines/mp/share';
-import type { SignedReceipt } from './crypto';
+import type { League, MatchMode } from '../../domain/types.ts';
+import type { BossId, BossPhase } from '../../engines/mp/boss.ts';
+import type { Rating } from '../../engines/mp/glicko2.ts';
+import type { Run } from '../../engines/mp/match.ts';
+import type { Unit } from '../../engines/mp/scoring.ts';
+import type { SharedHand } from '../../engines/mp/share.ts';
+import type { SignedReceipt } from './crypto.ts';
 
 export type MatchState =
   | 'created'

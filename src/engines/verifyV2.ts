@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { icm, icmWithBusts, bubbleFactor, requiredEquityIcm } from './icm';
-import * as F from './formats';
-import { solvePushFold } from './nash';
-import { lines, describeLine, comboCount, blockerImpact } from './chunk';
-import * as S from './srs';
-import { importFile } from './parser';
-import { texture } from './postflop';
-import { V2_WEIGHTED_RANGES, expandRangeGroups, simplifyFreqVector25 } from './v2Ranges';
+import { icm, icmWithBusts, bubbleFactor, requiredEquityIcm } from './icm.ts';
+import * as F from './formats.ts';
+import { solvePushFold } from './nash.ts';
+import { lines, describeLine, comboCount, blockerImpact } from './chunk.ts';
+import * as S from './srs.ts';
+import { importFile } from './parser.ts';
+import { texture } from './postflop.ts';
+import { V2_WEIGHTED_RANGES, expandRangeGroups, simplifyFreqVector25 } from './v2Ranges.ts';
 
 // 1. ICM contre énumération brute (200 configurations de 3 à 8 joueurs)
 function brute(s: number[], p: number[]) {

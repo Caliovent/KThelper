@@ -1,4 +1,4 @@
-import { parseHand } from '../parser';
+import { parseHand } from '../parser.ts';
 
 /** Partage d'une main : reconstruction par LISTE BLANCHE. Rien n'est copié du texte brut. */
 export interface SourceHand {

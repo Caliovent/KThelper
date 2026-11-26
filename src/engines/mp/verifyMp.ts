@@ -51,8 +51,8 @@ import {
   computeMasteryCountsFromReviews,
   migrateSuiteStateToV3,
   type SpotKey,
-} from './index';
-import type { GhostChallengeV2 } from '../../domain/types';
+} from './index.ts';
+import type { GhostChallengeV2 } from '../../domain/types.ts';
 
 (async () => {
   // MP-01: Drapeau mpEnabled présent par défaut

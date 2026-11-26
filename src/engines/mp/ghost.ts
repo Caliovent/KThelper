@@ -1,6 +1,6 @@
-import type { GhostChallengeV2 } from '../../domain/types';
-import { GHOST_LIMITS } from './config';
-import { parseGhostChallengeV2 } from './schemas';
+import type { GhostChallengeV2 } from '../../domain/types.ts';
+import { GHOST_LIMITS } from './config.ts';
+import { parseGhostChallengeV2 } from './schemas.ts';
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let bin = '';

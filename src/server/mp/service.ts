@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { League, PlayerAttemptRecord, SpotPublic } from '../../domain/types';
+import type { League, PlayerAttemptRecord, SpotPublic } from '../../domain/types.ts';
 import {
   BOSS_HAND_VARIANTS,
   BOSS_PROFILES,
@@ -7,7 +7,7 @@ import {
   scoreBossDecision,
   type BossId,
   type RaidMemberTelemetry,
-} from '../../engines/mp/boss';
+} from '../../engines/mp/boss.ts';
 import {
   ANTI_TILT,
   AUTH_LIMITS,
@@ -19,13 +19,13 @@ import {
   RULES_VERSION,
   SEASON_CONFIG,
   STABLE_CONFIG,
-} from '../../engines/mp/config';
-import { MIN_AGE_MS, type SharedHand } from '../../engines/mp/share';
-import { dayKey, medals, trapSpot } from '../../engines/mp/daily';
-import { DIVISION_LABELS, division, expected, update, type Gates, type Rating } from '../../engines/mp/glicko2';
-import { GRACE_MS, newRun, reduce } from '../../engines/mp/match';
-import { evaluateIntegritySignals, type IntegritySignal, type PlayerRunTelemetry } from '../../engines/mp/reviewSignals';
-import { rngFrom, shuffle } from '../../engines/mp/rng';
+} from '../../engines/mp/config.ts';
+import { MIN_AGE_MS, type SharedHand } from '../../engines/mp/share.ts';
+import { dayKey, medals, trapSpot } from '../../engines/mp/daily.ts';
+import { DIVISION_LABELS, division, expected, update, type Gates, type Rating } from '../../engines/mp/glicko2.ts';
+import { GRACE_MS, newRun, reduce } from '../../engines/mp/match.ts';
+import { evaluateIntegritySignals, type IntegritySignal, type PlayerRunTelemetry } from '../../engines/mp/reviewSignals.ts';
+import { rngFrom, shuffle } from '../../engines/mp/rng.ts';
 import {
   compareForBoard,
   detectTimingAnomaly,
@@ -34,14 +34,14 @@ import {
   totals,
   turningPoints,
   type SpotScore,
-} from '../../engines/mp/scoring';
+} from '../../engines/mp/scoring.ts';
 import {
   computeAllRounderRating,
   displayDivision,
   isProvisional,
   rolloverSeasonRating,
-} from '../../engines/mp/seasons';
-import { selectSeries } from '../../engines/mp/series';
+} from '../../engines/mp/seasons.ts';
+import { selectSeries } from '../../engines/mp/series.ts';
 import {
   L1_CORPUS_BY_ID,
   L1_CORPUS_VERSION,
@@ -50,7 +50,7 @@ import {
   toStrictPublicSpot,
   verifyL1CorpusTruth,
   type L1CorpusTemplate,
-} from './corpusL1';
+} from './corpusL1.ts';
 import {
   computeDailyCommitment,
   createReceiptSigner,
@@ -58,7 +58,7 @@ import {
   hashEmail,
   type ReceiptSigner,
   type SignedReceipt,
-} from './crypto';
+} from './crypto.ts';
 import {
   MpStore,
   type DbAttempt,
@@ -75,7 +75,7 @@ import {
   type DbSharedHand,
   type DbStable,
   type DbStableMember,
-} from './store';
+} from './store.ts';
 
 export class MpHttpError extends Error {
   public readonly status: number;

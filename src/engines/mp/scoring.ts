@@ -1,4 +1,4 @@
-import type { SpotSolution } from '../../domain/types';
+import type { SpotSolution } from '../../domain/types.ts';
 import {
   DRAW_BAND_PD,
   FSRS_THRESHOLDS,
@@ -6,7 +6,7 @@ import {
   SCALE,
   TIMEOUT,
   TURNING_POINT_MIN_DIFF_PD,
-} from './config';
+} from './config.ts';
 
 export type Unit = keyof typeof SCALE;
 

@@ -1,6 +1,6 @@
-import type { CorpusTemplate } from '../../domain/types';
-import { CLOCK_MS } from './config';
-import { funnelPd } from './scoring';
+import type { CorpusTemplate } from '../../domain/types.ts';
+import { CLOCK_MS } from './config.ts';
+import { funnelPd } from './scoring.ts';
 
 export interface FunnelBlockDef {
   id: string;

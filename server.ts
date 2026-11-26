@@ -7,12 +7,12 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, type DecodedIdToken } from 'firebase-admin/auth';
-import { SEASON_CONFIG } from './src/engines/mp/config';
-import { createAwsKtpProxyRouter } from './src/server/mp/awsProxy';
-import { createMpRouter } from './src/server/mp/router';
-import { MpService } from './src/server/mp/service';
-import { MpStore } from './src/server/mp/store';
-import { attachMpWsServer } from './src/server/mp/wsServer';
+import { SEASON_CONFIG } from './src/engines/mp/config.ts';
+import { createAwsKtpProxyRouter } from './src/server/mp/awsProxy.ts';
+import { createMpRouter } from './src/server/mp/router.ts';
+import { MpService } from './src/server/mp/service.ts';
+import { MpStore } from './src/server/mp/store.ts';
+import { attachMpWsServer } from './src/server/mp/wsServer.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

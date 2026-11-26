@@ -1,6 +1,6 @@
-import type { CorpusTemplate } from '../../domain/types';
-import { comboCount, lines } from '../chunk';
-import { FRESQUE_CONFIG } from './config';
+import type { CorpusTemplate } from '../../domain/types.ts';
+import { comboCount, lines } from '../chunk.ts';
+import { FRESQUE_CONFIG } from './config.ts';
 
 export interface FresqueLineAnswer {
   /** Index 0..hands.length-1 de la dernière main incluse depuis le haut ; null = aucune main depuis le haut. */

@@ -1,5 +1,5 @@
-import { GLICKO, SEASON_CONFIG } from './config';
-import { DIVISION_LABELS, division, update, type Gates, type Rating } from './glicko2';
+import { GLICKO, SEASON_CONFIG } from './config.ts';
+import { DIVISION_LABELS, division, update, type Gates, type Rating } from './glicko2.ts';
 
 /** Applique l'inflation d'inactivité (une fois par semaine complète sans match, RD plafonnée à 350, Bible p.20). */
 export function inflateRdForInactivity(rating: Rating, elapsedMs: number): Rating {

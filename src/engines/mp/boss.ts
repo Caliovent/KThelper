@@ -1,6 +1,6 @@
-import type { SpotSolution } from '../../domain/types';
-import { BOSS_CONFIG, RAID_CONFIG } from './config';
-import { scoreSolution } from './scoring';
+import type { SpotSolution } from '../../domain/types.ts';
+import { BOSS_CONFIG, RAID_CONFIG } from './config.ts';
+import { scoreSolution } from './scoring.ts';
 
 export type BossId = 'nit' | 'calling_station' | 'reg_aggro' | 'chip_leader_icm';
 export type BossPhase = 'preflop' | 'postflop' | 'pression';

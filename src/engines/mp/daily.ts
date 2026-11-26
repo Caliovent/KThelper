@@ -1,5 +1,5 @@
-import { DAILY_L1 } from './config';
-import type { SpotScore } from './scoring';
+import { DAILY_L1 } from './config.ts';
+import type { SpotScore } from './scoring.ts';
 
 export const dayKey = (utcMs: number) => `daily-${new Date(utcMs).toISOString().slice(0, 10)}`;
 

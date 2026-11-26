@@ -1,4 +1,4 @@
-import type { Action, FormatKind, Position, Provenance } from '../domain/types';
+import type { Action, FormatKind, Position, Provenance } from '../domain/types.ts';
 
 export type V2ActionCode = 'mr' | 'shv' | '3b' | '4b' | 'c' | 'limp' | 'f';
 export type V2FreqVector = Partial<Record<V2ActionCode, number>>;
