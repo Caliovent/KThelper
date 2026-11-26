@@ -123,6 +123,31 @@ export interface DbSession {
   expiresAtMs: number;
 }
 
+export interface DbReviewCase {
+  id: string;
+  playerId: string;
+  matchId: string;
+  signals: { kind: string; severity: 'low' | 'medium'; summary: string }[];
+  status: 'open' | 'dismissed' | 'warned' | 'annulled';
+  createdAt: string;
+  appealNote: string | null;
+  appealedAt: string | null;
+  decision: 'dismiss' | 'warn_player' | 'annul_match_recalc_mmr' | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  decisionReason: string | null;
+}
+
+export interface DbReviewAuditEntry {
+  id: string;
+  caseId: string;
+  actor: string;
+  action: 'open_signal' | 'appeal' | 'dismiss' | 'warn_player' | 'annul_match_recalc_mmr';
+  reason: string;
+  at: string;
+  mmrChanged: boolean;
+}
+
 export interface DbSnapshot {
   currentSeason: number;
   seasonTheme: string;
@@ -136,6 +161,8 @@ export interface DbSnapshot {
   dailyEntries: DbDailyEntry[];
   authLinks: DbAuthLink[];
   sessions: DbSession[];
+  reviewCases: DbReviewCase[];
+  reviewAuditLog: DbReviewAuditEntry[];
   forfeitTimestampsByPlayer: Record<string, number[]>;
   linkRateLimits: Record<string, number[]>;
 }
@@ -154,6 +181,8 @@ export class MpStore {
   public readonly dailyEntries = new Map<string, DbDailyEntry>(); // key = `${dailyKey}:${playerId}`
   public readonly authLinks = new Map<string, DbAuthLink>();
   public readonly sessions = new Map<string, DbSession>();
+  public readonly reviewCases = new Map<string, DbReviewCase>();
+  public readonly reviewAuditLog: DbReviewAuditEntry[] = [];
   public readonly forfeitTimestampsByPlayer = new Map<string, number[]>();
   public readonly linkRateLimits = new Map<string, number[]>();
 
@@ -216,6 +245,8 @@ export class MpStore {
       dailyEntries: Array.from(this.dailyEntries.values()),
       authLinks: Array.from(this.authLinks.values()),
       sessions: Array.from(this.sessions.values()),
+      reviewCases: Array.from(this.reviewCases.values()),
+      reviewAuditLog: [...this.reviewAuditLog],
       forfeitTimestampsByPlayer: Object.fromEntries(this.forfeitTimestampsByPlayer.entries()),
       linkRateLimits: Object.fromEntries(this.linkRateLimits.entries()),
     };
@@ -248,6 +279,10 @@ export class MpStore {
       snap.dailyEntries?.forEach((e) => this.dailyEntries.set(this.dailyEntryKey(e.dailyKey, e.playerId), e));
       snap.authLinks?.forEach((l) => this.authLinks.set(l.token, l));
       snap.sessions?.forEach((s) => this.sessions.set(s.token, s));
+      snap.reviewCases?.forEach((c) => this.reviewCases.set(c.id, c));
+      if (Array.isArray(snap.reviewAuditLog)) {
+        this.reviewAuditLog.push(...snap.reviewAuditLog);
+      }
       Object.entries(snap.forfeitTimestampsByPlayer ?? {}).forEach(([k, v]) =>
         this.forfeitTimestampsByPlayer.set(k, v)
       );

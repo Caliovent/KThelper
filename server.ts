@@ -1,20 +1,37 @@
 import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 import { getApp, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, type DecodedIdToken } from 'firebase-admin/auth';
-import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 import { SEASON_CONFIG } from './src/engines/mp/config';
 import { createAwsKtpProxyRouter } from './src/server/mp/awsProxy';
 import { createMpRouter } from './src/server/mp/router';
 import { MpService } from './src/server/mp/service';
 import { MpStore } from './src/server/mp/store';
+import { attachMpWsServer } from './src/server/mp/wsServer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function loadFirebaseProjectId(): string {
+  if (process.env.FIREBASE_PROJECT_ID) return process.env.FIREBASE_PROJECT_ID;
+  const localCfg = path.resolve(__dirname, 'firebase-applet-config.json');
+  const fallbackCfg = path.resolve(__dirname, 'firebase-applet-config.example.json');
+  const chosen = fs.existsSync(localCfg) ? localCfg : fallbackCfg;
+  if (fs.existsSync(chosen)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(chosen, 'utf8')) as { projectId?: string };
+      if (parsed.projectId) return parsed.projectId;
+    } catch {
+      // Ignore malformed json
+    }
+  }
+  return 'kthelper-local';
+}
 
 const PORT = Number(process.env.PORT) || 3000;
 const PRIMARY_MODEL = 'gemini-3.1-flash-lite';
@@ -23,7 +40,7 @@ const FALLBACK_MODEL = 'gemini-4-hydrogen';
 const adminApp = getApps().length
   ? getApp()
   : initializeAdminApp({
-      projectId: firebaseConfig.projectId,
+      projectId: loadFirebaseProjectId(),
     });
 const adminAuth = getAdminAuth(adminApp);
 
@@ -190,8 +207,31 @@ function validateScenario(data: GeneratedScenario): boolean {
   return true;
 }
 
+const ALLOWED_ORIGINS = new Set([
+  'https://kill-tilt-poker-suite.ai.studio',
+  'https://46-62-222-79.sslip.io',
+  'http://localhost:3000',
+  'http://127.0.0.1:4173',
+]);
+
 async function createServer() {
   const app = express();
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.has(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Player-Id, X-Review-Token'
+      );
+    }
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    return next();
+  });
   app.use(express.json({ limit: '1mb' }));
 
   app.post('/api/coach/scenario', requireFirebaseAuth, async (req, res) => {
@@ -540,8 +580,11 @@ IMPORTANT : Pour heroCards et boardCards dans detectedSpot, n'utilise QUE des co
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Kill Tilt Poker Suite server running on http://0.0.0.0:${PORT}`);
+  const httpServer = http.createServer(app);
+  attachMpWsServer(httpServer, mpService);
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Kill Tilt Poker Suite server (HTTP + WS /v1/ws) running on http://0.0.0.0:${PORT}`);
   });
 }
 

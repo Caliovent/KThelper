@@ -139,6 +139,59 @@ export const SalveAnswerSchema = z
   })
   .strict();
 
+/** Contrats Zod WebSocket Live Arena M2 (Bible p.30) & Console de Revue (MP-21). */
+export const ClientMsgSchema = z.discriminatedUnion('t', [
+  z
+    .object({
+      t: z.literal('hello'),
+      protocol: z.literal(1),
+      token: z.string().min(1).max(256),
+      resumeRunId: z.string().uuid().optional(),
+    })
+    .strict(),
+  z.object({ t: z.literal('ready'), matchId: z.string().uuid() }).strict(),
+  z
+    .object({
+      t: z.literal('queue_live'),
+      league: LeagueSchema.default('maths_icm'),
+    })
+    .strict(),
+  z
+    .object({
+      t: z.literal('open'),
+      runId: z.string().uuid(),
+      i: z.number().int().min(0).max(19),
+      key: z.string().uuid(),
+    })
+    .strict(),
+  z
+    .object({
+      t: z.literal('answer'),
+      runId: z.string().uuid(),
+      i: z.number().int().min(0).max(19),
+      action: z.string().min(1).max(64),
+      clientMs: z.number().finite().min(0).max(120000),
+      key: z.string().uuid(),
+    })
+    .strict(),
+  z.object({ t: z.literal('forfeit'), runId: z.string().uuid(), key: z.string().uuid() }).strict(),
+  z.object({ t: z.literal('ping'), at: z.number().finite().min(0) }).strict(),
+]);
+
+export const ReviewDecisionSchema = z
+  .object({
+    decision: z.enum(['dismiss', 'warn_player', 'annul_match_recalc_mmr']),
+    actor: z.string().trim().min(2).max(64),
+    reason: z.string().trim().min(5).max(500),
+  })
+  .strict();
+
+export const ReviewAppealSchema = z
+  .object({
+    appealNote: z.string().trim().min(5).max(500),
+  })
+  .strict();
+
 export function parseGhostChallengeV2(raw: unknown) {
   return GhostChallengeV2Schema.parse(raw);
 }

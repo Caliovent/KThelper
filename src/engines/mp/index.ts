@@ -14,3 +14,6 @@ export * from './fsrsBridge';
 export * from './seasons';
 export * from './fresque';
 export * from './salve';
+export * from './texture';
+export * from './funnel';
+export * from './reviewSignals';

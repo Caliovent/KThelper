@@ -11,6 +11,8 @@ import {
   LeagueSchema,
   OpenSpotRequestSchema,
   QueueJoinSchema,
+  ReviewAppealSchema,
+  ReviewDecisionSchema,
 } from '../../engines/mp/schemas';
 import { L1_CORPUS_VERSION, L1_GENERATOR_VERSION } from './corpusL1';
 import { MpHttpError, MpService } from './service';
@@ -217,6 +219,60 @@ export function createMpRouter(service: MpService): express.Router {
   router.get('/daily/:key/review', (req, res) => {
     try {
       return res.json(service.getDailyReview(req.params.key));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  // Console de revue humaine & signaux d'intégrité (MP-21)
+  router.get('/review/cases', (req, res) => {
+    try {
+      const reviewToken = req.header('X-Review-Token');
+      const expectedAdmin = process.env.MP_REVIEW_TOKEN || 'dev-review-token';
+      if (reviewToken === expectedAdmin) {
+        return res.json({ cases: service.listReviewCases() });
+      }
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json({ cases: service.listReviewCases(player.id) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/review/cases/:id/appeal', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(ReviewAppealSchema, req.body);
+      return res.json({ reviewCase: service.submitReviewAppeal(req.params.id, player.id, body.appealNote) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/review/cases/:id/decide', async (req, res) => {
+    try {
+      const reviewToken = req.header('X-Review-Token');
+      const expectedAdmin = process.env.MP_REVIEW_TOKEN || 'dev-review-token';
+      if (reviewToken !== expectedAdmin) {
+        throw new MpHttpError(403, 'forbidden', 'Jeton de modération X-Review-Token requis.');
+      }
+      const body = parseBody(ReviewDecisionSchema, req.body);
+      return res.json(await service.decideReviewCase(req.params.id, body));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.get('/review/audit-log', (req, res) => {
+    try {
+      const reviewToken = req.header('X-Review-Token');
+      const expectedAdmin = process.env.MP_REVIEW_TOKEN || 'dev-review-token';
+      if (reviewToken !== expectedAdmin) {
+        const player = service.authenticateBearer(req.headers.authorization);
+        const myCaseIds = new Set(service.listReviewCases(player.id).map((c) => c.id));
+        return res.json({ entries: service.getReviewAuditLog().filter((e) => myCaseIds.has(e.caseId)) });
+      }
+      return res.json({ entries: service.getReviewAuditLog() });
     } catch (err) {
       return handleError(res, err);
     }

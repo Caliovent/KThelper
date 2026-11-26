@@ -1,0 +1,11 @@
+services:
+  kthelper:
+    build: .
+    container_name: kthelper-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3000"
+    env_file:
+      - .env
+    volumes:
+      - /opt/kthelper/data:/app/.mp-data

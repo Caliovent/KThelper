@@ -6,12 +6,14 @@ import {
   DAILY_L1,
   GHOST_RANKED,
   GLICKO,
+  LIVE_ARENA,
   RULES_VERSION,
   SEASON_CONFIG,
 } from '../../engines/mp/config';
 import { dayKey, medals, trapSpot } from '../../engines/mp/daily';
 import { DIVISION_LABELS, division, expected, update, type Gates, type Rating } from '../../engines/mp/glicko2';
 import { GRACE_MS, newRun, reduce } from '../../engines/mp/match';
+import { evaluateIntegritySignals, type IntegritySignal, type PlayerRunTelemetry } from '../../engines/mp/reviewSignals';
 import { rngFrom, shuffle } from '../../engines/mp/rng';
 import {
   compareForBoard,
@@ -53,6 +55,8 @@ import {
   type DbMatch,
   type DbPlayer,
   type DbRating,
+  type DbReviewAuditEntry,
+  type DbReviewCase,
   type DbRun,
 } from './store';
 
@@ -943,12 +947,25 @@ export class MpService {
       run.flags.push('timing_review');
     }
 
+    const signals = this.evaluatePlayerHistorySignals(run.playerId);
+    if (signals.length > 0) {
+      this.openReviewCase(run.playerId, match.id, signals);
+    }
+
     if (match.mode === 'ghost_duel') {
       const allRuns = Array.from(this.store.runs.values()).filter((r) => r.matchId === match.id);
       if (allRuns.length === 1 && match.state === 'created') {
         match.state = 'awaiting_second_run';
         match.expiresAtMs = this.now() + GHOST_RANKED.expiryMs;
       } else if (
+        allRuns.length === 2 &&
+        allRuns.every((r) => r.engineRun.phase.s === 'done' || r.engineRun.phase.s === 'forfeit')
+      ) {
+        await this.settleMatchOnce(match.id);
+      }
+    } else if (match.mode === 'ranked_1v1') {
+      const allRuns = Array.from(this.store.runs.values()).filter((r) => r.matchId === match.id);
+      if (
         allRuns.length === 2 &&
         allRuns.every((r) => r.engineRun.phase.s === 'done' || r.engineRun.phase.s === 'forfeit')
       ) {
@@ -1556,6 +1573,274 @@ export class MpService {
     this.store.save();
 
     return { previousSeason: prev, currentSeason: next, theme };
+  }
+
+  // ===========================================================================
+  // MP-20 : Match Live Arena synchrone (ranked_1v1)
+  // ===========================================================================
+
+  public async createLiveMatch(
+    playerAId: string,
+    playerBId: string,
+    league: League = 'maths_icm'
+  ): Promise<{ matchId: string; runAId: string; runBId: string; spotCount: number }> {
+    if (playerAId === playerBId) {
+      throw new MpHttpError(400, 'same_player', 'Impossible de s’affronter soi-même.');
+    }
+    if (league !== 'maths_icm') {
+      throw new MpHttpError(409, 'league_closed', 'Seule la ligue Maths & ICM est ouverte en classé.');
+    }
+    if (this.getForfeitCooldownUntil(playerAId) || this.getForfeitCooldownUntil(playerBId)) {
+      throw new MpHttpError(429, 'cooldown', 'Un des joueurs est en refroidissement anti-tilt.');
+    }
+    if (this.countPairMatchesInWindow(playerAId, playerBId) >= GHOST_RANKED.maxPairMatchesInWindow) {
+      throw new MpHttpError(409, 'pair_limit_reached', 'Plafond de 3 matchs en 30 jours atteint pour cette paire.');
+    }
+
+    const seed = crypto.randomBytes(16).toString('hex');
+    const seen = this.getSeenTemplatesLast14Days([playerAId, playerBId]);
+    const filteredPool = L1_MATHS_ICM_CORPUS.filter((tpl) => !seen.has(tpl.id));
+
+    let picked: L1CorpusTemplate[];
+    try {
+      picked = await selectSeries(
+        filteredPool,
+        LIVE_ARENA.spotCount,
+        seed,
+        L1_CORPUS_VERSION,
+        L1_GENERATOR_VERSION,
+        true
+      );
+    } catch {
+      picked = await selectSeries(
+        L1_MATHS_ICM_CORPUS,
+        LIVE_ARENA.spotCount,
+        seed,
+        L1_CORPUS_VERSION,
+        L1_GENERATOR_VERSION,
+        true
+      );
+    }
+
+    const seriesId = crypto.randomUUID();
+    this.store.series.set(seriesId, {
+      id: seriesId,
+      seed,
+      corpusVersion: L1_CORPUS_VERSION,
+      generatorVersion: L1_GENERATOR_VERSION,
+      rulesVersion: RULES_VERSION,
+      templateIds: picked.map((tpl) => tpl.id),
+    });
+
+    const t = this.now();
+    const matchId = crypto.randomUUID();
+    const runAId = crypto.randomUUID();
+    const runBId = crypto.randomUUID();
+    const frozenA = this.toRating(this.getOrInitRating(playerAId, league));
+    const frozenB = this.toRating(this.getOrInitRating(playerBId, league));
+    const limits = picked.map((x) => x.public.limitMs);
+
+    this.store.matches.set(matchId, {
+      id: matchId,
+      mode: 'ranked_1v1',
+      league,
+      seriesId,
+      state: 'live',
+      season: this.store.currentSeason,
+      createdAt: new Date(t).toISOString(),
+      createdAtMs: t,
+      expiresAtMs: null,
+      settledAt: null,
+      dailyKey: null,
+      creatorId: playerAId,
+      opponentId: playerBId,
+      receipt: null,
+    });
+
+    this.store.runs.set(runAId, {
+      id: runAId,
+      matchId,
+      playerId: playerAId,
+      engineRun: newRun(limits),
+      openedAtMs: {},
+      openKeys: {},
+      totalPd: null,
+      perfects: null,
+      totalMs: null,
+      ratingBefore: frozenA,
+      ratingAfter: null,
+      flags: [],
+    });
+
+    this.store.runs.set(runBId, {
+      id: runBId,
+      matchId,
+      playerId: playerBId,
+      engineRun: newRun(limits),
+      openedAtMs: {},
+      openKeys: {},
+      totalPd: null,
+      perfects: null,
+      totalMs: null,
+      ratingBefore: frozenB,
+      ratingAfter: null,
+      flags: [],
+    });
+
+    this.store.save();
+    return { matchId, runAId, runBId, spotCount: picked.length };
+  }
+
+  // ===========================================================================
+  // MP-21 : Console de Revue Humaine & Signaux d'Intégrité (0 sanction auto)
+  // ===========================================================================
+
+  private evaluatePlayerHistorySignals(playerId: string): IntegritySignal[] {
+    const runs = Array.from(this.store.runs.values()).filter(
+      (r) =>
+        r.playerId === playerId &&
+        (r.engineRun.phase.s === 'done' || r.engineRun.phase.s === 'forfeit')
+    );
+    const history: PlayerRunTelemetry[] = runs.map((r) => {
+      const m = this.store.matches.get(r.matchId);
+      const opponentId = m ? (m.creatorId === playerId ? m.opponentId : m.creatorId) : null;
+      const comp = this.computeRunTotals(r.id, r.engineRun.n);
+      return {
+        matchId: r.matchId,
+        opponentId,
+        totalPd: comp.totals.pd,
+        forfeited: r.engineRun.phase.s === 'forfeit',
+        spots: comp.records.map((rec) => ({ elapsedMs: rec.elapsedMs, pd: rec.pd })),
+      };
+    });
+    return evaluateIntegritySignals(history);
+  }
+
+  public openReviewCase(
+    playerId: string,
+    matchId: string,
+    signals: IntegritySignal[],
+    reason = 'Signal déclenché automatiquement pour revue humaine (aucune modification automatique du MMR).'
+  ): DbReviewCase {
+    const existing = Array.from(this.store.reviewCases.values()).find(
+      (c) => c.playerId === playerId && c.matchId === matchId && c.status === 'open'
+    );
+    if (existing) return existing;
+
+    const at = this.nowIso();
+    const reviewCase: DbReviewCase = {
+      id: crypto.randomUUID(),
+      playerId,
+      matchId,
+      signals,
+      status: 'open',
+      createdAt: at,
+      appealNote: null,
+      appealedAt: null,
+      decision: null,
+      decidedBy: null,
+      decidedAt: null,
+      decisionReason: null,
+    };
+    this.store.reviewCases.set(reviewCase.id, reviewCase);
+    const audit: DbReviewAuditEntry = {
+      id: crypto.randomUUID(),
+      caseId: reviewCase.id,
+      actor: 'system_signal',
+      action: 'open_signal',
+      reason,
+      at,
+      mmrChanged: false,
+    };
+    this.store.reviewAuditLog.push(audit);
+    this.store.save();
+    return reviewCase;
+  }
+
+  public listReviewCases(playerId?: string): DbReviewCase[] {
+    const all = Array.from(this.store.reviewCases.values());
+    return playerId ? all.filter((c) => c.playerId === playerId) : all;
+  }
+
+  public submitReviewAppeal(caseId: string, playerId: string, appealNote: string): DbReviewCase {
+    const c = this.store.reviewCases.get(caseId);
+    if (!c) throw new MpHttpError(404, 'not_found', 'Dossier de revue introuvable.');
+    if (c.playerId !== playerId) throw new MpHttpError(403, 'forbidden', 'Ce dossier ne vous appartient pas.');
+    const at = this.nowIso();
+    c.appealNote = appealNote;
+    c.appealedAt = at;
+    this.store.reviewAuditLog.push({
+      id: crypto.randomUUID(),
+      caseId: c.id,
+      actor: playerId,
+      action: 'appeal',
+      reason: appealNote,
+      at,
+      mmrChanged: false,
+    });
+    this.store.save();
+    return c;
+  }
+
+  public async decideReviewCase(
+    caseId: string,
+    input: { decision: 'dismiss' | 'warn_player' | 'annul_match_recalc_mmr'; actor: string; reason: string }
+  ): Promise<{ reviewCase: DbReviewCase; audit: DbReviewAuditEntry }> {
+    const c = this.store.reviewCases.get(caseId);
+    if (!c) throw new MpHttpError(404, 'not_found', 'Dossier de revue introuvable.');
+    if (c.status !== 'open') {
+      throw new MpHttpError(409, 'already_decided', 'Une décision humaine a déjà été rendue sur ce dossier.');
+    }
+
+    let mmrChanged = false;
+    const at = this.nowIso();
+
+    if (input.decision === 'annul_match_recalc_mmr') {
+      await this.store.withMatchLock(c.matchId, async () => {
+        const match = this.store.matches.get(c.matchId);
+        if (match && match.state === 'settled') {
+          const runs = Array.from(this.store.runs.values()).filter((r) => r.matchId === match.id);
+          for (const run of runs) {
+            if (run.ratingBefore && run.ratingAfter) {
+              const cur = this.getOrInitRating(run.playerId, match.league, match.season);
+              const appliedDelta = run.ratingAfter.r - run.ratingBefore.r;
+              cur.r = Math.round((cur.r - appliedDelta) * 100) / 100;
+              cur.rd = run.ratingBefore.rd;
+              cur.matches = Math.max(0, cur.matches - 1);
+              mmrChanged = true;
+            }
+          }
+          match.state = 'cancelled';
+        }
+      });
+      c.status = 'annulled';
+    } else if (input.decision === 'warn_player') {
+      c.status = 'warned';
+    } else {
+      c.status = 'dismissed';
+    }
+
+    c.decision = input.decision;
+    c.decidedBy = input.actor;
+    c.decidedAt = at;
+    c.decisionReason = input.reason;
+
+    const audit: DbReviewAuditEntry = {
+      id: crypto.randomUUID(),
+      caseId: c.id,
+      actor: input.actor,
+      action: input.decision,
+      reason: input.reason,
+      at,
+      mmrChanged,
+    };
+    this.store.reviewAuditLog.push(audit);
+    this.store.save();
+    return { reviewCase: c, audit };
+  }
+
+  public getReviewAuditLog(): DbReviewAuditEntry[] {
+    return [...this.store.reviewAuditLog];
   }
 
   // Utilitaire de test/admin pour vérifier l'évolution attendue Glicko-2

@@ -79,10 +79,12 @@ import {
 } from '../../stores/arenaStore';
 import { AwsCloudPanel } from './AwsCloudPanel';
 import { FresqueDuelPanel } from './FresqueDuelPanel';
+import { LiveArenaPanel } from './LiveArenaPanel';
 import { RankedL1Panel } from './RankedL1Panel';
 import { SalvePanel } from './SalvePanel';
+import { TextureFunnelPanel } from './TextureFunnelPanel';
 
-type ArenaTab = 'duel' | 'aws' | 'l1' | 'daily' | 'elo' | 'quests' | 'games';
+type ArenaTab = 'duel' | 'aws' | 'l1' | 'live' | 'm2games' | 'daily' | 'elo' | 'quests' | 'games';
 type CertaintyMark = 'sur' | 'hesitant';
 
 const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
@@ -1375,7 +1377,9 @@ export const MultiplayerArena: React.FC = () => {
               ['duel', '⚔️ Duel & Ghost Amical (L0)'],
               ['aws', '☁️ Cloud AWS (L0)'],
               ['l1', '🌐 Classé L1 & Daily Officiel'],
+              ['live', '⚡ Live Arena & Revue (M2)'],
               ['games', '🎨 Fresque & Salve (MP-19)'],
+              ['m2games', '🔭 Radar & Détectives (M2)'],
               ['daily', '🏆 Daily Local (L0)'],
               ['elo', '📊 Ligues & Journal FSRS V3'],
               ['quests', '🎯 Quêtes & Écuries'],
@@ -1613,6 +1617,22 @@ export const MultiplayerArena: React.FC = () => {
           }
         />
       )}
+
+      {/* TAB LIVE : LIVE ARENA WS & CONSOLE DE REVUE (MP-20..MP-21) */}
+      {activeTab === 'live' && (
+        <LiveArenaPanel
+          roomClosedAttested={arena.antiTilt.roomClosedAttested}
+          onRunLockChange={setL1RunLocked}
+          onRequireAttestation={() =>
+            setStatusBanner(
+              'Confirmez d’abord l’engagement d’étude hors session (room de poker fermée) avant de rejoindre la Live Arena.'
+            )
+          }
+        />
+      )}
+
+      {/* TAB M2GAMES : RADAR DE BOARD & DETECTIVES (MP-22) */}
+      {activeTab === 'm2games' && <TextureFunnelPanel />}
 
       {/* TAB GAMES : FRESQUE DUEL & SALVE 3-MAX (MP-19) */}
       {activeTab === 'games' && (

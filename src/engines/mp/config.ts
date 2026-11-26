@@ -117,3 +117,36 @@ export const AUTH_LIMITS = {
   sessionTtlMs: 7 * 864e5,
   maxBodyBytes: 65536,
 } as const;
+
+/** M2 Direct : WebSocket Live Arena, Radar de Board, Détectives & Console de Revue (Bible p.13, 18, 21-22, 30-32). */
+export const LIVE_ARENA = {
+  spotCount: 15,
+  reconnectGraceTotalMs: 60000,
+  maxWsBytes: 16384,
+  mmrWindows: [
+    { maxWaitMs: 10000, delta: 75 },
+    { maxWaitMs: 20000, delta: 150 },
+    { maxWaitMs: 40000, delta: 300 },
+  ],
+} as const;
+
+export const TEXTURE_CONFIG = {
+  phase1Ms: 3000,
+  phase2Ms: 5000,
+  freqSteps: [0, 25, 50, 75, 100] as const,
+  sizingsPct: [33, 50, 75, 125] as const,
+} as const;
+
+export const FUNNEL_CONFIG = {
+  streetLimitMs: 20000,
+  minBlocks: 6,
+  maxBlocks: 10,
+} as const;
+
+export const REVIEW_SIGNALS = {
+  minRuns: 5,
+  timingStdMs: 15,
+  slowPerfectRatio: 0.85,
+  levelJumpPdDrop: 120,
+  collusionPairForfeits: 2,
+} as const;

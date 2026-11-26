@@ -198,7 +198,20 @@ export function saveMpSessionToken(token: string | null): void {
   }
 }
 
+export const MP_HETZNER_ORIGIN = 'https://46-62-222-79.sslip.io';
+export const AI_STUDIO_ORIGIN = 'https://kill-tilt-poker-suite.ai.studio';
+
+export function resolveMpApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
+    if (window.location.origin === AI_STUDIO_ORIGIN) {
+      return MP_HETZNER_ORIGIN;
+    }
+  }
+  return '';
+}
+
 async function requestJson<T>(url: string, init: RequestInit = {}, token?: string | null): Promise<T> {
+  const fullUrl = url.startsWith('http') ? url : `${resolveMpApiBaseUrl()}${url}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((init.headers as Record<string, string>) ?? {}),
@@ -208,7 +221,7 @@ async function requestJson<T>(url: string, init: RequestInit = {}, token?: strin
   }
   let res: Response;
   try {
-    res = await fetch(url, { ...init, headers });
+    res = await fetch(fullUrl, { ...init, headers });
   } catch {
     throw new MpApiClientError(0, 'offline', 'Serveur L1 inaccessible (mode hors-ligne L0 actif).', true);
   }
@@ -363,5 +376,46 @@ export const mpApi = {
       `/v1/leaderboards/${encodeURIComponent(league)}?page=${page}&limit=20`,
       { method: 'GET' }
     );
+  },
+
+  getReviewCases(token: string) {
+    return requestJson<{
+      cases: {
+        id: string;
+        playerId: string;
+        matchId: string;
+        signals: { kind: string; severity: 'low' | 'medium'; summary: string }[];
+        status: 'open' | 'dismissed' | 'warned' | 'annulled';
+        createdAt: string;
+        appealNote: string | null;
+        appealedAt: string | null;
+        decision: string | null;
+        decidedBy: string | null;
+        decidedAt: string | null;
+        decisionReason: string | null;
+      }[];
+    }>('/v1/review/cases', { method: 'GET' }, token);
+  },
+
+  submitReviewAppeal(token: string, caseId: string, appealNote: string) {
+    return requestJson<{ reviewCase: { id: string; appealNote: string | null; appealedAt: string | null } }>(
+      `/v1/review/cases/${encodeURIComponent(caseId)}/appeal`,
+      { method: 'POST', body: JSON.stringify({ appealNote }) },
+      token
+    );
+  },
+
+  getReviewAuditLog(token: string) {
+    return requestJson<{
+      entries: {
+        id: string;
+        caseId: string;
+        actor: string;
+        action: string;
+        reason: string;
+        at: string;
+        mmrChanged: boolean;
+      }[];
+    }>('/v1/review/audit-log', { method: 'GET' }, token);
   },
 };
