@@ -41,6 +41,8 @@ import {
   expandRangeGroups,
   simplifyFreqVector25,
 } from '../engines/v2Ranges';
+import * as mp from '../engines/mp';
+import { isMpEnabled } from '../stores/arenaStore';
 
 export const ProPokerV2 = {
   icm,
@@ -74,6 +76,8 @@ export const ProPokerV2 = {
   V2_WEIGHTED_RANGES,
   expandRangeGroups,
   simplifyFreqVector25,
+  mp,
+  isMpEnabled,
 } as const;
 
 export type ProPokerV2Api = typeof ProPokerV2;

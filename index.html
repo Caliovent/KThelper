@@ -56,6 +56,9 @@
         <button id="tab-btn-gto" onclick="switchSuiteTab('gto')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
           🧠 Solver GTO & Équité
         </button>
+        <button id="tab-btn-arena" onclick="switchSuiteTab('arena')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
+          ⚔️ Arène 1v1
+        </button>
         <button id="tab-btn-coach" onclick="switchSuiteTab('coach')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0">
           🤖 Coach IA Poker
         </button>
@@ -2168,6 +2171,13 @@
     </div>
 
     <!-- ===================================================================== -->
+    <!-- TAB V2-MP: ARÈNE MULTIJOUEUR, GHOST DUELS, DAILY TOP & ÉCURIES        -->
+    <!-- ===================================================================== -->
+    <div id="suite-tab-arena" class="hidden space-y-6">
+      <div id="arena-mp-root"></div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- TAB 5: COACH IA POKER (SCÉNARIOS INTERACTIFS & HAND HISTORY REVIEW)   -->
     <!-- ===================================================================== -->
     <div id="suite-tab-coach" class="hidden space-y-6">
@@ -2286,7 +2296,7 @@
             </label>
           </div>
           <div>
-            <label for="v2-backup-json-preview" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Aperçu instantané ProPokerSuiteState (schemaVersion: 2)</label>
+            <label for="v2-backup-json-preview" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Aperçu instantané ProPokerSuiteState (schemaVersion: 3)</label>
             <textarea id="v2-backup-json-preview" rows="8" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-300 focus:outline-none"></textarea>
           </div>
         </div>
@@ -2299,7 +2309,7 @@
   <footer class="border-t border-slate-900 bg-slate-950/60 py-4 px-4 text-center text-xs text-slate-500 space-y-1.5">
     <p>Règle d'or en NL2 : <span class="text-slate-300 font-medium">Jouez serré et agressif (TAG)</span>, privilégiez la position, évitez de limper et ne surjouez pas vos top paires face aux relances turn/river.</p>
     <p class="text-[11px] text-amber-400/90">
-      ⚖️ <span class="font-semibold">Conformité Anti-RTA (Winamax / PokerStars) :</span> outil 100 % dédié à l'étude hors-ligne et à la révision post-session. Ne pas utiliser pendant une session active en argent réel.
+      ⚖️ <span class="font-semibold">Étude hors session (Winamax / PokerStars) :</span> outil dédié à l'entraînement hors-ligne et à la révision post-session. Fermez l'application lorsque votre room de poker est ouverte (mesure de réduction du risque, sans garantie réglementaire automatique).
     </p>
   </footer>
 
@@ -2584,8 +2594,51 @@
      * 1B. TOP-LEVEL SUITE NAVIGATION
      * =========================================================================
      */
+    window.__proPokerArenaLocked = false;
+    window.addEventListener('propoker-arena-lock', (e) => {
+      window.__proPokerArenaLocked = Boolean(e?.detail?.locked);
+    });
+    window.addEventListener('propoker-award-xp', (e) => {
+      const amt = Number(e?.detail?.amount) || 0;
+      if (amt > 0 && typeof awardV2Xp === 'function') awardV2Xp(amt);
+    });
+
+    function isMpEnabledClient() {
+      try {
+        if (window.ProPokerV2 && typeof window.ProPokerV2.isMpEnabled === 'function') {
+          return window.ProPokerV2.isMpEnabled();
+        }
+        if (typeof window.location !== 'undefined') {
+          const q = new URLSearchParams(window.location.search).get('mp');
+          if (q === '0' || q === 'false') return false;
+          if (q === '1' || q === 'true') return true;
+        }
+        return localStorage.getItem('pro_poker_suite_mp_enabled') !== 'false';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function applyMpFlagVisibility() {
+      const enabled = isMpEnabledClient();
+      if (!enabled && !document.getElementById('suite-tab-arena')?.classList.contains('hidden')) {
+        switchSuiteTab('ranges');
+      }
+      const btn = document.getElementById('tab-btn-arena');
+      if (btn) btn.classList.toggle('hidden', !enabled);
+    }
+
     function switchSuiteTab(tabName) {
-      const tabs = ['ranges', 'icm', 'hud', 'bankroll', 'gto', 'coach'];
+      if (tabName === 'arena' && !isMpEnabledClient()) {
+        return;
+      }
+      if (window.__proPokerArenaLocked && tabName !== 'arena') {
+        if (typeof showToast === 'function') {
+          showToast('🔒 Verrou actif : terminez ou abandonnez votre run en cours avant de consulter les calculateurs.', 'error');
+        }
+        return;
+      }
+      const tabs = ['ranges', 'icm', 'hud', 'bankroll', 'gto', 'arena', 'coach'];
       tabs.forEach(t => {
         const panel = document.getElementById(`suite-tab-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
@@ -2596,6 +2649,9 @@
         } else {
           panel.classList.add('hidden');
           btn.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-slate-400 hover:text-white whitespace-nowrap shrink-0';
+        }
+        if (t === 'arena' && !isMpEnabledClient()) {
+          btn.classList.add('hidden');
         }
       });
 
@@ -9114,11 +9170,20 @@ Hero folds
         }
       });
       return {
-        schemaVersion: 2,
+        schemaVersion: 3,
         exportedAt: new Date().toISOString(),
         bankrollInitialEur: typeof bankrollState !== 'undefined' ? bankrollState.startingBankroll : 100,
         sessions: typeof bankrollState !== 'undefined' ? bankrollState.sessions : [],
+        settings: { mpEnabled: isMpEnabledClient() },
         v2SrsStats: v2State.srsStats,
+        arenaState: (() => {
+          try {
+            const rawArena = localStorage.getItem('pro_poker_suite_v2_arena');
+            return rawArena ? JSON.parse(rawArena) : null;
+          } catch (e) {
+            return null;
+          }
+        })(),
         legacyV1Keys: legacyV1,
       };
     }
@@ -9154,10 +9219,10 @@ Hero folds
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `pro-poker-suite-v2-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `pro-poker-suite-v3-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('💾 Sauvegarde JSON V2 téléchargée.', 'success');
+      showToast('💾 Sauvegarde JSON V3 téléchargée.', 'success');
     }
 
     function importV2StateFile(event) {
@@ -9166,9 +9231,12 @@ Hero folds
       file.text().then(raw => {
         try {
           const parsed = JSON.parse(raw);
-          if (!parsed || parsed.schemaVersion !== 2 || !parsed.legacyV1Keys) {
-            showToast('Fichier JSON V2 invalide (schemaVersion: 2 attendu).', 'error');
+          if (!parsed || (parsed.schemaVersion !== 2 && parsed.schemaVersion !== 3) || !parsed.legacyV1Keys) {
+            showToast('Fichier JSON invalide (schemaVersion: 2 ou 3 attendu).', 'error');
             return;
+          }
+          if (parsed.schemaVersion === 2 && window.ProPokerV2?.mp?.migrateSuiteStateToV3) {
+            window.ProPokerV2.mp.migrateSuiteStateToV3(parsed);
           }
           V1_PRESERVED_KEYS.forEach(k => {
             const val = parsed.legacyV1Keys[k];
@@ -9180,7 +9248,10 @@ Hero folds
             v2State.srsStats = { ...v2State.srsStats, ...parsed.v2SrsStats };
             saveV2SrsStats();
           }
-          showToast('📥 Restauration JSON V2 effectuée ! Rechargement UI...', 'success');
+          if (parsed.arenaState) {
+            localStorage.setItem('pro_poker_suite_v2_arena', JSON.stringify(parsed.arenaState));
+          }
+          showToast('📥 Restauration JSON V3 effectuée ! Rechargement UI...', 'success');
           openV2BackupModal();
           initBankrollTracker();
           rgState.mastery = loadRangeMastery();
@@ -9654,6 +9725,10 @@ Hero folds
       initFourBetSimulator();
       computeGtoSolver();
       initProPokerV2();
+      applyMpFlagVisibility();
+      if (isMpEnabledClient() && typeof window.location !== 'undefined' && new URLSearchParams(window.location.search).has('challenge')) {
+        switchSuiteTab('arena');
+      }
     });
 
     // Couch-friendly keyboard shortcuts when Quiz or Jeux de Ranges is active
