@@ -2,7 +2,7 @@ import type { CoachScenario, HandReview, StreetAnalysis } from '../types/coach.t
 import { parseHand } from './parser.ts';
 import { texture } from './postflop.ts';
 
-const OFFLINE_SCENARIO_BANK: CoachScenario[] = [
+export const OFFLINE_SCENARIO_BANK: CoachScenario[] = [
   {
     title: 'Cash 6-Max — C-Bet sur Board Sec vs Fish Passif',
     limit: 'NL2',

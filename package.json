@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
+    "export:audit": "tsx scripts/exportGameContentAudit.ts",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
