@@ -5,14 +5,22 @@ import {
   AnswerSpotRequestSchema,
   AuthLinkRequestSchema,
   AuthSessionRequestSchema,
+  CreateRaidSchema,
+  CreateStableSchema,
   DailyStartRequestSchema,
   ForfeitRequestSchema,
   LeaderboardQuerySchema,
   LeagueSchema,
   OpenSpotRequestSchema,
+  PrivateTournamentSchema,
+  PublishSharedHandSchema,
   QueueJoinSchema,
+  RaidDecisionSchema,
+  RaidHighlightSchema,
   ReviewAppealSchema,
   ReviewDecisionSchema,
+  TransferOwnerSchema,
+  VoteSharedHandSchema,
 } from '../../engines/mp/schemas';
 import { L1_CORPUS_VERSION, L1_GENERATOR_VERSION } from './corpusL1';
 import { MpHttpError, MpService } from './service';
@@ -273,6 +281,157 @@ export function createMpRouter(service: MpService): express.Router {
         return res.json({ entries: service.getReviewAuditLog().filter((e) => myCaseIds.has(e.caseId)) });
       }
       return res.json({ entries: service.getReviewAuditLog() });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  // ===========================================================================
+  // M3 Social : Écuries, Partages d'historiques >=24h & Raid Boss 72h (MP-23..25)
+  // ===========================================================================
+  router.get('/stables', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json({
+        stables: service.listAllStables(),
+        myStable: service.getMyStable(player.id),
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/stables', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(CreateStableSchema, req.body);
+      return res.json(service.createStable(player.id, body.name));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/stables/:id/join', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json({ member: service.joinStable(player.id, req.params.id) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/stables/:id/leave', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json(service.leaveStable(player.id, req.params.id));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/stables/:id/transfer', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(TransferOwnerSchema, req.body);
+      return res.json(service.transferStableOwnership(player.id, req.params.id, body.newOwnerId));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/stables/:id/tournaments', async (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(PrivateTournamentSchema, req.body);
+      return res.json({ tournament: await service.createPrivateTournament(player.id, req.params.id, body.name) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.get('/shared-hands', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const stableId = String(req.query.stableId ?? '');
+      if (!stableId) throw new MpHttpError(400, 'missing_stable', 'Paramètre stableId requis.');
+      return res.json({ hands: service.listSharedHands(player.id, stableId) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/shared-hands', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(PublishSharedHandSchema, req.body);
+      return res.json({ sharedHand: service.publishSharedHand(player.id, body) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/shared-hands/:id/vote', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(VoteSharedHandSchema, req.body);
+      return res.json({ sharedHand: service.voteSharedHand(player.id, req.params.id, body.vote) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/raids', async (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(CreateRaidSchema, req.body);
+      return res.json({ raid: await service.createRaid(player.id, body) });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.get('/raids/:id', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json(service.getRaidStatus(player.id, req.params.id));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/raids/:id/decision', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(RaidDecisionSchema, req.body);
+      return res.json(service.submitRaidDecision(player.id, req.params.id, body));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/raids/:id/forfeit', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json(service.forfeitRaidRun(player.id, req.params.id));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/raids/:id/close', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      return res.json(service.closeRaid(player.id, req.params.id));
+    } catch (err) {
+      return handleError(res, err);
+    }
+  });
+
+  router.post('/raids/:id/highlight', (req, res) => {
+    try {
+      const player = service.authenticateBearer(req.headers.authorization);
+      const body = parseBody(RaidHighlightSchema, req.body);
+      return res.json({ highlights: service.tagRaidHighlight(player.id, req.params.id, body) });
     } catch (err) {
       return handleError(res, err);
     }

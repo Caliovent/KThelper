@@ -1,6 +1,7 @@
 import type { League, SpotPublic, SpotSolution } from '../domain/types';
 import type { Rating } from '../engines/mp/glicko2';
 import type { SpotScore } from '../engines/mp/scoring';
+import type { SharedHand } from '../engines/mp/share';
 
 export const MP_SESSION_STORAGE_KEY = 'pro_poker_suite_mp_session_v1';
 
@@ -417,5 +418,66 @@ export const mpApi = {
         mmrChanged: boolean;
       }[];
     }>('/v1/review/audit-log', { method: 'GET' }, token);
+  },
+
+  getStables(token: string) {
+    return requestJson<{
+      stables: {
+        id: string;
+        name: string;
+        memberCount: number;
+        active: boolean;
+        weeklyTarget: number;
+        weeklyTotal: number;
+      }[];
+      myStable: null | {
+        stable: { id: string; name: string; createdAt: string };
+        myRole: 'owner' | 'captain' | 'member';
+        active: boolean;
+        weeklyTarget: number;
+        weeklyTotal: number;
+        members: { playerId: string; pseudo: string; role: string; weeklyCappedRevisions: number }[];
+        raids: { id: string; bossId: 'nit' | 'calling_station' | 'reg_aggro' | 'chip_leader_icm'; state: string; roster: string[] }[];
+      };
+    }>('/v1/stables', { method: 'GET' }, token);
+  },
+
+  createStable(token: string, name: string) {
+    return requestJson('/v1/stables', { method: 'POST', body: JSON.stringify({ name }) }, token);
+  },
+
+  joinStable(token: string, stableId: string) {
+    return requestJson(`/v1/stables/${encodeURIComponent(stableId)}/join`, { method: 'POST', body: '{}' }, token);
+  },
+
+  getSharedHands(token: string, stableId: string) {
+    return requestJson<{
+      hands: {
+        id: string;
+        stableId: string;
+        hand: SharedHand;
+        tags: string[];
+        question: string;
+        createdDay: string;
+        myVote: string | null;
+        totalVotes: number;
+        voteCounts: Record<string, number> | null;
+      }[];
+    }>(`/v1/shared-hands?stableId=${encodeURIComponent(stableId)}`, { method: 'GET' }, token);
+  },
+
+  publishSharedHand(
+    token: string,
+    body: { stableId: string; playedAtMs: number; question: string; tags: string[]; hand: SharedHand }
+  ) {
+    return requestJson('/v1/shared-hands', { method: 'POST', body: JSON.stringify(body) }, token);
+  },
+
+  voteSharedHand(token: string, sharedHandId: string, vote: 'fold' | 'check' | 'call' | 'bet' | 'raise') {
+    return requestJson(
+      `/v1/shared-hands/${encodeURIComponent(sharedHandId)}/vote`,
+      { method: 'POST', body: JSON.stringify({ vote }) },
+      token
+    );
   },
 };

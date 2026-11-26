@@ -98,23 +98,11 @@ export function parseRawToSourceHand(raw: string, playedAtMs?: number): SourceHa
   if (!norm.hero || !norm.heroCards || norm.heroCards.length !== 2) {
     throw new Error('cartes du joueur Hero introuvables');
   }
-  const btnMatch = raw.match(/Seat #(\d+) is the button/i);
-  if (!btnMatch) throw new Error('bouton (Seat #N is the button) introuvable');
-  const buttonSeat = Number(btnMatch[1]);
+  const buttonSeat = norm.buttonSeat;
+  if (buttonSeat === undefined) throw new Error('bouton (Seat #N is the button) introuvable');
 
-  let resolvedTs = playedAtMs;
-  if (resolvedTs === undefined) {
-    const dtMatch = raw.match(/(\d{4})[\/-](\d{2})[\/-](\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
-    if (!dtMatch) throw new Error('horodatage de la main introuvable');
-    resolvedTs = Date.UTC(
-      Number(dtMatch[1]),
-      Number(dtMatch[2]) - 1,
-      Number(dtMatch[3]),
-      Number(dtMatch[4]),
-      Number(dtMatch[5]),
-      Number(dtMatch[6])
-    );
-  }
+  const resolvedTs = playedAtMs ?? norm.playedAtMs;
+  if (resolvedTs === undefined) throw new Error('horodatage de la main introuvable');
 
   return {
     bigBlind: norm.bigBlind,

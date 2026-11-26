@@ -14,9 +14,9 @@ Ce document consigne les décisions ouvertes de la Bible de développement (`MUL
 | **Live Arena (jalon M2)** | Ouvert en M2 Direct sur `/v1/ws` avec reprise `resumeRunId`, grâce cumulée 60 s, 0 PD dans `opponent_progress`/`locked`, validé sur 100 duels simulés avec coupures. | File dédiée par sous-format dès ouverture solveurs. |
 | **Chat / Réactions** | 6 réactions prédéfinies post-match uniquement, désactivables et bloquées pendant le run. Aucun chat libre. | Chat libre nécessitant modération. |
 
-## 2. Points techniques tranchés en M0 & M1
+## 2. Points techniques tranchés en M0, M1, M2 & M3
 
-1. **Test runners (Vitest + Playwright)** : Vitest (`tests/unit/*.test.ts`) couvre les moteurs V2, M0 (`mp-m0.test.ts`), M1 (`mp-m1.test.ts`) et l'inspection anti-fuite du bundle `dist/assets/*.js` ; Playwright (`tests/e2e/*.spec.ts`) lance le serveur réel (`npx tsx server.ts` en `NODE_ENV=production`) sur Chromium Desktop (`1280×800`) et Mobile (`390×844`).
+1. **Test runners (Vitest + Playwright)** : Vitest (`tests/unit/*.test.ts`) couvre les moteurs V2, AWS, M0, M1, M2 (100 duels WS simulés), M3 (Écuries/Partages/Raids) et l'inspection anti-fuite du bundle `dist/assets/*.js` ; Playwright (`tests/e2e/*.spec.ts`) teste l'application complète contre `npx tsx server.ts` sur Desktop (`1280×800`) et Mobile (`390×844`).
 2. **Corpus `L'Échelle` (`depth`), `Fresque Duel` et `Salve 3-Max`** :
    - Les spots `maths_icm` sont classés (`ranked: true`, `provenance.origin === 'computed'`, `confidence: 'high'`, corpus L1 strictement côté serveur `l1_math_*`).
    - **Fresque Duel (MP-19)** est strictement non éligible au classé (`fresqueRankedEligible === false`, exception levée si `ranked: true`).

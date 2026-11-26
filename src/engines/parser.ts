@@ -15,6 +15,8 @@ export interface NormalizedHand {
   handId: string;
   bigBlind: number;
   isTournament: boolean;
+  playedAtMs?: number;
+  buttonSeat?: number;
   seats: { seat: number; name: string; stack: number }[];
   hero?: string;
   heroCards?: string[];
@@ -66,12 +68,28 @@ export function parseHand(raw: string): NormalizedHand {
   const bbm = head.match(site === 'winamax' ? RE.blinds : RE.blindsPs);
   if (!bbm) throw new Error('blindes introuvables');
 
+  const dtMatch = raw.match(/(\d{4})[\/-](\d{2})[\/-](\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+  const playedAtMs = dtMatch
+    ? Date.UTC(
+        Number(dtMatch[1]),
+        Number(dtMatch[2]) - 1,
+        Number(dtMatch[3]),
+        Number(dtMatch[4]),
+        Number(dtMatch[5]),
+        Number(dtMatch[6])
+      )
+    : undefined;
+  const btnMatch = raw.match(/Seat #(\d+) is the button/i);
+  const buttonSeat = btnMatch ? Number(btnMatch[1]) : undefined;
+
   const h: NormalizedHand = {
     key: `${site}:${handId}`,
     site,
     handId,
     bigBlind: num(bbm[1]),
     isTournament: /Tournament/i.test(head),
+    ...(playedAtMs !== undefined ? { playedAtMs } : {}),
+    ...(buttonSeat !== undefined ? { buttonSeat } : {}),
     seats: [],
     board: [],
     actions: [],

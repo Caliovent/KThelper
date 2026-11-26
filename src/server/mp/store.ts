@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { League, MatchMode } from '../../domain/types';
+import type { BossId, BossPhase } from '../../engines/mp/boss';
 import type { Rating } from '../../engines/mp/glicko2';
 import type { Run } from '../../engines/mp/match';
 import type { Unit } from '../../engines/mp/scoring';
+import type { SharedHand } from '../../engines/mp/share';
 import type { SignedReceipt } from './crypto';
 
 export type MatchState =
@@ -148,6 +150,74 @@ export interface DbReviewAuditEntry {
   mmrChanged: boolean;
 }
 
+export interface DbStable {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface DbStableMember {
+  stableId: string;
+  playerId: string;
+  role: 'owner' | 'captain' | 'member';
+  joinedAt: string;
+}
+
+export interface DbStableWeeklyMemberContribution {
+  stableId: string;
+  weekKey: string;
+  playerId: string;
+  skillKeys: string[];
+  cappedCount: number;
+}
+
+export interface DbSharedHand {
+  id: string;
+  stableId: string;
+  hand: SharedHand;
+  tags: string[];
+  question: string;
+  votesByPlayer: Record<string, 'fold' | 'check' | 'call' | 'bet' | 'raise'>;
+  createdDay: string;
+}
+
+export interface DbRaidRun {
+  raidId: string;
+  playerId: string;
+  variantOrderIds: string[];
+  started: boolean;
+  finished: boolean;
+  forfeited: boolean;
+  decisions: {
+    handIndex: number;
+    decisionIndex: number;
+    phase: BossPhase;
+    pd: number;
+    action: string;
+    idempotencyKey: string;
+  }[];
+}
+
+export interface DbRaid {
+  id: string;
+  stableId: string;
+  bossId: BossId;
+  state: 'open' | 'closed';
+  roster: string[];
+  opensAt: string;
+  closesAtMs: number;
+  closesAt: string;
+  highlights: { authorId: string; handIndex: number; decisionIndex: number; label: string }[];
+}
+
+export interface DbPrivateTournament {
+  id: string;
+  stableId: string;
+  name: string;
+  seriesId: string;
+  createdAt: string;
+}
+
 export interface DbSnapshot {
   currentSeason: number;
   seasonTheme: string;
@@ -163,6 +233,13 @@ export interface DbSnapshot {
   sessions: DbSession[];
   reviewCases: DbReviewCase[];
   reviewAuditLog: DbReviewAuditEntry[];
+  stables: DbStable[];
+  stableMembers: DbStableMember[];
+  stableWeeklyContribs: DbStableWeeklyMemberContribution[];
+  sharedHands: DbSharedHand[];
+  raids: DbRaid[];
+  raidRuns: DbRaidRun[];
+  privateTournaments: DbPrivateTournament[];
   forfeitTimestampsByPlayer: Record<string, number[]>;
   linkRateLimits: Record<string, number[]>;
 }
@@ -183,6 +260,13 @@ export class MpStore {
   public readonly sessions = new Map<string, DbSession>();
   public readonly reviewCases = new Map<string, DbReviewCase>();
   public readonly reviewAuditLog: DbReviewAuditEntry[] = [];
+  public readonly stables = new Map<string, DbStable>();
+  public readonly stableMembers = new Map<string, DbStableMember>(); // key = playerId (1 écurie max par joueur)
+  public readonly stableWeeklyContribs = new Map<string, DbStableWeeklyMemberContribution>(); // key = `${stableId}:${weekKey}:${playerId}`
+  public readonly sharedHands = new Map<string, DbSharedHand>();
+  public readonly raids = new Map<string, DbRaid>();
+  public readonly raidRuns = new Map<string, DbRaidRun>(); // key = `${raidId}:${playerId}`
+  public readonly privateTournaments = new Map<string, DbPrivateTournament>();
   public readonly forfeitTimestampsByPlayer = new Map<string, number[]>();
   public readonly linkRateLimits = new Map<string, number[]>();
 
@@ -247,6 +331,13 @@ export class MpStore {
       sessions: Array.from(this.sessions.values()),
       reviewCases: Array.from(this.reviewCases.values()),
       reviewAuditLog: [...this.reviewAuditLog],
+      stables: Array.from(this.stables.values()),
+      stableMembers: Array.from(this.stableMembers.values()),
+      stableWeeklyContribs: Array.from(this.stableWeeklyContribs.values()),
+      sharedHands: Array.from(this.sharedHands.values()),
+      raids: Array.from(this.raids.values()),
+      raidRuns: Array.from(this.raidRuns.values()),
+      privateTournaments: Array.from(this.privateTournaments.values()),
       forfeitTimestampsByPlayer: Object.fromEntries(this.forfeitTimestampsByPlayer.entries()),
       linkRateLimits: Object.fromEntries(this.linkRateLimits.entries()),
     };
@@ -283,6 +374,15 @@ export class MpStore {
       if (Array.isArray(snap.reviewAuditLog)) {
         this.reviewAuditLog.push(...snap.reviewAuditLog);
       }
+      snap.stables?.forEach((s) => this.stables.set(s.id, s));
+      snap.stableMembers?.forEach((m) => this.stableMembers.set(m.playerId, m));
+      snap.stableWeeklyContribs?.forEach((c) =>
+        this.stableWeeklyContribs.set(`${c.stableId}:${c.weekKey}:${c.playerId}`, c)
+      );
+      snap.sharedHands?.forEach((h) => this.sharedHands.set(h.id, h));
+      snap.raids?.forEach((r) => this.raids.set(r.id, r));
+      snap.raidRuns?.forEach((rr) => this.raidRuns.set(`${rr.raidId}:${rr.playerId}`, rr));
+      snap.privateTournaments?.forEach((pt) => this.privateTournaments.set(pt.id, pt));
       Object.entries(snap.forfeitTimestampsByPlayer ?? {}).forEach(([k, v]) =>
         this.forfeitTimestampsByPlayer.set(k, v)
       );

@@ -82,9 +82,10 @@ import { FresqueDuelPanel } from './FresqueDuelPanel';
 import { LiveArenaPanel } from './LiveArenaPanel';
 import { RankedL1Panel } from './RankedL1Panel';
 import { SalvePanel } from './SalvePanel';
+import { SocialM3Panel } from './SocialM3Panel';
 import { TextureFunnelPanel } from './TextureFunnelPanel';
 
-type ArenaTab = 'duel' | 'aws' | 'l1' | 'live' | 'm2games' | 'daily' | 'elo' | 'quests' | 'games';
+type ArenaTab = 'duel' | 'aws' | 'l1' | 'live' | 'm2games' | 'social' | 'daily' | 'elo' | 'quests' | 'games';
 type CertaintyMark = 'sur' | 'hesitant';
 
 const SUIT_SYMBOL: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
@@ -1380,6 +1381,7 @@ export const MultiplayerArena: React.FC = () => {
               ['live', '⚡ Live Arena & Revue (M2)'],
               ['games', '🎨 Fresque & Salve (MP-19)'],
               ['m2games', '🔭 Radar & Détectives (M2)'],
+              ['social', '🏰 Boss, Raids & Écuries L1 (M3)'],
               ['daily', '🏆 Daily Local (L0)'],
               ['elo', '📊 Ligues & Journal FSRS V3'],
               ['quests', '🎯 Quêtes & Écuries'],
@@ -1633,6 +1635,9 @@ export const MultiplayerArena: React.FC = () => {
 
       {/* TAB M2GAMES : RADAR DE BOARD & DETECTIVES (MP-22) */}
       {activeTab === 'm2games' && <TextureFunnelPanel />}
+
+      {/* TAB SOCIAL M3 : BOSS SUR RAILS, RAIDS & ECURIES L1 (MP-23..MP-25) */}
+      {activeTab === 'social' && <SocialM3Panel />}
 
       {/* TAB GAMES : FRESQUE DUEL & SALVE 3-MAX (MP-19) */}
       {activeTab === 'games' && (

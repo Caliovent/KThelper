@@ -150,3 +150,30 @@ export const REVIEW_SIGNALS = {
   levelJumpPdDrop: 120,
   collusionPairForfeits: 2,
 } as const;
+
+/** M3 Social : Écuries L1, Boss sur rails & Raid Boss 72h (Bible p.19, 25-26, 36). */
+export const STABLE_CONFIG = {
+  minActiveMembers: 4,
+  maxMembers: 20,
+  weeklyCapPerMember: 100,
+  weeklyTargetDefault: 500,
+  maxSharedHandTags: 3,
+} as const;
+
+export const BOSS_CONFIG = {
+  soloHandsCount: 3,
+  soloMinVariants: 8,
+  soloMaxMeanPdPerHand: 500,
+  soloCriticalDecisionPd: 500,
+  decisionLimitMs: 20000,
+} as const;
+
+export const RAID_CONFIG = {
+  minRoster: 4,
+  maxRoster: 20,
+  durationMs: 72 * 3600 * 1000,
+  handsPerMember: 10,
+  victoryMaxMeanPd: 80,
+  minFinishRatio: 0.8,
+  minFinishCount: 4,
+} as const;

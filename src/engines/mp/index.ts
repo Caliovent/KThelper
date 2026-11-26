@@ -17,3 +17,4 @@ export * from './salve';
 export * from './texture';
 export * from './funnel';
 export * from './reviewSignals';
+export * from './boss';

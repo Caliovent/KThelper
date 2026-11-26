@@ -1,15 +1,26 @@
 import crypto from 'node:crypto';
 import type { League, PlayerAttemptRecord, SpotPublic } from '../../domain/types';
 import {
+  BOSS_HAND_VARIANTS,
+  BOSS_PROFILES,
+  evaluateRaidOutcome,
+  scoreBossDecision,
+  type BossId,
+  type RaidMemberTelemetry,
+} from '../../engines/mp/boss';
+import {
   ANTI_TILT,
   AUTH_LIMITS,
   DAILY_L1,
   GHOST_RANKED,
   GLICKO,
   LIVE_ARENA,
+  RAID_CONFIG,
   RULES_VERSION,
   SEASON_CONFIG,
+  STABLE_CONFIG,
 } from '../../engines/mp/config';
+import { MIN_AGE_MS, type SharedHand } from '../../engines/mp/share';
 import { dayKey, medals, trapSpot } from '../../engines/mp/daily';
 import { DIVISION_LABELS, division, expected, update, type Gates, type Rating } from '../../engines/mp/glicko2';
 import { GRACE_MS, newRun, reduce } from '../../engines/mp/match';
@@ -54,10 +65,16 @@ import {
   type DbDaily,
   type DbMatch,
   type DbPlayer,
+  type DbPrivateTournament,
+  type DbRaid,
+  type DbRaidRun,
   type DbRating,
   type DbReviewAuditEntry,
   type DbReviewCase,
   type DbRun,
+  type DbSharedHand,
+  type DbStable,
+  type DbStableMember,
 } from './store';
 
 export class MpHttpError extends Error {
@@ -1841,6 +1858,543 @@ export class MpService {
 
   public getReviewAuditLog(): DbReviewAuditEntry[] {
     return [...this.store.reviewAuditLog];
+  }
+
+  // ===========================================================================
+  // MP-23, MP-24, MP-25 : Écuries L1, Partages d'historiques >=24h & Raid Boss 72h
+  // ===========================================================================
+
+  private currentIsoWeekKey(): string {
+    const d = new Date(this.now());
+    const tmp = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${tmp.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  }
+
+  public createStable(playerId: string, name: string): { stable: DbStable; member: DbStableMember } {
+    if (this.store.stableMembers.has(playerId)) {
+      throw new MpHttpError(409, 'already_in_stable', 'Vous appartenez déjà à une écurie (1 max par joueur).');
+    }
+    const clean = name.trim();
+    for (const s of this.store.stables.values()) {
+      if (s.name.toLowerCase() === clean.toLowerCase()) {
+        throw new MpHttpError(409, 'name_taken', 'Ce nom d’écurie est déjà pris.');
+      }
+    }
+    const stable: DbStable = { id: crypto.randomUUID(), name: clean, createdAt: this.nowIso() };
+    const member: DbStableMember = {
+      stableId: stable.id,
+      playerId,
+      role: 'owner',
+      joinedAt: this.nowIso(),
+    };
+    this.store.stables.set(stable.id, stable);
+    this.store.stableMembers.set(playerId, member);
+    this.store.save();
+    return { stable, member };
+  }
+
+  public joinStable(playerId: string, stableId: string): DbStableMember {
+    if (this.store.stableMembers.has(playerId)) {
+      throw new MpHttpError(409, 'already_in_stable', 'Vous appartenez déjà à une écurie.');
+    }
+    const stable = this.store.stables.get(stableId);
+    if (!stable) throw new MpHttpError(404, 'not_found', 'Écurie introuvable.');
+
+    const members = Array.from(this.store.stableMembers.values()).filter((m) => m.stableId === stableId);
+    if (members.length >= STABLE_CONFIG.maxMembers) {
+      throw new MpHttpError(409, 'stable_full', `Écurie complète (maximum ${STABLE_CONFIG.maxMembers} membres).`);
+    }
+    const member: DbStableMember = {
+      stableId,
+      playerId,
+      role: 'member',
+      joinedAt: this.nowIso(),
+    };
+    this.store.stableMembers.set(playerId, member);
+    this.store.save();
+    return member;
+  }
+
+  public transferStableOwnership(ownerId: string, stableId: string, newOwnerId: string) {
+    const curOwner = this.store.stableMembers.get(ownerId);
+    if (!curOwner || curOwner.stableId !== stableId || curOwner.role !== 'owner') {
+      throw new MpHttpError(403, 'forbidden', 'Réservé au propriétaire actuel de l’écurie.');
+    }
+    const target = this.store.stableMembers.get(newOwnerId);
+    if (!target || target.stableId !== stableId) {
+      throw new MpHttpError(404, 'not_found', 'Le nouveau propriétaire doit être membre de l’écurie.');
+    }
+    curOwner.role = 'captain';
+    target.role = 'owner';
+    this.store.save();
+    return { ownerId: newOwnerId };
+  }
+
+  public leaveStable(playerId: string, stableId: string) {
+    const cur = this.store.stableMembers.get(playerId);
+    if (!cur || cur.stableId !== stableId) {
+      throw new MpHttpError(403, 'forbidden', 'Vous n’êtes pas membre de cette écurie.');
+    }
+    const members = Array.from(this.store.stableMembers.values()).filter((m) => m.stableId === stableId);
+    if (cur.role === 'owner' && members.length > 1) {
+      throw new MpHttpError(409, 'transfer_owner_required', 'Transférez la propriété avant de quitter l’écurie.');
+    }
+    this.store.stableMembers.delete(playerId);
+    if (members.length <= 1) {
+      this.store.stables.delete(stableId);
+    }
+    this.store.save();
+    return { left: true };
+  }
+
+  public recordStableL1Revision(
+    playerId: string,
+    skillKey: string,
+    grade: 1 | 2 | 3 | 4
+  ): { counted: boolean; memberCappedTotal: number; stableWeeklyTotal: number } {
+    const member = this.store.stableMembers.get(playerId);
+    if (!member) return { counted: false, memberCappedTotal: 0, stableWeeklyTotal: 0 };
+
+    const weekKey = this.currentIsoWeekKey();
+    const key = `${member.stableId}:${weekKey}:${playerId}`;
+    let contrib = this.store.stableWeeklyContribs.get(key);
+    if (!contrib) {
+      contrib = { stableId: member.stableId, weekKey, playerId, skillKeys: [], cappedCount: 0 };
+      this.store.stableWeeklyContribs.set(key, contrib);
+    }
+
+    let counted = false;
+    if (
+      grade >= 3 &&
+      contrib.cappedCount < STABLE_CONFIG.weeklyCapPerMember &&
+      !contrib.skillKeys.includes(skillKey)
+    ) {
+      contrib.skillKeys.push(skillKey);
+      contrib.cappedCount += 1;
+      counted = true;
+      this.store.save();
+    }
+
+    const stableTotal = Array.from(this.store.stableWeeklyContribs.values())
+      .filter((c) => c.stableId === member.stableId && c.weekKey === weekKey)
+      .reduce((sum, c) => sum + c.cappedCount, 0);
+
+    return { counted, memberCappedTotal: contrib.cappedCount, stableWeeklyTotal: stableTotal };
+  }
+
+  public listAllStables() {
+    const weekKey = this.currentIsoWeekKey();
+    return Array.from(this.store.stables.values()).map((s) => {
+      const members = Array.from(this.store.stableMembers.values()).filter((m) => m.stableId === s.id);
+      const weeklyTotal = Array.from(this.store.stableWeeklyContribs.values())
+        .filter((c) => c.stableId === s.id && c.weekKey === weekKey)
+        .reduce((sum, c) => sum + c.cappedCount, 0);
+      const target =
+        members.length === STABLE_CONFIG.minActiveMembers
+          ? 100 * STABLE_CONFIG.minActiveMembers
+          : STABLE_CONFIG.weeklyTargetDefault;
+      return {
+        ...s,
+        memberCount: members.length,
+        active: members.length >= STABLE_CONFIG.minActiveMembers,
+        weeklyTarget: target,
+        weeklyTotal,
+      };
+    });
+  }
+
+  public getMyStable(playerId: string) {
+    const membership = this.store.stableMembers.get(playerId);
+    if (!membership) return null;
+    const stable = this.store.stables.get(membership.stableId);
+    if (!stable) return null;
+    const weekKey = this.currentIsoWeekKey();
+    const members = Array.from(this.store.stableMembers.values())
+      .filter((m) => m.stableId === stable.id)
+      .map((m) => {
+        const p = this.store.players.get(m.playerId);
+        const c = this.store.stableWeeklyContribs.get(`${stable.id}:${weekKey}:${m.playerId}`);
+        return {
+          playerId: m.playerId,
+          pseudo: p?.pseudo ?? 'Membre',
+          role: m.role,
+          weeklyCappedRevisions: c?.cappedCount ?? 0,
+        };
+      });
+    const weeklyTotal = members.reduce((sum, m) => sum + m.weeklyCappedRevisions, 0);
+    const weeklyTarget =
+      members.length === STABLE_CONFIG.minActiveMembers
+        ? 100 * STABLE_CONFIG.minActiveMembers
+        : STABLE_CONFIG.weeklyTargetDefault;
+    const tournaments = Array.from(this.store.privateTournaments.values()).filter(
+      (t) => t.stableId === stable.id
+    );
+    const raids = Array.from(this.store.raids.values()).filter((r) => r.stableId === stable.id);
+    return {
+      stable,
+      myRole: membership.role,
+      active: members.length >= STABLE_CONFIG.minActiveMembers,
+      weeklyTarget,
+      weeklyTotal,
+      members,
+      tournaments,
+      raids,
+    };
+  }
+
+  public async createPrivateTournament(actorId: string, stableId: string, name: string): Promise<DbPrivateTournament> {
+    const membership = this.store.stableMembers.get(actorId);
+    if (!membership || membership.stableId !== stableId || membership.role === 'member') {
+      throw new MpHttpError(403, 'forbidden', 'Réservé au propriétaire ou capitaine d’écurie.');
+    }
+    const seed = crypto.randomBytes(12).toString('hex');
+    const picked = await selectSeries(
+      L1_MATHS_ICM_CORPUS,
+      15,
+      seed,
+      L1_CORPUS_VERSION,
+      L1_GENERATOR_VERSION,
+      true
+    );
+    const seriesId = crypto.randomUUID();
+    this.store.series.set(seriesId, {
+      id: seriesId,
+      seed,
+      corpusVersion: L1_CORPUS_VERSION,
+      generatorVersion: L1_GENERATOR_VERSION,
+      rulesVersion: RULES_VERSION,
+      templateIds: picked.map((t) => t.id),
+    });
+    const t: DbPrivateTournament = {
+      id: crypto.randomUUID(),
+      stableId,
+      name,
+      seriesId,
+      createdAt: this.nowIso(),
+    };
+    this.store.privateTournaments.set(t.id, t);
+    this.store.save();
+    return t;
+  }
+
+  public publishSharedHand(
+    playerId: string,
+    input: { stableId: string; playedAtMs: number; question: string; tags: string[]; hand: SharedHand }
+  ) {
+    const membership = this.store.stableMembers.get(playerId);
+    if (!membership || membership.stableId !== input.stableId) {
+      throw new MpHttpError(403, 'forbidden', 'Vous devez appartenir à cette écurie pour partager une main.');
+    }
+    if (this.now() - input.playedAtMs < MIN_AGE_MS) {
+      throw new MpHttpError(400, 'hand_too_recent', 'Main datant de moins de 24 h refusée (anti-RTA).');
+    }
+
+    // Reconstruction stricte par liste blanche : aucun pseudo, handId, tableName, playedAtMs ou texte brut conservé
+    const cleanHand: SharedHand = {
+      tableSize: input.hand.tableSize,
+      heroLabel: input.hand.heroLabel,
+      heroCards: [...input.hand.heroCards],
+      board: [...input.hand.board],
+      stacksBb: { ...input.hand.stacksBb },
+      actions: input.hand.actions.map((a) => ({
+        street: a.street,
+        actor: a.actor,
+        type: a.type,
+        amountBb: a.amountBb,
+        ...(a.toBb === undefined ? {} : { toBb: a.toBb }),
+        allIn: a.allIn,
+      })),
+    };
+
+    const shared: DbSharedHand = {
+      id: crypto.randomUUID(),
+      stableId: input.stableId,
+      hand: cleanHand,
+      tags: input.tags.slice(0, STABLE_CONFIG.maxSharedHandTags),
+      question: input.question,
+      votesByPlayer: {},
+      createdDay: new Date(this.now()).toISOString().slice(0, 10),
+    };
+    this.store.sharedHands.set(shared.id, shared);
+    this.store.save();
+    return this.formatSharedHandForPlayer(shared, playerId);
+  }
+
+  private formatSharedHandForPlayer(h: DbSharedHand, playerId: string) {
+    const myVote = h.votesByPlayer[playerId] ?? null;
+    const voteCounts = myVote
+      ? Object.values(h.votesByPlayer).reduce<Record<string, number>>((acc, v) => {
+          acc[v] = (acc[v] ?? 0) + 1;
+          return acc;
+        }, {})
+      : null;
+    return {
+      id: h.id,
+      stableId: h.stableId,
+      hand: h.hand,
+      tags: h.tags,
+      question: h.question,
+      createdDay: h.createdDay,
+      myVote,
+      totalVotes: Object.keys(h.votesByPlayer).length,
+      voteCounts, // Règle Bible p.25 : chacun vote, puis voit les votes
+    };
+  }
+
+  public listSharedHands(playerId: string, stableId: string) {
+    const membership = this.store.stableMembers.get(playerId);
+    if (!membership || membership.stableId !== stableId) {
+      throw new MpHttpError(403, 'forbidden', 'Accès réservé aux membres de l’écurie.');
+    }
+    return Array.from(this.store.sharedHands.values())
+      .filter((h) => h.stableId === stableId)
+      .map((h) => this.formatSharedHandForPlayer(h, playerId));
+  }
+
+  public voteSharedHand(
+    playerId: string,
+    sharedHandId: string,
+    vote: 'fold' | 'check' | 'call' | 'bet' | 'raise'
+  ) {
+    const h = this.store.sharedHands.get(sharedHandId);
+    if (!h) throw new MpHttpError(404, 'not_found', 'Main partagée introuvable.');
+    const membership = this.store.stableMembers.get(playerId);
+    if (!membership || membership.stableId !== h.stableId) {
+      throw new MpHttpError(403, 'forbidden', 'Accès réservé aux membres de l’écurie.');
+    }
+    h.votesByPlayer[playerId] = vote;
+    this.store.save();
+    return this.formatSharedHandForPlayer(h, playerId);
+  }
+
+  public async createRaid(
+    actorId: string,
+    input: { stableId: string; bossId: BossId; rosterPlayerIds: string[] }
+  ): Promise<DbRaid> {
+    const membership = this.store.stableMembers.get(actorId);
+    if (!membership || membership.stableId !== input.stableId || membership.role === 'member') {
+      throw new MpHttpError(403, 'forbidden', 'Seul le propriétaire ou un capitaine peut lancer un Raid.');
+    }
+    const stableMembers = new Set(
+      Array.from(this.store.stableMembers.values())
+        .filter((m) => m.stableId === input.stableId)
+        .map((m) => m.playerId)
+    );
+    if (stableMembers.size < STABLE_CONFIG.minActiveMembers) {
+      throw new MpHttpError(409, 'stable_inactive', 'L’écurie doit compter au moins 4 membres pour lancer un Raid.');
+    }
+    const roster = Array.from(new Set(input.rosterPlayerIds));
+    if (roster.length < RAID_CONFIG.minRoster || roster.length > RAID_CONFIG.maxRoster) {
+      throw new MpHttpError(400, 'invalid_roster', 'Le roster du Raid doit contenir 4 à 20 membres.');
+    }
+    for (const pid of roster) {
+      if (!stableMembers.has(pid)) {
+        throw new MpHttpError(400, 'invalid_roster', 'Tous les joueurs du roster doivent appartenir à l’écurie.');
+      }
+    }
+
+    const t = this.now();
+    const raidId = crypto.randomUUID();
+    const closesAtMs = t + RAID_CONFIG.durationMs;
+    const raid: DbRaid = {
+      id: raidId,
+      stableId: input.stableId,
+      bossId: input.bossId,
+      state: 'open',
+      roster,
+      opensAt: new Date(t).toISOString(),
+      closesAtMs,
+      closesAt: new Date(closesAtMs).toISOString(),
+      highlights: [],
+    };
+    this.store.raids.set(raidId, raid);
+
+    const allVariantIds = BOSS_HAND_VARIANTS.map((v) => v.id);
+    for (const pid of roster) {
+      const rng = await rngFrom(raidId, pid, 'raid-v1');
+      const order = shuffle(rng, allVariantIds).slice(0, RAID_CONFIG.handsPerMember);
+      const run: DbRaidRun = {
+        raidId,
+        playerId: pid,
+        variantOrderIds: order,
+        started: false,
+        finished: false,
+        forfeited: false,
+        decisions: [],
+      };
+      this.store.raidRuns.set(`${raidId}:${pid}`, run);
+    }
+
+    this.store.save();
+    return raid;
+  }
+
+  public submitRaidDecision(
+    playerId: string,
+    raidId: string,
+    input: { handIndex: number; decisionIndex: number; action: string; clientMs: number; key: string }
+  ) {
+    const raid = this.store.raids.get(raidId);
+    if (!raid) throw new MpHttpError(404, 'not_found', 'Raid introuvable.');
+    if (!raid.roster.includes(playerId)) {
+      throw new MpHttpError(403, 'roster_locked', 'Liste figée à l’ouverture : vous ne faites pas partie de ce Raid.');
+    }
+    if (raid.state !== 'open' || this.now() > raid.closesAtMs) {
+      throw new MpHttpError(409, 'raid_closed', 'Ce Raid Boss est clos.');
+    }
+    const run = this.store.raidRuns.get(`${raidId}:${playerId}`);
+    if (!run) throw new MpHttpError(404, 'not_found', 'Run de raid introuvable.');
+    if (run.forfeited || run.finished) {
+      throw new MpHttpError(409, 'run_closed', 'Votre participation à ce Raid est déjà terminée.');
+    }
+
+    const existing = run.decisions.find((d) => d.idempotencyKey === input.key);
+    if (existing) {
+      return { recorded: true, finished: run.finished };
+    }
+    const dupSlot = run.decisions.find(
+      (d) => d.handIndex === input.handIndex && d.decisionIndex === input.decisionIndex
+    );
+    if (dupSlot) {
+      throw new MpHttpError(409, 'already_answered', 'Cette décision est déjà verrouillée.');
+    }
+
+    const variantId = run.variantOrderIds[input.handIndex];
+    const variant = BOSS_HAND_VARIANTS.find((v) => v.id === variantId);
+    const step = variant?.steps[input.decisionIndex];
+    if (!variant || !step) {
+      throw new MpHttpError(400, 'invalid_step', 'Main ou décision de raid invalide.');
+    }
+
+    run.started = true;
+    const pd = scoreBossDecision(step, input.action, Math.min(20000, input.clientMs));
+    run.decisions.push({
+      handIndex: input.handIndex,
+      decisionIndex: input.decisionIndex,
+      phase: step.phase,
+      pd,
+      action: input.action,
+      idempotencyKey: input.key,
+    });
+
+    const expectedTotalDecisions = run.variantOrderIds.reduce((sum, vid) => {
+      const v = BOSS_HAND_VARIANTS.find((x) => x.id === vid);
+      return sum + (v?.steps.length ?? 3);
+    }, 0);
+
+    if (run.decisions.length >= expectedTotalDecisions) {
+      run.finished = true;
+    }
+    this.store.save();
+    return { recorded: true, finished: run.finished, decisionsDone: run.decisions.length, expectedTotalDecisions };
+  }
+
+  public forfeitRaidRun(playerId: string, raidId: string) {
+    const raid = this.store.raids.get(raidId);
+    if (!raid) throw new MpHttpError(404, 'not_found', 'Raid introuvable.');
+    if (!raid.roster.includes(playerId)) {
+      throw new MpHttpError(403, 'roster_locked', 'Liste figée : accès refusé.');
+    }
+    const run = this.store.raidRuns.get(`${raidId}:${playerId}`);
+    if (!run) throw new MpHttpError(404, 'not_found', 'Run introuvable.');
+    run.started = true;
+    run.forfeited = true;
+    this.store.save();
+    return { forfeited: true };
+  }
+
+  public closeRaid(actorId: string, raidId: string) {
+    const raid = this.store.raids.get(raidId);
+    if (!raid) throw new MpHttpError(404, 'not_found', 'Raid introuvable.');
+    const membership = this.store.stableMembers.get(actorId);
+    if (!membership || membership.stableId !== raid.stableId || membership.role === 'member') {
+      throw new MpHttpError(403, 'forbidden', 'Réservé au capitaine ou propriétaire.');
+    }
+    raid.state = 'closed';
+    this.store.save();
+    return this.getRaidStatus(actorId, raidId);
+  }
+
+  public tagRaidHighlight(
+    playerId: string,
+    raidId: string,
+    input: { handIndex: number; decisionIndex: number; label: string }
+  ) {
+    const raid = this.store.raids.get(raidId);
+    if (!raid) throw new MpHttpError(404, 'not_found', 'Raid introuvable.');
+    if (!raid.roster.includes(playerId)) throw new MpHttpError(403, 'forbidden', 'Accès refusé.');
+    if (raid.state !== 'closed') {
+      throw new MpHttpError(409, 'raid_open', 'Le conseil d’écurie s’ouvre uniquement après la clôture du Raid.');
+    }
+    raid.highlights.push({
+      authorId: playerId,
+      handIndex: input.handIndex,
+      decisionIndex: input.decisionIndex,
+      label: input.label,
+    });
+    this.store.save();
+    return raid.highlights;
+  }
+
+  public getRaidStatus(playerId: string, raidId: string) {
+    const raid = this.store.raids.get(raidId);
+    if (!raid) throw new MpHttpError(404, 'not_found', 'Raid introuvable.');
+    const membership = this.store.stableMembers.get(playerId);
+    if (!membership || membership.stableId !== raid.stableId) {
+      throw new MpHttpError(403, 'forbidden', 'Accès réservé aux membres de l’écurie.');
+    }
+
+    const runs = raid.roster
+      .map((pid) => this.store.raidRuns.get(`${raid.id}:${pid}`))
+      .filter((r): r is DbRaidRun => Boolean(r));
+
+    const telemetry: RaidMemberTelemetry[] = runs.map((r) => ({
+      playerId: r.playerId,
+      started: r.started,
+      finished: r.finished,
+      forfeited: r.forfeited,
+      decisions: r.decisions.map((d) => ({ phase: d.phase, pd: d.pd })),
+      expectedDecisionCount: r.variantOrderIds.reduce((sum, vid) => {
+        const v = BOSS_HAND_VARIANTS.find((x) => x.id === vid);
+        return sum + (v?.steps.length ?? 3);
+      }, 0),
+    }));
+
+    const outcome = evaluateRaidOutcome(raid.roster.length, telemetry);
+    const myRun = runs.find((r) => r.playerId === playerId);
+
+    // Confidentialité stricte Bible p.26 : le détail individuel des pertes n'est visible QUE par le joueur lui-même ; l'équipe voit uniquement les agrégats !
+    return {
+      raidId: raid.id,
+      stableId: raid.stableId,
+      boss: BOSS_PROFILES[raid.bossId],
+      state: raid.state,
+      rosterSize: raid.roster.length,
+      opensAt: raid.opensAt,
+      closesAt: raid.closesAt,
+      outcome: {
+        requiredFinishers: outcome.requiredFinishers,
+        finishedCount: outcome.finishedCount,
+        countedPlayers: outcome.countedPlayers,
+        teamMeanDecisionPd: outcome.teamMeanDecisionPd,
+        victory: outcome.victory,
+        // Les jauges par phase sont révélées à la clôture
+        phaseMeans: raid.state === 'closed' ? outcome.phaseMeans : null,
+      },
+      highlights: raid.state === 'closed' ? raid.highlights : [],
+      myRun: myRun
+        ? {
+            started: myRun.started,
+            finished: myRun.finished,
+            forfeited: myRun.forfeited,
+            decisions: myRun.decisions,
+            variantOrderIds: myRun.variantOrderIds,
+          }
+        : null,
+    };
   }
 
   // Utilitaire de test/admin pour vérifier l'évolution attendue Glicko-2

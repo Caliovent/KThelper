@@ -192,6 +192,89 @@ export const ReviewAppealSchema = z
   })
   .strict();
 
+/** Contrats Zod M3 Social : Écuries, Défis d'historiques >= 24h & Raid Boss (MP-23..MP-25). */
+export const CreateStableSchema = z
+  .object({
+    name: z.string().trim().min(3).max(48),
+  })
+  .strict();
+
+export const TransferOwnerSchema = z
+  .object({
+    newOwnerId: z.string().uuid(),
+  })
+  .strict();
+
+export const PrivateTournamentSchema = z
+  .object({
+    name: z.string().trim().min(3).max(64),
+  })
+  .strict();
+
+export const SharedHandActionSchema = z
+  .object({
+    street: z.enum(['preflop', 'flop', 'turn', 'river']),
+    actor: z.string().min(1).max(16),
+    type: z.enum(['fold', 'check', 'call', 'bet', 'raise']),
+    amountBb: z.number().min(0).max(10000),
+    toBb: z.number().min(0).max(10000).optional(),
+    allIn: z.boolean(),
+  })
+  .strict();
+
+export const SharedHandPayloadSchema = z
+  .object({
+    tableSize: z.number().int().min(2).max(9),
+    heroLabel: z.string().min(1).max(16),
+    heroCards: z.array(z.string().regex(/^[2-9TJQKA][shdc]$/)).length(2),
+    board: z.array(z.string().regex(/^[2-9TJQKA][shdc]$/)).max(5),
+    stacksBb: z.record(z.string(), z.number().min(0).max(10000)),
+    actions: z.array(SharedHandActionSchema).max(60),
+  })
+  .strict();
+
+export const PublishSharedHandSchema = z
+  .object({
+    stableId: z.string().uuid(),
+    playedAtMs: z.number().finite().positive(),
+    question: z.string().trim().min(3).max(240),
+    tags: z.array(z.string().trim().min(1).max(24)).max(3),
+    hand: SharedHandPayloadSchema,
+  })
+  .strict();
+
+export const VoteSharedHandSchema = z
+  .object({
+    vote: z.enum(['fold', 'check', 'call', 'bet', 'raise']),
+  })
+  .strict();
+
+export const CreateRaidSchema = z
+  .object({
+    stableId: z.string().uuid(),
+    bossId: z.enum(['nit', 'calling_station', 'reg_aggro', 'chip_leader_icm']),
+    rosterPlayerIds: z.array(z.string().uuid()).min(4).max(20),
+  })
+  .strict();
+
+export const RaidDecisionSchema = z
+  .object({
+    handIndex: z.number().int().min(0).max(9),
+    decisionIndex: z.number().int().min(0).max(5),
+    action: z.string().min(1).max(64),
+    clientMs: z.number().finite().min(0).max(120000),
+    key: z.string().uuid(),
+  })
+  .strict();
+
+export const RaidHighlightSchema = z
+  .object({
+    handIndex: z.number().int().min(0).max(9),
+    decisionIndex: z.number().int().min(0).max(5),
+    label: z.string().trim().min(2).max(120),
+  })
+  .strict();
+
 export function parseGhostChallengeV2(raw: unknown) {
   return GhostChallengeV2Schema.parse(raw);
 }
