@@ -222,20 +222,47 @@
                 <span class="w-3 h-3 rounded-sm bg-emerald-500"></span> Raise
               </button>
               <button type="button" data-brush="opencall" onclick="setBrush('opencall')" class="brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 flex flex-col items-center gap-1">
-                <span class="w-3 h-3 rounded-sm bg-sky-500"></span> Open Call
+                <span class="w-3 h-3 rounded-sm bg-orange-500"></span> Open Call
               </button>
               <button type="button" data-brush="threebet" onclick="setBrush('threebet')" class="brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 flex flex-col items-center gap-1">
-                <span class="w-3 h-3 rounded-sm bg-rose-500"></span> 3-Bet
+                <span class="w-3 h-3 rounded-sm bg-violet-600"></span> 3-Bet
               </button>
               <button type="button" data-brush="fourbet" onclick="setBrush('fourbet')" class="brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 flex flex-col items-center gap-1">
-                <span class="w-3 h-3 rounded-sm bg-purple-600"></span> 4-Bet
+                <span class="w-3 h-3 rounded-sm bg-red-600"></span> 4-Bet
               </button>
               <button type="button" data-brush="mixed" onclick="setBrush('mixed')" class="brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 flex flex-col items-center gap-1">
-                <span class="w-3 h-3 rounded-sm bg-amber-500"></span> Mixte
+                <span class="w-3 h-3 rounded-sm bg-yellow-400"></span> Loose (Mixte)
               </button>
               <button type="button" data-brush="fold" onclick="setBrush('fold')" class="brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 flex flex-col items-center gap-1">
                 <span class="w-3 h-3 rounded-sm bg-slate-700"></span> Fold
               </button>
+            </div>
+            <!-- 50/50 Split Cell Controls (e.g. AKo 50% 4-Bet / 50% Open Call) -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="btn-split-mode" type="button" onclick="toggleSplitMode()" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition inline-flex items-center gap-1.5">
+                  <span id="split-preview-swatch" class="w-4 h-3 rounded-sm border border-white/30 inline-block shrink-0" style="background: linear-gradient(90deg, #dc2626 0% 50%, #ea580c 50% 100%)"></span>
+                  <span id="btn-split-mode-label">Mode Moitié 50/50</span>
+                </button>
+                <span id="split-mode-summary" class="text-[11px] text-slate-400">Couper une case en 2 (ex: AKo ½ 4-Bet / ½ Open Call)</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <div id="split-secondary-controls" class="hidden inline-flex items-center gap-1.5">
+                  <label for="split-secondary-select" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">2e moitié :</label>
+                  <select id="split-secondary-select" onchange="setSplitBrush(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-orange-500">
+                    <option value="opencall">🟠 Open Call</option>
+                    <option value="fourbet">🔴 4-Bet</option>
+                    <option value="threebet">🟣 3-Bet</option>
+                    <option value="raise">🟢 Raise</option>
+                    <option value="mixed">🟡 Loose (Mixte)</option>
+                    <option value="fold">⬛ Fold</option>
+                  </select>
+                </div>
+                <button type="button" onclick="applyQuickSplitPreset('fourbet', 'opencall')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-200 border border-slate-700 transition inline-flex items-center gap-1" title="Activer le pinceau 50% 4-Bet (Rouge) / 50% Open Call (Orange) — idéal pour AKo">
+                  <span class="w-3 h-2.5 rounded-xs border border-white/30 inline-block" style="background: linear-gradient(90deg, #dc2626 0% 50%, #ea580c 50% 100%)"></span>
+                  ½ 4-Bet / ½ Call
+                </button>
+              </div>
             </div>
           </div>
 
@@ -252,27 +279,27 @@
             </div>
             <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2 flex items-center justify-between">
               <span class="flex items-center gap-1.5 text-slate-300 font-medium">
-                <span class="w-2.5 h-2.5 rounded-sm bg-sky-500"></span> Open Call
+                <span class="w-2.5 h-2.5 rounded-sm bg-orange-500"></span> Open Call
               </span>
-              <span id="stat-call" class="font-mono font-bold text-sky-400">0%</span>
+              <span id="stat-call" class="font-mono font-bold text-orange-400">0%</span>
             </div>
             <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2 flex items-center justify-between">
               <span class="flex items-center gap-1.5 text-slate-300 font-medium">
-                <span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span> 3-Bet
+                <span class="w-2.5 h-2.5 rounded-sm bg-violet-600"></span> 3-Bet
               </span>
-              <span id="stat-3bet" class="font-mono font-bold text-rose-400">0%</span>
+              <span id="stat-3bet" class="font-mono font-bold text-violet-400">0%</span>
             </div>
             <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2 flex items-center justify-between">
               <span class="flex items-center gap-1.5 text-slate-300 font-medium">
-                <span class="w-2.5 h-2.5 rounded-sm bg-purple-600"></span> 4-Bet
+                <span class="w-2.5 h-2.5 rounded-sm bg-red-600"></span> 4-Bet
               </span>
-              <span id="stat-4bet" class="font-mono font-bold text-purple-400">0%</span>
+              <span id="stat-4bet" class="font-mono font-bold text-red-400">0%</span>
             </div>
             <div class="col-span-2 sm:col-span-1 bg-slate-950/80 border border-slate-800/80 rounded-xl p-2 flex items-center justify-between">
               <span class="flex items-center gap-1.5 text-slate-300 font-medium">
-                <span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Mixte
+                <span class="w-2.5 h-2.5 rounded-sm bg-yellow-400"></span> Loose (Mixte)
               </span>
-              <span id="stat-mixed" class="font-mono font-bold text-amber-400">0%</span>
+              <span id="stat-mixed" class="font-mono font-bold text-yellow-400">0%</span>
             </div>
           </div>
         </div>
@@ -483,16 +510,16 @@
             <button type="button" onclick="submitQuizAnswer('fold')" class="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-extrabold text-slate-200 transition">
               <span class="opacity-60 font-mono text-[10px] mr-1">[1]</span>Fold
             </button>
-            <button type="button" onclick="submitQuizAnswer('opencall')" class="py-3 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 border border-sky-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+            <button type="button" onclick="submitQuizAnswer('opencall')" class="py-3 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 border border-orange-400/40 text-xs sm:text-sm font-extrabold text-white transition">
               <span class="opacity-75 font-mono text-[10px] mr-1">[2]</span>Open Call
             </button>
             <button type="button" onclick="submitQuizAnswer('raise')" class="py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-xs sm:text-sm font-extrabold text-white transition">
               <span class="opacity-75 font-mono text-[10px] mr-1">[3]</span>Open Raise
             </button>
-            <button type="button" onclick="submitQuizAnswer('threebet')" class="py-3 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 border border-rose-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+            <button type="button" onclick="submitQuizAnswer('threebet')" class="py-3 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 border border-violet-400/40 text-xs sm:text-sm font-extrabold text-white transition">
               <span class="opacity-75 font-mono text-[10px] mr-1">[4]</span>3-Bet
             </button>
-            <button type="button" onclick="submitQuizAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-3 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-400/40 text-xs sm:text-sm font-extrabold text-white transition">
+            <button type="button" onclick="submitQuizAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-3 px-3 rounded-xl bg-red-600 hover:bg-red-500 border border-red-400/40 text-xs sm:text-sm font-extrabold text-white transition">
               <span class="opacity-75 font-mono text-[10px] mr-1">[5]</span>4-Bet
             </button>
           </div>
@@ -2354,40 +2381,95 @@
       raise: {
         short: 'Raise',
         label: 'OPEN RAISE / VALUE',
+        hex: '#059669',
         cellClass: 'bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-400/50',
         badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
       },
       opencall: {
         short: 'Open Call',
         label: 'OPEN CALL / DÉFENSE',
-        cellClass: 'bg-sky-600/90 hover:bg-sky-500 text-white border-sky-400/50',
-        badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+        hex: '#ea580c',
+        cellClass: 'bg-orange-600/90 hover:bg-orange-500 text-white border-orange-400/60',
+        badgeClass: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
       },
       threebet: {
         short: '3-Bet',
         label: '3-BET / SUR-RELANCE',
-        cellClass: 'bg-rose-600/90 hover:bg-rose-500 text-white border-rose-400/50',
-        badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+        hex: '#7c3aed',
+        cellClass: 'bg-violet-600/90 hover:bg-violet-500 text-white border-violet-400/50',
+        badgeClass: 'bg-violet-500/20 text-violet-300 border-violet-500/40',
       },
       fourbet: {
         short: '4-Bet',
         label: '4-BET / SUR-SUR-RELANCE',
-        cellClass: 'bg-purple-600/90 hover:bg-purple-500 text-white border-purple-400/50',
-        badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+        hex: '#dc2626',
+        cellClass: 'bg-red-600/90 hover:bg-red-500 text-white border-red-400/60',
+        badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40',
       },
       mixed: {
-        short: 'Mixte',
-        label: 'MIXTE / EXPLOIT',
-        cellClass: 'bg-amber-500/90 hover:bg-amber-400 text-slate-950 border-amber-300/60',
-        badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        short: 'Loose (Mixte)',
+        label: 'LOOSE / MIXTE',
+        hex: '#facc15',
+        cellClass: 'bg-yellow-400/95 hover:bg-yellow-300 text-slate-950 border-yellow-200/70',
+        badgeClass: 'bg-yellow-400/20 text-yellow-300 border-yellow-400/40',
       },
       fold: {
         short: 'Fold',
         label: 'FOLD (PASSER)',
+        hex: '#0f172a',
         cellClass: 'bg-slate-900/90 hover:bg-slate-800 text-slate-500 border-slate-800',
         badgeClass: 'bg-slate-800 text-slate-400 border-slate-700',
       },
     };
+
+    function normalizeSingleAction(act) {
+      if (act === 'call') return 'opencall';
+      return ACTIONS[act] ? act : 'fold';
+    }
+
+    function normalizeStoredAction(act) {
+      if (typeof act !== 'string') return 'fold';
+      if (act.includes('|')) {
+        const [rawA, rawB] = act.split('|');
+        const a = normalizeSingleAction(rawA);
+        const b = normalizeSingleAction(rawB);
+        if (a === b) return a;
+        return `${a}|${b}`;
+      }
+      return normalizeSingleAction(act);
+    }
+
+    function parseActionParts(act) {
+      if (typeof act === 'string' && act.includes('|')) {
+        const [rawA, rawB] = act.split('|');
+        const a = normalizeSingleAction(rawA);
+        const b = normalizeSingleAction(rawB);
+        if (a !== b) {
+          return { isSplit: true, parts: [a, b] };
+        }
+        return { isSplit: false, parts: [a] };
+      }
+      return { isSplit: false, parts: [normalizeSingleAction(act)] };
+    }
+
+    function getActionDisplay(act) {
+      const parsed = parseActionParts(act);
+      if (!parsed.isSplit) {
+        return { ...ACTIONS[parsed.parts[0]], isSplit: false, parts: parsed.parts, gradient: null };
+      }
+      const [a, b] = parsed.parts;
+      const cfgA = ACTIONS[a];
+      const cfgB = ACTIONS[b];
+      return {
+        isSplit: true,
+        parts: [a, b],
+        short: `½ ${cfgA.short} / ½ ${cfgB.short}`,
+        label: `50% ${cfgA.short.toUpperCase()} / 50% ${cfgB.short.toUpperCase()}`,
+        gradient: `linear-gradient(90deg, ${cfgA.hex} 0% 50%, ${cfgB.hex} 50% 100%)`,
+        cellClass: 'text-white border-white/35 split-hand-cell',
+        badgeClass: 'bg-slate-800/95 text-white border-orange-400/50',
+      };
+    }
 
     const ALL_HANDS = [];
     const HAND_META = {};
@@ -2570,7 +2652,7 @@
       },
       BB_VS_BTN: {
         title: 'BB vs Relance CO ou BU (Tableau 2 p.33)',
-        subtitle: '3-Bet (Rouge) : QQ+, AK, AQ, JJ. Open Call (Bleu) : paires 22-TT, broadways assortis et connecteurs assortis.',
+        subtitle: '3-Bet (Violet) : QQ+, AK, AQ, JJ. Open Call (Orange) : paires 22-TT, broadways assortis et connecteurs assortis.',
         context: "Le Bouton relance à 3bb, la SB passe. Vous êtes en Big Blind (BB).",
         build: () => {
           const m = {};
@@ -2582,7 +2664,7 @@
       },
       BB_VS_UTG: {
         title: 'BB vs Relance UTG ou MP (Tableau 2 p.33)',
-        subtitle: '3-Bet (Rouge) : QQ+, AK. Open Call (Bleu) : 22-JJ, AJs+, KQs+, ATs, QJs, KJs. Fold tout le reste.',
+        subtitle: '3-Bet (Violet) : QQ+, AK. Open Call (Orange) : 22-JJ, AJs+, KQs+, ATs, QJs, KJs. Fold tout le reste.',
         context: "UTG relance à 3bb, tout le monde passe jusqu'à vous en Big Blind (BB).",
         build: () => {
           const m = {};
@@ -2594,7 +2676,7 @@
       },
       '3BET_IP': {
         title: 'BU vs Relance du Cutoff (Tableau 2 p.33)',
-        subtitle: '3-Bet (Rouge) : QQ+, AK. Open Call (Bleu) : 22-JJ, AJs+, KQs+, ATs, KJs, QJs, JTs, AQo.',
+        subtitle: '3-Bet (Violet) : QQ+, AK. Open Call (Orange) : 22-JJ, AJs+, KQs+, ATs, KJs, QJs, JTs, AQo.',
         context: "Le Cutoff (CO) relance à 3bb. Vous êtes au Bouton (BU). Quelle est votre décision ?",
         build: () => {
           const m = {};
@@ -2606,11 +2688,12 @@
       },
       VS_3BET: {
         title: 'Face à un 3-Bet adverse (4-Bet & Défense p.34)',
-        subtitle: '4-Bet (Violet) : QQ+, AK. Open Call (Bleu) : TT-JJ, AQs, AQo, KQs. Fold les broadways offsuit faibles (AJo, KQo...).',
+        subtitle: '4-Bet (Rouge) : QQ+, AKs (et AKo ½ 4-Bet / ½ Open Call). Open Call (Orange) : TT-JJ, AQs, AQo, KQs. Loose (Jaune) : 99, suited connecteurs.',
         context: "Vous avez ouvert (Open Raise) préflop et un joueur derrière vous sur-relance (3-Bet à 9-10bb).",
         build: () => {
           const m = {};
-          parseNotationToMap('QQ+, AKs, AKo', 'fourbet', m);
+          parseNotationToMap('QQ+, AKs', 'fourbet', m);
+          m['AKo'] = 'fourbet|opencall';
           parseNotationToMap('JJ-TT, AQs, AQo, KQs', 'opencall', m);
           parseNotationToMap('99, AJs, ATs, QJs, JTs, T9s', 'mixed', m);
           return m;
@@ -2713,8 +2796,10 @@
       currentPreset: 'UTG',
       selectedHand: 'AKs',
       brush: 'raise',
+      splitMode: false,
+      splitBrush: 'opencall',
       isDragging: false,
-      ranges: {}, // Map of presetId -> { handName: action }
+      ranges: {}, // Map of presetId -> { handName: action | 'actionA|actionB' }
       quiz: {
         score: 0,
         total: 0,
@@ -2730,7 +2815,7 @@
         state.ranges[key] = DEFAULT_PRESETS[key].build();
       });
 
-      // Merge any saved custom edits from localStorage (normalize legacy 'call' to 'opencall')
+      // Merge any saved custom edits from localStorage (normalize legacy 'call' & support 'a|b' splits)
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
@@ -2739,7 +2824,8 @@
             if (state.ranges[key]) {
               const normalized = {};
               Object.entries(parsed[key]).forEach(([h, act]) => {
-                normalized[h] = act === 'call' ? 'opencall' : act;
+                const norm = normalizeStoredAction(act);
+                if (norm !== 'fold') normalized[h] = norm;
               });
               state.ranges[key] = normalized;
             }
@@ -2775,7 +2861,7 @@
 
         cell.addEventListener('mouseenter', () => {
           if (state.mode === 'edit' && state.isDragging) {
-            paintHand(hand.name, state.brush);
+            paintHand(hand.name, getActivePaintAction());
           }
           inspectHand(hand.name, false);
         });
@@ -2785,7 +2871,7 @@
           if (state.mode === 'edit') {
             e.preventDefault();
             state.isDragging = true;
-            paintHand(hand.name, state.brush);
+            paintHand(hand.name, getActivePaintAction());
           }
           inspectHand(hand.name, true);
         }, { passive: false });
@@ -2799,7 +2885,7 @@
         const touch = e.touches[0];
         const el = document.elementFromPoint(touch.clientX, touch.clientY);
         if (el && el.dataset && el.dataset.hand) {
-          paintHand(el.dataset.hand, state.brush);
+          paintHand(el.dataset.hand, getActivePaintAction());
           inspectHand(el.dataset.hand, true);
         }
       }, { passive: true });
@@ -2816,19 +2902,21 @@
       inspectHand(handName, true);
       if (state.mode === 'edit') {
         state.isDragging = true;
-        // Toggle to fold if clicking same color, otherwise paint brush
+        // Toggle to fold if clicking same color/split, otherwise paint active brush
+        const paintTarget = getActivePaintAction();
         const currentAction = getHandAction(state.currentPreset, handName);
-        const nextAction = (currentAction === state.brush && state.brush !== 'fold') ? 'fold' : state.brush;
+        const nextAction = (currentAction === paintTarget && paintTarget !== 'fold') ? 'fold' : paintTarget;
         paintHand(handName, nextAction);
       }
     }
 
     function paintHand(handName, action) {
       const map = state.ranges[state.currentPreset];
-      if (action === 'fold') {
+      const norm = normalizeStoredAction(action);
+      if (norm === 'fold') {
         delete map[handName];
       } else {
-        map[handName] = action;
+        map[handName] = norm;
       }
       renderMatrixState();
       updateMetricsAndNotation();
@@ -2836,7 +2924,7 @@
     }
 
     function getHandAction(presetKey, handName) {
-      return state.ranges[presetKey]?.[handName] || 'fold';
+      return normalizeStoredAction(state.ranges[presetKey]?.[handName] || 'fold');
     }
 
     function renderMatrixState() {
@@ -2874,7 +2962,7 @@
           const vec = rawVec ? (v2State.simplifiedGto25 ? window.ProPokerV2.simplifyFreqVector25(rawVec) : rawVec) : null;
           const grad = vec ? buildV2CellGradient(vec) : null;
           if (grad) {
-            cell.className = `${baseClasses} text-white border-slate-600/70${selectedClass}`;
+            cell.className = `${baseClasses} text-white border-slate-600/70 split-hand-cell${selectedClass}`;
             cell.style.background = grad;
           } else {
             cell.className = `${baseClasses} ${ACTIONS.fold.cellClass}${selectedClass}`;
@@ -2883,8 +2971,13 @@
         }
 
         const action = getHandAction(state.currentPreset, hand.name);
-        const actionCfg = ACTIONS[action];
-        cell.className = `${baseClasses} ${actionCfg.cellClass}${selectedClass}`;
+        const display = getActionDisplay(action);
+        if (display.isSplit && display.gradient) {
+          cell.className = `${baseClasses} ${display.cellClass}${selectedClass}`;
+          cell.style.background = display.gradient;
+        } else {
+          cell.className = `${baseClasses} ${display.cellClass}${selectedClass}`;
+        }
       });
 
       if (typeof renderV2ChunkingPanel === 'function') {
@@ -2936,15 +3029,25 @@
         const act = map[h.name];
         if (!act || act === 'fold') return;
 
-        if (act === 'raise') raiseCombos += h.combos;
-        if (act === 'threebet') threebetCombos += h.combos;
-        if (act === 'fourbet') fourbetCombos += h.combos;
-        if (act === 'opencall' || act === 'call') callCombos += h.combos;
-        if (act === 'mixed') mixedCombos += h.combos;
+        const parsed = parseActionParts(act);
+        const weight = parsed.isSplit ? 0.5 : 1;
+        let activeWeight = 0;
 
-        if (h.type === 'pair') pairCombos += h.combos;
-        if (h.type === 'suited') suitedCombos += h.combos;
-        if (h.type === 'offsuit') offsuitCombos += h.combos;
+        parsed.parts.forEach(p => {
+          if (p === 'fold') return;
+          activeWeight += weight;
+          if (p === 'raise') raiseCombos += h.combos * weight;
+          if (p === 'threebet') threebetCombos += h.combos * weight;
+          if (p === 'fourbet') fourbetCombos += h.combos * weight;
+          if (p === 'opencall') callCombos += h.combos * weight;
+          if (p === 'mixed') mixedCombos += h.combos * weight;
+        });
+
+        if (activeWeight > 0) {
+          if (h.type === 'pair') pairCombos += h.combos * activeWeight;
+          if (h.type === 'suited') suitedCombos += h.combos * activeWeight;
+          if (h.type === 'offsuit') offsuitCombos += h.combos * activeWeight;
+        }
       });
 
       const totalActiveCombos = v2Expanded
@@ -3049,6 +3152,17 @@
       const highRank = handName[0];
       const lowRank = handName[1];
 
+      const parsed = parseActionParts(action);
+      if (parsed.isSplit) {
+        const [a, b] = parsed.parts;
+        const labelA = ACTIONS[a].short;
+        const labelB = ACTIONS[b].short;
+        if (handName === 'AKo' && parsed.parts.includes('fourbet') && parsed.parts.includes('opencall')) {
+          return `Fréquence mixte Kill Tilt (50% 4-Bet / 50% Open Call) avec AKo : 4-bettez en value contre les profils qui 3-bettent large ou en bataille de positions (CO/BU/SB), et privilégiez l'Open Call en position contre un profil serré (Nit/UTG) pour garder ses mains dominées (AQ, KQ).`;
+        }
+        return `Action partagée 50% / 50% (${labelA} / ${labelB}) sur ${handName} : alternez selon le profil adverse et la dynamique de table (plus agressif contre un joueur large/récréatif, plus prudent contre un Nit).`;
+      }
+
       if (action === 'fourbet') {
         return `4-Bet Value / Premium (${handName}) : face à un 3-bet adverse, sur-sur-relancez (~22-25bb) pour construire un pot énorme avec vos meilleures mains. Si l'adversaire fait tapis (5-bet), vous payez avec KK/AA (et QQ/AK selon le profil).`;
       }
@@ -3151,6 +3265,7 @@
           .sort((a, b) => (b[1] || 0) - (a[1] || 0))
           .map(([k, p]) => `${window.ProPokerV2.V2_ACTION_PALETTE[k]?.label || k} ${Math.round((p || 0) * 100)}%`);
         badge.textContent = parts.length ? parts.join(' • ') : 'Fold 100%';
+        badge.style.background = '';
         badge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold border bg-sky-500/15 text-sky-200 border-sky-500/30';
         const foldFreq = vec.f || 0;
         const activeFreq = Math.max(0, 1 - foldFreq);
@@ -3158,18 +3273,25 @@
         document.getElementById('inspect-advice').textContent = `${v2Spec.scenario} (${v2Spec.stackBB}bb) — Fréquences ${v2State.simplifiedGto25 ? 'simplifiées au pas de 25%' : 'mixtes V2'} : ${parts.join(' / ')}. Provenance : ${v2Spec.provenance.note}.`;
       } else {
         const action = getHandAction(state.currentPreset, handName);
-        const actionCfg = ACTIONS[action];
-        badge.textContent = actionCfg.label;
-        badge.className = `px-2.5 py-1 rounded-lg text-xs font-bold border ${actionCfg.badgeClass}`;
+        const display = getActionDisplay(action);
+        badge.textContent = display.label;
+        badge.className = `px-2.5 py-1 rounded-lg text-xs font-bold border ${display.badgeClass}${display.isSplit ? ' split-hand-cell' : ''}`;
+        badge.style.background = display.isSplit && display.gradient ? display.gradient : '';
 
         // Share of current active range
         const map = state.ranges[state.currentPreset];
         let totalActive = 0;
         ALL_HANDS.forEach(h => {
-          if (map[h.name] && map[h.name] !== 'fold') totalActive += h.combos;
+          const p = parseActionParts(map[h.name] || 'fold');
+          const w = p.isSplit ? 0.5 : 1;
+          p.parts.forEach(part => {
+            if (part !== 'fold') totalActive += h.combos * w;
+          });
         });
-        const share = (action !== 'fold' && totalActive > 0)
-          ? `${((meta.combos / totalActive) * 100).toFixed(1)}%`
+        const handParts = parseActionParts(action);
+        const handActiveFreq = handParts.parts.reduce((acc, part) => acc + (part !== 'fold' ? (handParts.isSplit ? 0.5 : 1) : 0), 0);
+        const share = (handActiveFreq > 0 && totalActive > 0)
+          ? `${(((meta.combos * handActiveFreq) / totalActive) * 100).toFixed(1)}%${handActiveFreq < 1 ? ' (50%)' : ''}`
           : '0% (Fold)';
         document.getElementById('inspect-share').textContent = share;
         document.getElementById('inspect-advice').textContent = getStrategicAdvice(state.currentPreset, handName, action);
@@ -3280,22 +3402,91 @@
         if (newMode === 'edit') {
           editToolbar.classList.remove('hidden');
           setBrush(state.brush);
+          updateSplitToolbarUI();
         } else {
           editToolbar.classList.add('hidden');
         }
       }
     }
 
+    function getActivePaintAction() {
+      if (state.splitMode && state.splitBrush && state.splitBrush !== state.brush) {
+        return `${state.brush}|${state.splitBrush}`;
+      }
+      return state.brush;
+    }
+
+    function updateSplitToolbarUI() {
+      const btn = document.getElementById('btn-split-mode');
+      const label = document.getElementById('btn-split-mode-label');
+      const swatch = document.getElementById('split-preview-swatch');
+      const summary = document.getElementById('split-mode-summary');
+      const secControls = document.getElementById('split-secondary-controls');
+      const secSelect = document.getElementById('split-secondary-select');
+      if (!btn) return;
+
+      const primaryCfg = ACTIONS[state.brush] || ACTIONS.raise;
+      const secondaryCfg = ACTIONS[state.splitBrush] || ACTIONS.opencall;
+
+      if (secSelect && secSelect.value !== state.splitBrush) {
+        secSelect.value = state.splitBrush;
+      }
+
+      if (swatch) {
+        swatch.style.background = `linear-gradient(90deg, ${primaryCfg.hex} 0% 50%, ${secondaryCfg.hex} 50% 100%)`;
+      }
+
+      if (state.splitMode) {
+        btn.className = 'px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border-2 border-white bg-slate-800 text-white shadow transition inline-flex items-center gap-1.5';
+        if (label) label.textContent = 'Moitié 50/50 : ACTIF';
+        if (secControls) secControls.classList.remove('hidden');
+        if (summary) {
+          summary.textContent = state.brush === state.splitBrush
+            ? `Choisissez une 2e couleur différente de ${primaryCfg.short}`
+            : `Pinceau actif : 50% ${primaryCfg.short} / 50% ${secondaryCfg.short}`;
+          summary.className = 'text-[11px] font-semibold text-orange-300';
+        }
+      } else {
+        btn.className = 'px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition inline-flex items-center gap-1.5';
+        if (label) label.textContent = 'Mode Moitié 50/50';
+        if (secControls) secControls.classList.add('hidden');
+        if (summary) {
+          summary.textContent = 'Couper une case en 2 (ex: AKo ½ 4-Bet / ½ Open Call)';
+          summary.className = 'text-[11px] text-slate-400';
+        }
+      }
+    }
+
+    function toggleSplitMode() {
+      state.splitMode = !state.splitMode;
+      if (state.splitMode && state.splitBrush === state.brush) {
+        state.splitBrush = state.brush === 'opencall' ? 'fourbet' : 'opencall';
+      }
+      updateSplitToolbarUI();
+    }
+
+    function setSplitBrush(secondAction) {
+      state.splitBrush = normalizeSingleAction(secondAction);
+      updateSplitToolbarUI();
+    }
+
+    function applyQuickSplitPreset(firstAction, secondAction) {
+      state.splitMode = true;
+      state.splitBrush = normalizeSingleAction(secondAction);
+      setBrush(normalizeSingleAction(firstAction));
+    }
+
     function setBrush(brushAction) {
-      state.brush = brushAction;
+      state.brush = normalizeSingleAction(brushAction);
       document.querySelectorAll('.brush-btn').forEach(btn => {
-        const isSelected = btn.dataset.brush === brushAction;
+        const isSelected = btn.dataset.brush === state.brush;
         if (isSelected) {
           btn.className = 'brush-btn py-2 px-1 rounded-xl text-xs font-bold border-2 border-white bg-slate-800 text-white transition flex flex-col items-center gap-1 shadow';
         } else {
           btn.className = 'brush-btn py-2 px-1 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-white transition flex flex-col items-center gap-1';
         }
       });
+      updateSplitToolbarUI();
     }
 
     function clearCurrentGrid() {
@@ -4857,10 +5048,16 @@
         chosenHand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)];
       }
 
-      const rawAction = map[chosenHand.name] || 'fold';
-      let expectedAction = rawAction;
-      if (rawAction === 'mixed') {
+      const rawAction = normalizeStoredAction(map[chosenHand.name] || 'fold');
+      const parsedAction = parseActionParts(rawAction);
+      let expectedAction = parsedAction.parts[0];
+      let acceptedActions = parsedAction.isSplit ? parsedAction.parts : null;
+      if (!parsedAction.isSplit && rawAction === 'mixed') {
         expectedAction = ['BB_VS_BTN', 'BB_VS_UTG', '3BET_IP', 'VS_3BET'].includes(presetKey) ? 'opencall' : 'raise';
+      } else if (parsedAction.isSplit) {
+        const defenseFallback = ['BB_VS_BTN', 'BB_VS_UTG', '3BET_IP', 'VS_3BET'].includes(presetKey) ? 'opencall' : 'raise';
+        acceptedActions = parsedAction.parts.map(p => (p === 'mixed' ? defenseFallback : p));
+        expectedAction = acceptedActions[0];
       }
 
       state.quiz.currentQuestion = {
@@ -4869,6 +5066,7 @@
         preset,
         hand: chosenHand,
         expectedAction,
+        acceptedActions,
         rawAction,
         hint: buildRangeHint(presetKey, chosenHand.name),
       };
@@ -5487,8 +5685,10 @@
       if (state.quiz.answered || !state.quiz.currentQuestion || state.quiz.currentQuestion.type !== 'range') return;
       state.quiz.answered = true;
 
-      const { presetKey, hand, expectedAction, rawAction } = state.quiz.currentQuestion;
-      const isCorrect = userAction === expectedAction;
+      const { presetKey, hand, expectedAction, acceptedActions, rawAction } = state.quiz.currentQuestion;
+      const isCorrect = Array.isArray(acceptedActions)
+        ? acceptedActions.includes(userAction)
+        : userAction === expectedAction;
 
       state.quiz.total += 1;
       if (isCorrect) {
@@ -5512,7 +5712,9 @@
       const explEl = document.getElementById('quiz-feedback-explanation');
       const xpBadgeEl = document.getElementById('quiz-xp-gained');
 
-      const expectedLabel = ACTIONS[expectedAction].short;
+      const expectedLabel = Array.isArray(acceptedActions)
+        ? getActionDisplay(rawAction).short
+        : ACTIONS[expectedAction].short;
       const advice = getStrategicAdvice(presetKey, hand.name, rawAction);
 
       if (isCorrect) {
@@ -7056,7 +7258,8 @@
       const base100 = {};
 
       ALL_HANDS.forEach(h => {
-        let act = rawMap[h.name] || 'fold';
+        const parsed = parseActionParts(rawMap[h.name] || 'fold');
+        let act = parsed.parts[0];
         if (act === 'mixed') {
           act = metaInfo.type === 'defense' ? 'opencall' : 'raise';
         }
@@ -7578,9 +7781,9 @@
 
       const brushColors = {
         raise: 'bg-emerald-500',
-        opencall: 'bg-sky-500',
-        threebet: 'bg-rose-500',
-        fourbet: 'bg-purple-600',
+        opencall: 'bg-orange-500',
+        threebet: 'bg-violet-600',
+        fourbet: 'bg-red-600',
         fold: 'bg-slate-600',
       };
 
@@ -8752,7 +8955,10 @@
           return Math.max(0, 1 - (vec.f || 0));
         }
         const act = v1Map[hand];
-        return act && act !== 'fold' ? 1 : 0;
+        if (!act || act === 'fold') return 0;
+        const p = parseActionParts(act);
+        const w = p.isSplit ? 0.5 : 1;
+        return p.parts.reduce((acc, part) => acc + (part !== 'fold' ? w : 0), 0);
       };
 
       const allLines = api.lines();

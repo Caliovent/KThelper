@@ -25,12 +25,12 @@ export interface V2WeightedRangeSpec {
 }
 
 export const V2_ACTION_PALETTE: Record<V2ActionCode, { label: string; color: string }> = {
-  mr: { label: 'Open / Min-Raise', color: '#22C55E' },
-  shv: { label: 'All-In / Shove', color: '#9333EA' },
-  '3b': { label: '3-Bet', color: '#EF4444' },
-  '4b': { label: '4-Bet', color: '#A855F7' },
-  c: { label: 'Call / Défense', color: '#38BDF8' },
-  limp: { label: 'Limp (Trap/Stab)', color: '#F59E0B' },
+  mr: { label: 'Open / Min-Raise', color: '#10B981' },
+  shv: { label: 'All-In / Shove', color: '#B91C1C' },
+  '3b': { label: '3-Bet', color: '#7C3AED' },
+  '4b': { label: '4-Bet', color: '#DC2626' },
+  c: { label: 'Open Call / Défense', color: '#F97316' },
+  limp: { label: 'Loose / Mixte', color: '#FACC15' },
   f: { label: 'Fold', color: '#1E293B' },
 };
 

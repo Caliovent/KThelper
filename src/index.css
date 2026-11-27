@@ -63,6 +63,10 @@ textarea,
   z-index: 15;
 }
 
+.split-hand-cell {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.92), 0 0 2px rgba(0, 0, 0, 0.75);
+}
+
 /* Card suit visual polish */
 .poker-card {
   background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%);
