@@ -953,10 +953,10 @@
 
               <div id="rg-leaks-actions" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <button type="button" onclick="submitLeaksDrillAnswer('fold')" class="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-slate-200 transition">[1] Fold</button>
-                <button type="button" onclick="submitLeaksDrillAnswer('opencall')" class="py-2.5 px-2 rounded-xl bg-sky-600 hover:bg-sky-500 border border-sky-400/40 text-xs font-extrabold text-white transition">[2] Call</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('opencall')" class="py-2.5 px-2 rounded-xl bg-orange-600 hover:bg-orange-500 border border-orange-400/40 text-xs font-extrabold text-white transition">[2] Call</button>
                 <button type="button" onclick="submitLeaksDrillAnswer('raise')" class="py-2.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 border border-emerald-400/40 text-xs font-extrabold text-white transition">[3] Raise</button>
-                <button type="button" onclick="submitLeaksDrillAnswer('threebet')" class="py-2.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 border border-rose-400/40 text-xs font-extrabold text-white transition">[4] 3-Bet</button>
-                <button type="button" onclick="submitLeaksDrillAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-2.5 px-2 rounded-xl bg-purple-600 hover:bg-purple-500 border border-purple-400/40 text-xs font-extrabold text-white transition">[5] 4-Bet</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('threebet')" class="py-2.5 px-2 rounded-xl bg-violet-600 hover:bg-violet-500 border border-violet-400/40 text-xs font-extrabold text-white transition">[4] 3-Bet</button>
+                <button type="button" onclick="submitLeaksDrillAnswer('fourbet')" class="col-span-2 sm:col-span-1 py-2.5 px-2 rounded-xl bg-red-600 hover:bg-red-500 border border-red-400/40 text-xs font-extrabold text-white transition">[5] 4-Bet</button>
               </div>
 
               <div id="rg-leaks-feedback" class="hidden rounded-xl p-3.5 border text-left text-xs space-y-2"></div>
@@ -2471,6 +2471,39 @@
       };
     }
 
+    function actionsMatch(actA, actB) {
+      const a = normalizeStoredAction(actA || 'fold');
+      const b = normalizeStoredAction(actB || 'fold');
+      if (a === b) return true;
+      const pA = parseActionParts(a);
+      const pB = parseActionParts(b);
+      if (pA.isSplit && pB.isSplit) {
+        return (pA.parts[0] === pB.parts[0] && pA.parts[1] === pB.parts[1]) ||
+               (pA.parts[0] === pB.parts[1] && pA.parts[1] === pB.parts[0]);
+      }
+      return false;
+    }
+
+    function getActionActiveWeight(act) {
+      const parsed = parseActionParts(act || 'fold');
+      const weight = parsed.isSplit ? 0.5 : 1;
+      return parsed.parts.reduce((acc, part) => acc + (part !== 'fold' ? weight : 0), 0);
+    }
+
+    function hasCustomSavedRange(presetKey) {
+      const preset = DEFAULT_PRESETS[presetKey];
+      const current = state.ranges?.[presetKey];
+      if (!preset || !current) return false;
+      const defMap = preset.build();
+      for (let i = 0; i < ALL_HANDS.length; i++) {
+        const name = ALL_HANDS[i].name;
+        if (!actionsMatch(current[name] || 'fold', defMap[name] || 'fold')) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     const ALL_HANDS = [];
     const HAND_META = {};
 
@@ -2917,6 +2950,9 @@
         delete map[handName];
       } else {
         map[handName] = norm;
+      }
+      if (typeof rgState !== 'undefined' && rgState.recall) {
+        rgState.recall.needsSyncPreset = state.currentPreset;
       }
       renderMatrixState();
       updateMetricsAndNotation();
@@ -3519,7 +3555,10 @@
     function saveToLocalStorage() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.ranges));
-        showToast('Vos ranges personnalisées ont été sauvegardées dans le navigateur.', 'success');
+        if (typeof rgState !== 'undefined' && rgState.recall) {
+          rgState.recall.needsSyncPreset = state.currentPreset;
+        }
+        showToast('Vos ranges personnalisées ont été sauvegardées et synchronisées avec « Peins la Range ».', 'success');
       } catch (e) {
         showToast('Erreur lors de la sauvegarde locale.', 'error');
       }
@@ -7249,21 +7288,40 @@
       },
     };
 
-    const RANGE_ACTION_SEVERITY = { fold: 0, opencall: 1, raise: 2, threebet: 3, fourbet: 4 };
+    const RANGE_ACTION_SEVERITY = { fold: 0, opencall: 1, mixed: 1.5, raise: 2, threebet: 3, fourbet: 4 };
 
-    function getContextualRange(presetKey, depthKey = '100bb', profileKey = 'standard') {
-      const preset = DEFAULT_PRESETS[presetKey] || DEFAULT_PRESETS.UTG;
+    function resolveSingleDrillAction(rawAct, presetKey) {
       const metaInfo = RANGE_PRESET_META[presetKey] || RANGE_PRESET_META.UTG;
-      const rawMap = preset.build();
+      const parsed = parseActionParts(rawAct || 'fold');
+      let act = parsed.parts[0];
+      if (act === 'fold' && parsed.isSplit && parsed.parts[1] !== 'fold') {
+        act = parsed.parts[1];
+      }
+      if (act === 'mixed') {
+        act = metaInfo.type === 'defense' ? 'opencall' : 'raise';
+      }
+      return act;
+    }
+
+    function getActionSeverity(act) {
+      const parsed = parseActionParts(act || 'fold');
+      if (!parsed.isSplit) {
+        return RANGE_ACTION_SEVERITY[parsed.parts[0]] ?? 0;
+      }
+      const s0 = RANGE_ACTION_SEVERITY[parsed.parts[0]] ?? 0;
+      const s1 = RANGE_ACTION_SEVERITY[parsed.parts[1]] ?? 0;
+      return (s0 + s1) / 2;
+    }
+
+    function getContextualRange(presetKey, depthKey = '100bb', profileKey = 'standard', options = {}) {
+      const preserveExact = Boolean(options.preserveExactActions);
+      const preset = DEFAULT_PRESETS[presetKey] || DEFAULT_PRESETS.UTG;
+      const rawMap = (state.ranges && state.ranges[presetKey]) ? state.ranges[presetKey] : preset.build();
       const base100 = {};
 
       ALL_HANDS.forEach(h => {
-        const parsed = parseActionParts(rawMap[h.name] || 'fold');
-        let act = parsed.parts[0];
-        if (act === 'mixed') {
-          act = metaInfo.type === 'defense' ? 'opencall' : 'raise';
-        }
-        base100[h.name] = act;
+        const stored = normalizeStoredAction(rawMap[h.name] || 'fold');
+        base100[h.name] = preserveExact ? stored : resolveSingleDrillAction(stored, presetKey);
       });
 
       const map = { ...base100 };
@@ -7360,11 +7418,12 @@
       const deltaRemoved = [];
 
       ALL_HANDS.forEach(h => {
-        const act = map[h.name] || 'fold';
-        const baseAct = base100[h.name] || 'fold';
-        if (act !== 'fold') combosActive += h.combos;
-        if (act !== baseAct) {
-          if (RANGE_ACTION_SEVERITY[act] > RANGE_ACTION_SEVERITY[baseAct]) {
+        const act = normalizeStoredAction(map[h.name] || 'fold');
+        const baseAct = normalizeStoredAction(base100[h.name] || 'fold');
+        const activeWeight = getActionActiveWeight(act);
+        if (activeWeight > 0) combosActive += h.combos * activeWeight;
+        if (!actionsMatch(act, baseAct)) {
+          if (getActionSeverity(act) > getActionSeverity(baseAct)) {
             deltaAdded.push(h.name);
           } else {
             deltaRemoved.push(h.name);
@@ -7373,7 +7432,33 @@
       });
 
       const totalPct = ((combosActive / 1326) * 100).toFixed(1);
-      return { map, base100, combosActive, totalPct, deltaAdded, deltaRemoved };
+      return { map, base100, combosActive: Math.round(combosActive * 10) / 10, totalPct, deltaAdded, deltaRemoved };
+    }
+
+    function getRecallTargetRange(presetKey, depthKey = '100bb', profileKey = 'standard') {
+      const ctx = getContextualRange(presetKey, depthKey, profileKey, { preserveExactActions: true });
+      const metaInfo = RANGE_PRESET_META[presetKey] || RANGE_PRESET_META.UTG;
+      const baseOrder = ['raise', 'opencall', 'threebet', 'fourbet', 'mixed', 'fold'];
+      const baseSet = new Set(metaInfo.validActions || ['raise', 'fold']);
+      const splitList = [];
+
+      ALL_HANDS.forEach(h => {
+        const act = ctx.map[h.name] || 'fold';
+        const parsed = parseActionParts(act);
+        parsed.parts.forEach(p => baseSet.add(p));
+        if (parsed.isSplit) {
+          const alreadyListed = splitList.some(existing => actionsMatch(existing, act));
+          if (!alreadyListed) splitList.push(act);
+        }
+      });
+
+      const usedBaseActions = baseOrder.filter(a => baseSet.has(a));
+      return {
+        ...ctx,
+        isCustom: hasCustomSavedRange(presetKey),
+        usedBaseActions,
+        usedSplits: splitList,
+      };
     }
 
     function getBoundaryHands(presetKey, depthKey = '100bb', profileKey = 'standard') {
@@ -7426,6 +7511,7 @@
         depthKey: '100bb',
         profileKey: 'standard',
         brush: 'raise',
+        needsSyncPreset: null,
         isDragging: false,
         dragAction: null,
         isFullscreen: false,
@@ -7604,13 +7690,42 @@
       if (!rgState.initialized) {
         rgState.initialized = true;
         buildRecallMatrixDOM();
+        const presetEl = document.getElementById('rg-recall-preset');
+        if (presetEl && state.currentPreset && DEFAULT_PRESETS[state.currentPreset]) {
+          presetEl.value = state.currentPreset;
+        }
+        rgState.recall.needsSyncPreset = null;
         loadRecallSpot();
         nextDepthChallenge();
+      } else if (rgState.recall.needsSyncPreset && DEFAULT_PRESETS[rgState.recall.needsSyncPreset]) {
+        const presetEl = document.getElementById('rg-recall-preset');
+        const depthEl = document.getElementById('rg-recall-depth');
+        const profileEl = document.getElementById('rg-recall-profile');
+        if (presetEl) presetEl.value = rgState.recall.needsSyncPreset;
+        if (depthEl) depthEl.value = '100bb';
+        if (profileEl) profileEl.value = 'standard';
+        rgState.recall.needsSyncPreset = null;
+        loadRecallSpot();
+      } else {
+        // Refresh brushes & source badge in case the user modified a range in the Editor
+        renderRecallBrushes();
+        updateRecallBrief();
       }
       updateGamesMasteryBadges();
       if (rgState.tab === 'mastery') {
         renderMasteryDashboard();
       }
+    }
+
+    function openCurrentRecallInEditor() {
+      const targetPreset = rgState.recall.presetKey || 'UTG';
+      if (rgState.recall.isFullscreen) {
+        setRecallFullscreen(false);
+      }
+      if (DEFAULT_PRESETS[targetPreset]) {
+        selectPreset(targetPreset);
+      }
+      setAppMode('edit');
     }
 
     function setRangeGameTab(tabName) {
@@ -7686,7 +7801,7 @@
             return;
           }
           const currentAction = rgState.recall.painted[hand.name] || 'fold';
-          const nextAction = (currentAction === rgState.recall.brush && rgState.recall.brush !== 'fold')
+          const nextAction = (actionsMatch(currentAction, rgState.recall.brush) && rgState.recall.brush !== 'fold')
             ? 'fold'
             : rgState.recall.brush;
           rgState.recall.isDragging = true;
@@ -7707,7 +7822,7 @@
           }
           e.preventDefault();
           const currentAction = rgState.recall.painted[hand.name] || 'fold';
-          const nextAction = (currentAction === rgState.recall.brush && rgState.recall.brush !== 'fold')
+          const nextAction = (actionsMatch(currentAction, rgState.recall.brush) && rgState.recall.brush !== 'fold')
             ? 'fold'
             : rgState.recall.brush;
           rgState.recall.isDragging = true;
@@ -7771,12 +7886,28 @@
       setRecallFullscreen(!rgState.recall.isFullscreen);
     }
 
+    function updateRecallBrief() {
+      const briefEl = document.getElementById('rg-recall-brief');
+      if (!briefEl) return;
+      const { presetKey, depthKey, profileKey } = rgState.recall;
+      const preset = DEFAULT_PRESETS[presetKey];
+      const depthInfo = RANGE_STACK_DEPTHS[depthKey];
+      const profInfo = RANGE_TABLE_PROFILES[profileKey];
+      const ctx = getRecallTargetRange(presetKey, depthKey, profileKey);
+      const sourceBadge = ctx.isCustom
+        ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-[11px]">✏️ Range perso (Éditeur)</span>'
+        : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-[11px]">📘 Range Éditeur (Kill Tilt)</span>';
+      const editBtn = '<button type="button" onclick="openCurrentRecallInEditor()" class="ml-auto px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-bold text-amber-300 transition shrink-0">✏️ Modifier dans l’éditeur</button>';
+      briefEl.innerHTML = `<div class="flex flex-wrap items-center gap-2">${sourceBadge}<span>${escapeHtml(preset.context)} • ${depthInfo.icon} ${escapeHtml(depthInfo.label)} • ${profInfo.icon} ${escapeHtml(profInfo.label)}</span>${editBtn}</div>`;
+    }
+
     function renderRecallBrushes() {
       const container = document.getElementById('rg-recall-brushes');
       if (!container) return;
-      const metaInfo = RANGE_PRESET_META[rgState.recall.presetKey] || RANGE_PRESET_META.UTG;
-      if (!metaInfo.validActions.includes(rgState.recall.brush)) {
-        rgState.recall.brush = metaInfo.validActions[0];
+      const ctx = getRecallTargetRange(rgState.recall.presetKey, rgState.recall.depthKey, rgState.recall.profileKey);
+      const allAllowedBrushes = [...ctx.usedBaseActions, ...ctx.usedSplits];
+      if (!allAllowedBrushes.some(b => actionsMatch(b, rgState.recall.brush))) {
+        rgState.recall.brush = allAllowedBrushes[0] || 'raise';
       }
 
       const brushColors = {
@@ -7784,21 +7915,33 @@
         opencall: 'bg-orange-500',
         threebet: 'bg-violet-600',
         fourbet: 'bg-red-600',
+        mixed: 'bg-yellow-400',
         fold: 'bg-slate-600',
       };
 
-      container.innerHTML = metaInfo.validActions.map(act => {
-        const cfg = ACTIONS[act];
-        const isSel = rgState.recall.brush === act;
+      const baseHtml = ctx.usedBaseActions.map(act => {
+        const cfg = ACTIONS[act] || ACTIONS.fold;
+        const isSel = actionsMatch(rgState.recall.brush, act);
         const cls = isSel
           ? 'px-2.5 py-1.5 rounded-xl text-xs font-extrabold border-2 border-white bg-slate-800 text-white shadow inline-flex items-center gap-1.5 transition'
           : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950 text-slate-400 hover:text-white inline-flex items-center gap-1.5 transition';
         return `<button type="button" onclick="setRecallBrush('${act}')" class="${cls}"><span class="w-2.5 h-2.5 rounded-sm ${brushColors[act] || 'bg-slate-600'}"></span>${escapeHtml(cfg.short)}</button>`;
       }).join('');
+
+      const splitHtml = ctx.usedSplits.map(splitAct => {
+        const display = getActionDisplay(splitAct);
+        const isSel = actionsMatch(rgState.recall.brush, splitAct);
+        const cls = isSel
+          ? 'px-2.5 py-1.5 rounded-xl text-xs font-extrabold border-2 border-white bg-slate-800 text-white shadow inline-flex items-center gap-1.5 transition'
+          : 'px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-800 bg-slate-950 text-slate-300 hover:text-white inline-flex items-center gap-1.5 transition';
+        return `<button type="button" onclick="setRecallBrush('${splitAct}')" class="${cls}"><span class="w-3 h-3 rounded-sm border border-white/30 inline-block shrink-0" style="background: ${display.gradient}"></span>${escapeHtml(display.short)}</button>`;
+      }).join('');
+
+      container.innerHTML = baseHtml + splitHtml;
     }
 
     function setRecallBrush(action) {
-      rgState.recall.brush = action;
+      rgState.recall.brush = normalizeStoredAction(action);
       renderRecallBrushes();
     }
 
@@ -7815,13 +7958,9 @@
       rgState.recall.revealed = false;
       rgState.recall.xpAwardedForSpot = false;
 
-      const preset = DEFAULT_PRESETS[rgState.recall.presetKey];
       const depthInfo = RANGE_STACK_DEPTHS[rgState.recall.depthKey];
       const profInfo = RANGE_TABLE_PROFILES[rgState.recall.profileKey];
-      const briefEl = document.getElementById('rg-recall-brief');
-      if (briefEl) {
-        briefEl.textContent = `${preset.context} • ${depthInfo.icon} ${depthInfo.label} • ${profInfo.icon} ${profInfo.label}`;
-      }
+      updateRecallBrief();
 
       const hintBox = document.getElementById('rg-recall-hint-box');
       if (hintBox) hintBox.classList.add('hidden');
@@ -7833,7 +7972,7 @@
       }
       const metricsEl = document.getElementById('rg-recall-metrics');
       if (metricsEl) {
-        metricsEl.innerHTML = 'Peignez les mains de la matrice de mémoire, puis cliquez sur <strong class="text-emerald-300">« ✅ Vérifier ma Range »</strong> pour voir vos oublis, vos sur-extensions et gagner de l’XP.';
+        metricsEl.innerHTML = 'Peignez votre range de mémoire (celle de votre éditeur), puis cliquez sur <strong class="text-emerald-300">« ✅ Vérifier ma Range »</strong> pour voir vos oublis, vos erreurs et gagner de l’XP.';
       }
       const rationaleEl = document.getElementById('rg-recall-rationale');
       if (rationaleEl) {
@@ -7841,7 +7980,7 @@
       }
       const inspectorEl = document.getElementById('rg-recall-cell-inspector');
       if (inspectorEl) {
-        inspectorEl.textContent = 'Cliquez sur n’importe quelle main après vérification (ou pendant la solution) pour comprendre pourquoi elle est jouée ou foldée.';
+        inspectorEl.textContent = 'Cliquez sur n’importe quelle main après vérification (ou pendant la solution) pour comparer votre réponse avec votre range enregistrée.';
       }
 
       renderRecallBrushes();
@@ -7868,8 +8007,9 @@
     }
 
     function paintRecallHand(handName, action) {
-      if (action === 'fold') delete rgState.recall.painted[handName];
-      else rgState.recall.painted[handName] = action;
+      const norm = normalizeStoredAction(action);
+      if (norm === 'fold') delete rgState.recall.painted[handName];
+      else rgState.recall.painted[handName] = norm;
       renderRecallMatrix();
     }
 
@@ -7887,14 +8027,17 @@
         box.classList.add('hidden');
         return;
       }
-      const ctx = getContextualRange(rgState.recall.presetKey, rgState.recall.depthKey, rgState.recall.profileKey);
-      const activeList = ALL_HANDS.filter(h => ctx.map[h.name] !== 'fold');
+      const ctx = getRecallTargetRange(rgState.recall.presetKey, rgState.recall.depthKey, rgState.recall.profileKey);
+      const activeList = ALL_HANDS.filter(h => (ctx.map[h.name] || 'fold') !== 'fold');
       const pairs = activeList.filter(h => h.type === 'pair').map(h => h.name);
       const lowestPair = pairs.length ? pairs[pairs.length - 1] : 'aucune';
+      const splitNote = ctx.usedSplits.length
+        ? ` Cases 50/50 dans votre range : ${ctx.usedSplits.map(s => getActionDisplay(s).short).join(', ')}.`
+        : '';
       const deltaStr = ctx.deltaAdded.length || ctx.deltaRemoved.length
         ? ` Écarts vs 100bb Standard : +${ctx.deltaAdded.length} mains ajoutées/upgradées, -${ctx.deltaRemoved.length} mains retirées.`
         : '';
-      box.innerHTML = `<strong>💡 Indice du Coach :</strong> Visez environ <strong>${ctx.totalPct}%</strong> (${ctx.combosActive} combos). Plus petite paire servie jouée : <strong>${escapeHtml(lowestPair)}</strong>.${escapeHtml(deltaStr)}`;
+      box.innerHTML = `<strong>💡 Indice (${ctx.isCustom ? 'Votre range perso' : 'Range Éditeur'}) :</strong> Visez environ <strong>${ctx.totalPct}%</strong> (${ctx.combosActive} combos). Plus petite paire servie jouée : <strong>${escapeHtml(lowestPair)}</strong>.${escapeHtml(splitNote)}${escapeHtml(deltaStr)}`;
       box.classList.remove('hidden');
     }
 
@@ -7905,8 +8048,10 @@
       ALL_HANDS.forEach(hand => {
         const cell = document.getElementById(`rg-cell-${hand.name}`);
         if (!cell) return;
-        const paintedAct = rgState.recall.painted[hand.name] || 'fold';
-        if (paintedAct !== 'fold') paintedCombos += hand.combos;
+        cell.style.background = '';
+        const paintedAct = normalizeStoredAction(rgState.recall.painted[hand.name] || 'fold');
+        const paintedWeight = getActionActiveWeight(paintedAct);
+        if (paintedWeight > 0) paintedCombos += hand.combos * paintedWeight;
 
         let displayAct = paintedAct;
         let diffClass = '';
@@ -7924,20 +8069,23 @@
           }
         }
 
-        const cfg = ACTIONS[displayAct] || ACTIONS.fold;
-        cell.className = `${baseClasses} ${cfg.cellClass}${diffClass}`;
+        const display = getActionDisplay(displayAct);
+        cell.className = `${baseClasses} ${display.cellClass}${diffClass}`;
+        if (display.isSplit && display.gradient) {
+          cell.style.background = display.gradient;
+        }
       });
 
       const statEl = document.getElementById('rg-recall-painted-stat');
       if (statEl) {
         const pct = ((paintedCombos / 1326) * 100).toFixed(1);
-        statEl.textContent = `Peintes : ${pct}% (${paintedCombos} / 1326)`;
+        statEl.textContent = `Peintes : ${pct}% (${Math.round(paintedCombos)} / 1326)`;
       }
     }
 
     function checkRecallRange() {
       const { presetKey, depthKey, profileKey, painted } = rgState.recall;
-      const ctx = getContextualRange(presetKey, depthKey, profileKey);
+      const ctx = getRecallTargetRange(presetKey, depthKey, profileKey);
       const expectedMap = ctx.map;
 
       let totalActiveExpectedCombos = 0;
@@ -7948,13 +8096,14 @@
       const diffMap = {};
 
       ALL_HANDS.forEach(h => {
-        const exp = expectedMap[h.name] || 'fold';
-        const got = painted[h.name] || 'fold';
-        if (exp !== 'fold') totalActiveExpectedCombos += h.combos;
+        const exp = normalizeStoredAction(expectedMap[h.name] || 'fold');
+        const got = normalizeStoredAction(painted[h.name] || 'fold');
+        const expWeight = getActionActiveWeight(exp);
+        if (expWeight > 0) totalActiveExpectedCombos += h.combos * expWeight;
 
-        if (got === exp) {
+        if (actionsMatch(got, exp)) {
           totalGridCorrectCombos += h.combos;
-          if (exp !== 'fold') matchedActiveCombos += h.combos;
+          if (expWeight > 0) matchedActiveCombos += h.combos * expWeight;
           diffMap[h.name] = { status: 'exact', expected: exp, got };
         } else if (got === 'fold' && exp !== 'fold') {
           missedHands.push({ handName: h.name, expected: exp, combos: h.combos });
@@ -7985,7 +8134,7 @@
         rgState.mastery.bestRecall[spotKey] = finalScore;
       }
 
-      // Log up to 6 key boundary misses into SRS weakHands
+      // Log up to 6 key boundary misses into SRS weakHands (resolved to single drill action)
       const boundarySet = new Set(getBoundaryHands(presetKey, depthKey, profileKey));
       const priorityMisses = [
         ...missedHands.filter(m => boundarySet.has(m.handName)).map(m => ({ handName: m.handName, expected: m.expected })),
@@ -7997,7 +8146,8 @@
       priorityMisses.forEach(item => {
         if (logged.size >= 6 || logged.has(item.handName)) return;
         logged.add(item.handName);
-        recordRangeAnswer(presetKey, depthKey, profileKey, item.handName, item.expected, false, true);
+        const drillExpected = resolveSingleDrillAction(item.expected, presetKey);
+        recordRangeAnswer(presetKey, depthKey, profileKey, item.handName, drillExpected, false, true);
       });
       if (logged.size === 0) {
         saveRangeMastery();
@@ -8044,8 +8194,11 @@
 
     function revealRecallSolution() {
       const { presetKey, depthKey, profileKey } = rgState.recall;
-      const ctx = getContextualRange(presetKey, depthKey, profileKey);
-      rgState.recall.painted = { ...ctx.map };
+      const ctx = getRecallTargetRange(presetKey, depthKey, profileKey);
+      rgState.recall.painted = {};
+      Object.entries(ctx.map).forEach(([handName, act]) => {
+        if (act && act !== 'fold') rgState.recall.painted[handName] = act;
+      });
       rgState.recall.revealed = true;
       rgState.recall.checked = false;
       renderRecallMatrix();
@@ -8057,24 +8210,32 @@
       }
       const metricsEl = document.getElementById('rg-recall-metrics');
       if (metricsEl) {
-        metricsEl.innerHTML = `Solution affichée (<strong class="text-white">${ctx.combosActive} combos</strong>). Cliquez sur n’importe quelle case pour lire son explication stratégique.`;
+        const srcLabel = ctx.isCustom ? 'de votre range personnalisée' : 'de votre range éditeur';
+        metricsEl.innerHTML = `Solution ${srcLabel} affichée (<strong class="text-white">${ctx.combosActive} combos</strong>). Cliquez sur n’importe quelle case pour lire son explication.`;
       }
     }
 
     function inspectRecallCell(handName) {
       const { presetKey, depthKey, profileKey } = rgState.recall;
-      const ctx = getContextualRange(presetKey, depthKey, profileKey);
-      const expected = ctx.map[handName] || 'fold';
-      const cfg = ACTIONS[expected] || ACTIONS.fold;
+      const ctx = getRecallTargetRange(presetKey, depthKey, profileKey);
+      const expected = normalizeStoredAction(ctx.map[handName] || 'fold');
+      const got = normalizeStoredAction(rgState.recall.painted[handName] || 'fold');
+      const display = getActionDisplay(expected);
+      const gotDisplay = getActionDisplay(got);
       const explanation = getHandContextExplanation(presetKey, depthKey, profileKey, handName, expected);
+      const badgeBgStyle = display.isSplit && display.gradient ? ` style="background: ${display.gradient}"` : '';
+      const userAnswerLine = (rgState.recall.checked && !actionsMatch(got, expected))
+        ? `<div class="text-[11px] text-rose-300 mb-1.5">Votre réponse : <strong>${escapeHtml(gotDisplay.short)}</strong> → Attendu : <strong>${escapeHtml(display.short)}</strong></div>`
+        : '';
 
       const inspectorEl = document.getElementById('rg-recall-cell-inspector');
       if (inspectorEl) {
         inspectorEl.innerHTML = `
           <div class="flex items-center justify-between gap-2 mb-1.5">
             <span class="font-mono text-sm font-extrabold text-white">${escapeHtml(handName)}</span>
-            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold border ${cfg.badgeClass}">${escapeHtml(cfg.label)}</span>
+            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold border ${display.badgeClass}${display.isSplit ? ' split-hand-cell' : ''}"${badgeBgStyle}>${escapeHtml(display.label)}</span>
           </div>
+          ${userAnswerLine}
           <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(explanation)}</p>
         `;
       }
@@ -8679,7 +8840,10 @@
       d.answered = true;
 
       const item = d.queue[d.index];
-      const isCorrect = userAction === item.expectedAction;
+      const expectedDisplay = getActionDisplay(item.expectedAction);
+      const isCorrect = expectedDisplay.isSplit
+        ? expectedDisplay.parts.includes(userAction)
+        : userAction === item.expectedAction;
       const graduated = recordRangeAnswer(item.presetKey, item.depthKey, item.profileKey, item.handName, item.expectedAction, isCorrect);
 
       if (graduated) {
@@ -8700,7 +8864,7 @@
         const expl = getHandContextExplanation(item.presetKey, item.depthKey, item.profileKey, item.handName, item.expectedAction);
         fb.innerHTML = `
           <div class="font-extrabold ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}">
-            ${isCorrect ? `✅ Exact (${escapeHtml(ACTIONS[item.expectedAction].short)})` : `❌ Erreur — Attendu : ${escapeHtml(ACTIONS[item.expectedAction].short)}`}
+            ${isCorrect ? `✅ Exact (${escapeHtml(expectedDisplay.short)})` : `❌ Erreur — Attendu : ${escapeHtml(expectedDisplay.short)}`}
             ${graduated ? ' • 🎉 Leak corrigé (+15 XP) !' : ''}
           </div>
           <p class="text-slate-200 leading-relaxed">${escapeHtml(expl)}</p>
