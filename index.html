@@ -104,6 +104,9 @@
           <button id="btn-mode-funnel" onclick="setAppMode('funnel')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
             📉 Entonnoir 4 Rues
           </button>
+          <button id="btn-mode-builder3bet" onclick="setAppMode('builder3bet')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+            🎯 Open &amp; 4-Bet
+          </button>
         </div>
       </div>
 
@@ -1095,6 +1098,11 @@
       <!-- EVOLUTIONARY RANGE FUNNEL (STREET-BY-STREET MATRIX DIFF) -->
       <section id="evolutionary-funnel-workspace" class="hidden space-y-5">
         <div id="evolutionary-funnel-root"></div>
+      </section>
+
+      <!-- CONSTRUCTEUR OPEN & DÉFENSE VS 3-BET / 4-BET -->
+      <section id="range-3bet-builder-workspace" class="hidden space-y-5">
+        <div id="range-3bet-builder-root"></div>
       </section>
     </div>
 
@@ -3198,7 +3206,7 @@
     function setAppMode(newMode) {
       state.mode = newMode;
 
-      const modes = ['explore', 'edit', 'quiz', 'games', 'funnel'];
+      const modes = ['explore', 'edit', 'quiz', 'games', 'funnel', 'builder3bet'];
       modes.forEach(m => {
         const btn = document.getElementById(`btn-mode-${m}`);
         if (!btn) return;
@@ -3216,6 +3224,7 @@
       const quizWorkspace = document.getElementById('quiz-workspace');
       const rangeGamesWorkspace = document.getElementById('range-games-workspace');
       const funnelWorkspace = document.getElementById('evolutionary-funnel-workspace');
+      const builder3BetWorkspace = document.getElementById('range-3bet-builder-workspace');
 
       if (newMode !== 'games' && typeof stopBlitzTimer === 'function') {
         stopBlitzTimer();
@@ -3227,6 +3236,7 @@
         matrixWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
         if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
+        if (builder3BetWorkspace) builder3BetWorkspace.classList.add('hidden');
         quizWorkspace.classList.remove('hidden');
         if (!state.quiz.currentQuestion) {
           nextQuizQuestion();
@@ -3237,6 +3247,7 @@
         matrixWorkspace.classList.add('hidden');
         quizWorkspace.classList.add('hidden');
         if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
+        if (builder3BetWorkspace) builder3BetWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.remove('hidden');
         if (typeof initRangeGamesUI === 'function') {
           initRangeGamesUI();
@@ -3247,7 +3258,16 @@
         matrixWorkspace.classList.add('hidden');
         quizWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
+        if (builder3BetWorkspace) builder3BetWorkspace.classList.add('hidden');
         if (funnelWorkspace) funnelWorkspace.classList.remove('hidden');
+      } else if (newMode === 'builder3bet') {
+        if (v2RangeBar) v2RangeBar.classList.add('hidden');
+        presetBar.classList.add('hidden');
+        matrixWorkspace.classList.add('hidden');
+        quizWorkspace.classList.add('hidden');
+        if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
+        if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
+        if (builder3BetWorkspace) builder3BetWorkspace.classList.remove('hidden');
       } else {
         if (v2RangeBar) v2RangeBar.classList.remove('hidden');
         presetBar.classList.remove('hidden');
@@ -3255,6 +3275,7 @@
         quizWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
         if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
+        if (builder3BetWorkspace) builder3BetWorkspace.classList.add('hidden');
 
         if (newMode === 'edit') {
           editToolbar.classList.remove('hidden');

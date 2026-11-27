@@ -1,5 +1,5 @@
 export type SuiteTabId = 'ranges' | 'icm' | 'hud' | 'bankroll' | 'gto' | 'arena' | 'coach';
-export type RangeAppMode = 'explore' | 'edit' | 'quiz' | 'games' | 'funnel';
+export type RangeAppMode = 'explore' | 'edit' | 'quiz' | 'games' | 'funnel' | 'builder3bet';
 
 export interface TourStep {
   id: string;
