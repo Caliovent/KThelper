@@ -88,7 +88,7 @@
           <span class="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 font-mono text-[11px] text-rose-400">3-Bet : 3x IP / +1-2bb OOP</span>
           <span class="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 font-mono text-[11px] text-amber-300">Squeeze : 4x</span>
         </div>
-        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div class="flex flex-wrap items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
           <button id="btn-mode-explore" onclick="setAppMode('explore')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow">
             📊 Explorer
           </button>
@@ -100,6 +100,9 @@
           </button>
           <button id="btn-mode-games" onclick="setAppMode('games')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
             🎮 Jeux Ranges <span id="games-mastery-badge" class="hidden px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">0%</span>
+          </button>
+          <button id="btn-mode-funnel" onclick="setAppMode('funnel')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+            📉 Entonnoir 4 Rues
           </button>
         </div>
       </div>
@@ -1087,6 +1090,11 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- EVOLUTIONARY RANGE FUNNEL (STREET-BY-STREET MATRIX DIFF) -->
+      <section id="evolutionary-funnel-workspace" class="hidden space-y-5">
+        <div id="evolutionary-funnel-root"></div>
       </section>
     </div>
 
@@ -3190,7 +3198,7 @@
     function setAppMode(newMode) {
       state.mode = newMode;
 
-      const modes = ['explore', 'edit', 'quiz', 'games'];
+      const modes = ['explore', 'edit', 'quiz', 'games', 'funnel'];
       modes.forEach(m => {
         const btn = document.getElementById(`btn-mode-${m}`);
         if (!btn) return;
@@ -3202,36 +3210,51 @@
       });
 
       const presetBar = document.getElementById('preset-bar');
+      const v2RangeBar = document.getElementById('v2-range-bar');
       const matrixWorkspace = document.getElementById('matrix-workspace');
       const editToolbar = document.getElementById('edit-toolbar');
       const quizWorkspace = document.getElementById('quiz-workspace');
       const rangeGamesWorkspace = document.getElementById('range-games-workspace');
+      const funnelWorkspace = document.getElementById('evolutionary-funnel-workspace');
 
       if (newMode !== 'games' && typeof stopBlitzTimer === 'function') {
         stopBlitzTimer();
       }
 
       if (newMode === 'quiz') {
+        if (v2RangeBar) v2RangeBar.classList.remove('hidden');
         presetBar.classList.add('hidden');
         matrixWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
+        if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
         quizWorkspace.classList.remove('hidden');
         if (!state.quiz.currentQuestion) {
           nextQuizQuestion();
         }
       } else if (newMode === 'games') {
+        if (v2RangeBar) v2RangeBar.classList.remove('hidden');
         presetBar.classList.add('hidden');
         matrixWorkspace.classList.add('hidden');
         quizWorkspace.classList.add('hidden');
+        if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.remove('hidden');
         if (typeof initRangeGamesUI === 'function') {
           initRangeGamesUI();
         }
+      } else if (newMode === 'funnel') {
+        if (v2RangeBar) v2RangeBar.classList.add('hidden');
+        presetBar.classList.add('hidden');
+        matrixWorkspace.classList.add('hidden');
+        quizWorkspace.classList.add('hidden');
+        if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
+        if (funnelWorkspace) funnelWorkspace.classList.remove('hidden');
       } else {
+        if (v2RangeBar) v2RangeBar.classList.remove('hidden');
         presetBar.classList.remove('hidden');
         matrixWorkspace.classList.remove('hidden');
         quizWorkspace.classList.add('hidden');
         if (rangeGamesWorkspace) rangeGamesWorkspace.classList.add('hidden');
+        if (funnelWorkspace) funnelWorkspace.classList.add('hidden');
 
         if (newMode === 'edit') {
           editToolbar.classList.remove('hidden');

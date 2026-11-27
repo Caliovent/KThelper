@@ -1,5 +1,5 @@
 export type SuiteTabId = 'ranges' | 'icm' | 'hud' | 'bankroll' | 'gto' | 'arena' | 'coach';
-export type RangeAppMode = 'explore' | 'edit' | 'quiz' | 'games';
+export type RangeAppMode = 'explore' | 'edit' | 'quiz' | 'games' | 'funnel';
 
 export interface TourStep {
   id: string;
@@ -720,6 +720,25 @@ export const MODULE_GUIDES: DocModuleGuide[] = [
     ],
     keywords: ['video', 'kill tilt', 'sauvegarde', 'json', 'export', 'import', 'backup'],
   },
+  {
+    id: 'mod-evolutionary-funnel',
+    title: '📉 Entonnoir de Range 4 Rues (Matrix Diff)',
+    badge: 'Préflop → River • Card Removal',
+    suiteTab: 'ranges',
+    summary:
+      'Visualisez sur une matrice 13×13 comment un range évolue de Préflop à River grâce au Stepper temporel, au calque fantôme des mains éliminées et au calcul exact de card removal.',
+    whenToUse:
+      'Pour comprendre d’un coup d’œil quelles mains abandonnent au flop, quelles mains restent pour 2-barrel/3-barrel et combien de combos disparaissent quand une carte du board bloque la range.',
+    keyFeatures: [
+      'Stepper temporel 4 rues (Préflop → Flop → Turn → River) pilotable à la souris, molette ou touches ← / →.',
+      'Calque Fantôme hachuré sur les combos couchés à la rue précédente et comparaison 4 mini-matrices côte à côte.',
+      'Inspecteur de main avec décompte exact (6 / 4 / 12 combos + card removal par les cartes du tableau) et Défi Entonnoir.',
+    ],
+    proTips: [
+      'Regardez comment K♣ sur le Turn bloque immédiatement 25 % des combos de KJ (16 → 12 combos restants).',
+    ],
+    keywords: ['entonnoir', 'funnel', 'card removal', 'bloqueur', 'matrix diff', 'fantome', 'shishi', 'triple barrel'],
+  },
 ];
 
 export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
@@ -801,6 +820,14 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     definition:
       'Les réussites obtenues en duel restent provisoires jusqu’à leur validation en révision solo à froid 7 jours plus tard. Votre Division Classée exige Score + Maîtrise M.',
     example: 'Pour débloquer Master en Arène Classée, il faut à la fois un Score ≥ 1700 ET une Maîtrise à froid M ≥ 85 %.',
+  },
+  {
+    term: 'Entonnoir de Range & Card Removal',
+    category: 'Postflop & Ranges',
+    formula: 'Combos actifs = Combos non bloqués par le board × Fréquence conservée',
+    definition:
+      'Dynamique d’élimination d’une range rue par rue (Préflop → Flop → Turn → River) combinant les décisions de fold/check et la suppression mécanique de combos par les cartes tombées au tableau.',
+    example: 'Avec K♣ au Turn, KJs passe de 4 à 3 combos (-K♣J♣) et KJo de 12 à 9 combos, soit 12 combos KJ restants au lieu de 16 (-25 %).',
   },
 ];
 

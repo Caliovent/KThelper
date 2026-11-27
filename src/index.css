@@ -190,4 +190,29 @@ textarea,
   }
 }
 
+/* Range Évolutif & Entonnoir de Board — Calque Fantôme */
+.funnel-cell-ghost {
+  background-color: rgba(15, 23, 42, 0.72);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(148, 163, 184, 0.24) 0px,
+    rgba(148, 163, 184, 0.24) 3px,
+    rgba(15, 23, 42, 0.55) 3px,
+    rgba(15, 23, 42, 0.55) 6px
+  );
+  opacity: 0.36;
+}
+
+.funnel-cell-ghost-old {
+  background-color: rgba(15, 23, 42, 0.7);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(100, 116, 139, 0.16) 0px,
+    rgba(100, 116, 139, 0.16) 2px,
+    rgba(15, 23, 42, 0.6) 2px,
+    rgba(15, 23, 42, 0.6) 6px
+  );
+  opacity: 0.18;
+}
+
 

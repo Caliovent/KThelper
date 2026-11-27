@@ -37,7 +37,6 @@ function checkNoForbiddenKeys(obj: unknown, path = 'root'): string | null {
 test.describe('Jalon M1 Asynchrone — Classé L1, Daily Officiel, Fresque Duel & Salve 3-Max', () => {
   test('MP-12, MP-13, MP-16, MP-17 : Auth L1, Ghost Classé sans fuite réseau, Daily Officiel & Suppression RGPD', async ({
     page,
-    browserName,
   }, testInfo) => {
     const errors: Error[] = [];
     page.on('pageerror', (err) => errors.push(err));
@@ -67,12 +66,12 @@ test.describe('Jalon M1 Asynchrone — Classé L1, Daily Officiel, Fresque Duel 
     await arenaRoot.getByRole('button', { name: /Arène Classée/i }).click();
     await expect(arenaRoot.getByText(/Arène Classée en ligne/i)).toBeVisible();
 
-    const uniq = `${testInfo.project.name}_${browserName}_${Date.now().toString(36)}`.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18);
+    const uniq = `m1_${testInfo.project.name.startsWith('mobile') ? 'mob' : 'dsk'}_${Date.now().toString(36)}`.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18);
     await arenaRoot.getByPlaceholder('joueur@exemple.fr').fill(`${uniq}@test.fr`);
     await arenaRoot.getByPlaceholder('Shark_KT').fill(uniq);
     await arenaRoot.getByRole('button', { name: /Recevoir mon accès rapide/i }).click();
     await arenaRoot.getByRole('button', { name: /Confirmer la connexion/i }).click();
-    await expect(arenaRoot.getByText(uniq)).toBeVisible();
+    await expect(arenaRoot.getByText(uniq, { exact: true })).toBeVisible();
 
     // Lancer un Duel Fantôme Classé et jouer les 15 spots avec vérification d'absence de fuite réseau
     await arenaRoot.getByRole('button', { name: /Trouver un Duel Classé/i }).click();
