@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Range Évolutif & Entonnoir de Board (Street-by-Street Matrix Diff)', () => {
-  test('Stepper 4 rues, calque fantôme, card removal KJs/K♣, vue 4 mini-matrices & Défi Entonnoir', async ({
+test.describe('PALM-Funnel — Range Évolutif & 4 Modes Progressifs', () => {
+  test('Stepper clavier (< 5ms), Fantôme, KJs vs KJ et parcours complet des 4 modes PALM-Funnel', async ({
     page,
   }) => {
     const errors: Error[] = [];
@@ -9,53 +9,108 @@ test.describe('Range Évolutif & Entonnoir de Board (Street-by-Street Matrix Dif
 
     await page.goto('/');
 
-    // 1. Ouvrir le sous-mode Entonnoir 4 Rues dans l'onglet Ranges & Quiz
+    // 1. Ouvrir l'onglet Entonnoir 4 Rues
     await page.locator('#btn-mode-funnel').click();
     const lab = page.locator('#evolutionary-funnel-lab');
     await expect(lab).toBeVisible();
-
-    // 2. Vérifier le spot de Shishi par défaut (Turn K♣ sélectionné, KJs épinglée)
     await expect(
       lab.getByRole('heading', { name: /Spot Shishi — Triple Barrel/i })
     ).toBeVisible();
+
+    // Vérifier distinction cellule KJs (4 -> 4 -> 3) vs famille KJ (12 / 16)
     await expect(lab.locator('#funnel-inspected-hand')).toHaveText('KJs');
+    await expect(lab.locator('#funnel-inspected-active-combos')).toContainText('3 combos dispo');
     await expect(lab.locator('#funnel-family-summary')).toContainText('12 / 16 combos');
-    await expect(lab.locator('#funnel-family-summary')).toContainText('-4 card removal');
 
-    // 3. Vérifier le calque fantôme (.funnel-cell-ghost) sur les mains éliminées à cette rue (ex: 77 au Turn)
-    const ghostCount = await lab.locator('#funnel-diff-matrix .funnel-cell-ghost').count();
-    expect(ghostCount).toBeGreaterThan(5);
+    // Calque fantôme présent à l'écran
+    expect(await lab.locator('#funnel-diff-matrix .funnel-cell-ghost').count()).toBeGreaterThan(5);
 
-    // 4. Vérifier le stepper & le raccourci clavier ArrowRight -> River A♥
-    await page.locator('#evolutionary-funnel-lab').click({ position: { x: 10, y: 10 } });
+    // Navigation clavier <- / -> et mesure du budget moteur (< 5 ms par transition)
     await page.keyboard.press('ArrowRight');
     await expect(lab.locator('#funnel-street-slider')).toHaveValue('3');
-    await expect(lab.getByText(/RIVER : A♥/i).first()).toBeVisible();
+    await page.keyboard.press('ArrowLeft');
+    await expect(lab.locator('#funnel-street-slider')).toHaveValue('2');
 
-    // Retour Flop via clic stepper pour inspecter 44 (fantôme)
-    await lab.locator('[data-street-step="1"]').click();
-    await expect(lab.locator('#funnel-street-slider')).toHaveValue('1');
-    const cell44 = lab.locator('#funnel-diff-matrix [data-hand="44"]');
-    await expect(cell44).toHaveAttribute('data-status', 'eliminated_prev');
-    await cell44.click();
-    await expect(lab.locator('#funnel-inspected-hand')).toHaveText('44');
+    const avgTransitionMs = await page.evaluate(() => {
+      const api = (window as unknown as {
+        ProPokerV2?: {
+          EVOLUTIONARY_FUNNEL_SCENARIOS: readonly unknown[];
+          computeStreetMatrixDiff: (sc: unknown, st: 0 | 1 | 2 | 3) => unknown;
+        };
+      }).ProPokerV2;
+      if (!api) return 999;
+      const sc = api.EVOLUTIONARY_FUNNEL_SCENARIOS[0];
+      const t0 = performance.now();
+      for (let i = 0; i < 20; i++) {
+        api.computeStreetMatrixDiff(sc, (i % 4) as 0 | 1 | 2 | 3);
+      }
+      return (performance.now() - t0) / 20;
+    });
+    expect(avgTransitionMs).toBeLessThan(5);
 
-    // 5. Basculer vers Vue Entonnoir (4 mini-matrices côte à côte)
+    // Bascule Vue Entonnoir (4 mini-matrices côte à côte)
     await lab.locator('#funnel-view-compare-btn').click();
-    const compareGrid = lab.locator('#funnel-compare-grid');
-    await expect(compareGrid).toBeVisible();
-    await expect(compareGrid.locator('.matrix-grid')).toHaveCount(4);
+    await expect(lab.locator('#funnel-compare-grid .matrix-grid')).toHaveCount(4);
 
-    // 6. Ouvrir Défi Entonnoir (Serious Game) et répondre à la question 1
-    await lab.locator('#funnel-view-quiz-btn').click();
-    const quizBox = lab.locator('#funnel-quiz-workspace');
-    await expect(quizBox).toBeVisible();
-    const firstQ = quizBox.locator('[data-funnel-question="shishi_q1_kj_removal"]');
-    await firstQ.getByRole('button', { name: /KJs = 3 combos/i }).click();
-    await expect(firstQ.getByText(/supprime exactement 1 combo/i)).toBeVisible();
-    await expect(lab.locator('#funnel-view-quiz-btn')).toContainText('1/3');
+    // Mode 1 : Le Sismographe de Contraste (1 rue masquée -> révélée après réponse)
+    await lab.locator('#funnel-mode-sismographe-btn').click();
+    const sismoWs = lab.locator('#funnel-sismographe-workspace');
+    await expect(sismoWs.locator('[data-masked="true"]')).toHaveCount(1);
+    await sismoWs
+      .getByRole('button', { name: /Les paires intermédiaires/i })
+      .click();
+    await expect(sismoWs.locator('[data-masked="true"]')).toHaveCount(0);
 
-    // Aucun débordement horizontal sur mobile ni erreur console
+    // Mode 2 : Le Scalpel par Tiroirs (élagage sans clic 169× -> FSRS + déblocage chrono)
+    await lab.locator('#funnel-mode-scalpel-btn').click();
+    const scalpelWs = lab.locator('#funnel-scalpel-workspace');
+    await expect(scalpelWs.locator('#funnel-scalpel-timer-btn')).toBeDisabled();
+    // Régler les tiroirs principaux pour atteindre >= 80% sur Shishi Turn Kc
+    await scalpelWs
+      .locator('[data-drawer-id="sets_overpairs"]')
+      .getByRole('button', { name: '100%', exact: true })
+      .click();
+    await scalpelWs
+      .locator('[data-drawer-id="top_pairs"]')
+      .getByRole('button', { name: '100%', exact: true })
+      .click();
+    await scalpelWs
+      .locator('[data-drawer-id="draws"]')
+      .getByRole('button', { name: '75%', exact: true })
+      .click();
+    await scalpelWs
+      .locator('[data-drawer-id="mid_pairs"]')
+      .getByRole('button', { name: '25%', exact: true })
+      .click();
+    await scalpelWs
+      .locator('[data-drawer-id="overcards_bd"]')
+      .getByRole('button', { name: '25%', exact: true })
+      .click();
+    await scalpelWs
+      .locator('[data-drawer-id="air"]')
+      .getByRole('button', { name: '0%', exact: true })
+      .click();
+
+    await scalpelWs.locator('#funnel-scalpel-validate-btn').click();
+    await expect(scalpelWs.locator('#funnel-scalpel-result')).toBeVisible();
+    await expect(scalpelWs.locator('#funnel-scalpel-timer-btn')).toBeEnabled();
+
+    // Mode 3 : L'Œil du Bloqueur (Micro-drill 5s computed)
+    await lab.locator('#funnel-mode-blocker-btn').click();
+    const blockerWs = lab.locator('#funnel-blocker-workspace');
+    await expect(blockerWs).toBeVisible();
+    await blockerWs.getByRole('button', { name: '12 combos' }).click();
+    await expect(blockerWs.getByText(/K♣ retire 1 Roi du paquet/i)).toBeVisible();
+
+    // Mode 4 : L'Arbitre River (Fréquences naturelles & décision EV)
+    await lab.locator('#funnel-mode-river-btn').click();
+    const riverWs = lab.locator('#funnel-river-workspace');
+    await expect(riverWs).toBeVisible();
+    await expect(riverWs.getByText(/Cote requise : 30\.0%/i)).toBeVisible();
+    await riverWs.getByRole('button', { name: /Payer \(Bluff-Catch EV\+\)/i }).click();
+    await expect(riverWs.locator('#funnel-river-feedback')).toBeVisible();
+
+    // Aucun débordement horizontal mobile ni erreur JS
     const hasOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2
     );

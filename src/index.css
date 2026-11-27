@@ -190,7 +190,7 @@ textarea,
   }
 }
 
-/* Range Évolutif & Entonnoir de Board — Calque Fantôme */
+/* Range Évolutif & Entonnoir de Board — Calque Fantôme (25% composite) */
 .funnel-cell-ghost {
   background-color: rgba(15, 23, 42, 0.72);
   background-image: repeating-linear-gradient(
@@ -200,7 +200,7 @@ textarea,
     rgba(15, 23, 42, 0.55) 3px,
     rgba(15, 23, 42, 0.55) 6px
   );
-  opacity: 0.36;
+  opacity: var(--ghost-opacity, 0.25);
 }
 
 .funnel-cell-ghost-old {

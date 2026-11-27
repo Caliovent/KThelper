@@ -24,11 +24,26 @@ import {
 import { texture } from '../engines/postflop';
 import {
   gradeAttempt,
+  gradeFunnelAttempt,
+  createFunnelFsrsCard,
+  reviewFunnelFsrsCard,
+  getFunnelCardRetrievability,
+  buildFunnelWarmupCandidates,
   masteryScore,
   betaCdfInt,
   leakProbability,
   buildWarmup,
 } from '../engines/srs';
+import {
+  EVOLUTIONARY_FUNNEL_SCENARIOS,
+  buildCardMask52,
+  computeStreetMatrixDiff,
+} from '../engines/evolutionaryFunnel';
+import {
+  getFunnelWarmupCandidatesFromStore,
+  openFunnelScenarioInUi,
+  recordFunnelFsrsReview,
+} from '../stores/funnelFsrsStore';
 import {
   splitHands,
   detectSite,
@@ -64,6 +79,14 @@ export const ProPokerV2 = {
   blockerImpact,
   texture,
   gradeAttempt,
+  gradeFunnelAttempt,
+  createFunnelFsrsCard,
+  reviewFunnelFsrsCard,
+  getFunnelCardRetrievability,
+  buildFunnelWarmupCandidates,
+  getFunnelWarmupCandidatesFromStore,
+  recordFunnelFsrsReview,
+  openFunnelScenarioInUi,
   masteryScore,
   betaCdfInt,
   leakProbability,
@@ -76,6 +99,9 @@ export const ProPokerV2 = {
   V2_WEIGHTED_RANGES,
   expandRangeGroups,
   simplifyFreqVector25,
+  EVOLUTIONARY_FUNNEL_SCENARIOS,
+  buildCardMask52,
+  computeStreetMatrixDiff,
   mp,
   isMpEnabled,
 } as const;

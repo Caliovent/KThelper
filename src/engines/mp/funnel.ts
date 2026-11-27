@@ -1,4 +1,5 @@
 import type { CorpusTemplate } from '../../domain/types.ts';
+import { hamiltonRoundPercent } from '../evolutionaryFunnel.ts';
 import { CLOCK_MS } from './config.ts';
 import { funnelPd } from './scoring.ts';
 
@@ -35,6 +36,19 @@ export interface FunnelCaseSpec {
 /** Détectives (Entonnoir) : toujours non classé car la référence dépend d'un modèle de profil (Bible p.19). */
 export function funnelRankedEligible(_template: CorpusTemplate): false {
   return false;
+}
+
+/** Normalise un vecteur de poids par la méthode d'Hamilton pour garantir une somme exacte à 100 %. */
+export function normalizeFunnelWeightsHamilton(
+  weights: Record<string, number>
+): Record<string, number> {
+  const keys = Object.keys(weights);
+  const rounded = hamiltonRoundPercent(keys.map((k) => weights[k] ?? 0));
+  const out: Record<string, number> = {};
+  keys.forEach((k, idx) => {
+    out[k] = rounded[idx];
+  });
+  return out;
 }
 
 export function scoreFunnelStreet(

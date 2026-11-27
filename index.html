@@ -9394,6 +9394,29 @@ Hero folds
       ];
       fallbackSpots.forEach(x => candidates.push(x));
 
+      // Lot 3 PALM-Funnel : injecter les scénarios Entonnoir à faible Retrievability FSRS
+      if (typeof api.getFunnelWarmupCandidatesFromStore === 'function') {
+        const funnelCands = api.getFunnelWarmupCandidatesFromStore();
+        funnelCands.forEach(fc => {
+          const expected = fc.scenarioId.includes('bb_defense')
+            ? 'c'
+            : (fc.scenarioId.includes('threebet') ? '3b' : 'mr');
+          candidates.push({
+            id: fc.id,
+            family: fc.family,
+            kind: fc.kind,
+            priority: fc.priority + 5,
+            seconds: fc.seconds,
+            hand: fc.hand,
+            spotLabel: `📉 Entonnoir FSRS (${Math.round(fc.retrievability * 100)}% R) — ${fc.spotLabel}`,
+            expected,
+            source: 'palm_funnel',
+            scenarioId: fc.scenarioId,
+            retrievability: fc.retrievability,
+          });
+        });
+      }
+
       const queue = api.buildWarmup(candidates, 270).slice(0, 6);
       v2State.warmup.queue = queue;
       v2State.warmup.index = 0;
@@ -9433,7 +9456,11 @@ Hero folds
       const item = q[idx];
       v2State.warmup.answered = false;
       v2State.warmup.cardStartTs = Date.now();
-      if (prog) prog.textContent = `Carte ${idx + 1}/${q.length} • Priorité : ${item.kind.toUpperCase()}`;
+      if (prog) {
+        prog.textContent = item.source === 'palm_funnel'
+          ? `Carte ${idx + 1}/${q.length} • PALM-Funnel FSRS (R=${Math.round((item.retrievability || 0) * 100)}%)`
+          : `Carte ${idx + 1}/${q.length} • Priorité : ${item.kind.toUpperCase()}`;
+      }
       promptEl.textContent = `${item.spotLabel} — Quelle action optimale avec ${item.hand} ?`;
       if (cardsEl && typeof renderMiniCards === 'function') renderMiniCards('rg-warmup-cards', item.hand, 'sm');
 
@@ -9464,6 +9491,9 @@ Hero folds
       const gb = document.getElementById('rg-warmup-grade-badge');
       if (gb) gb.textContent = `Note FSRS : ${gradeLabels[grade] || grade}`;
       recordV2SrsAttempt(ok, ms, 10000, item.kind === 'transfer');
+      if (item.source === 'palm_funnel' && typeof api.recordFunnelFsrsReview === 'function') {
+        api.recordFunnelFsrsReview({ scenarioId: item.scenarioId, grade });
+      }
 
       const fb = document.getElementById('rg-warmup-feedback');
       if (fb) {
@@ -9471,7 +9501,10 @@ Hero folds
         fb.className = ok
           ? 'rounded-xl p-3 border text-xs bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
           : 'rounded-xl p-3 border text-xs bg-rose-950/50 border-rose-500/40 text-rose-200';
-        fb.innerHTML = `${ok ? '✅ Excellent !' : `❌ Attendu : ${item.expected.toUpperCase()}.`} <button type="button" onclick="v2State.warmup.index++; renderWarmupCard();" class="ml-3 px-2.5 py-1 rounded-lg bg-white text-slate-950 font-extrabold">Continuer →</button>`;
+        const openFunnelBtn = item.source === 'palm_funnel' && typeof api.openFunnelScenarioInUi === 'function'
+          ? ` <button type="button" onclick="window.ProPokerV2.openFunnelScenarioInUi('${item.scenarioId}')" class="ml-2 px-2.5 py-1 rounded-lg bg-sky-600 text-white font-bold">📉 Réviser dans l'Entonnoir</button>`
+          : '';
+        fb.innerHTML = `${ok ? '✅ Excellent !' : `❌ Attendu : ${item.expected.toUpperCase()}.`}${openFunnelBtn} <button type="button" onclick="v2State.warmup.index++; renderWarmupCard();" class="ml-3 px-2.5 py-1 rounded-lg bg-white text-slate-950 font-extrabold">Continuer →</button>`;
       }
     }
 

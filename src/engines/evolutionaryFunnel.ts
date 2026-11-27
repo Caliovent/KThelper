@@ -29,6 +29,27 @@ export interface FunnelQuizQuestion {
   correctIndex: number;
   explanation: string;
   focusHand: string;
+  provenance: 'computed' | 'heuristic';
+}
+
+export type FunnelDrawerId =
+  | 'sets_overpairs'
+  | 'top_pairs'
+  | 'mid_pairs'
+  | 'draws'
+  | 'overcards_bd'
+  | 'air';
+
+export type DrawerStepFreq = 0 | 0.25 | 0.5 | 0.75 | 1;
+
+export interface SismographeChallenge {
+  maskedStreetIndex: 1 | 2 | 3;
+  prompt: string;
+  options: readonly string[];
+  correctIndex: number;
+  explanation: string;
+  focusDrawerId: FunnelDrawerId;
+  provenance: 'computed' | 'heuristic';
 }
 
 export interface EvolutionaryFunnelScenario {
@@ -37,9 +58,12 @@ export interface EvolutionaryFunnelScenario {
   subtitle: string;
   format: string;
   actorLabel: string;
+  provenanceKind: 'computed' | 'heuristic';
   provenance: Provenance;
   streets: readonly [StreetNode, StreetNode, StreetNode, StreetNode];
   quizQuestions: readonly FunnelQuizQuestion[];
+  sismographe: SismographeChallenge;
+  riverBetPctPot: number;
 }
 
 export type CellDiffStatus =
@@ -71,7 +95,13 @@ export interface StreetMatrixDiffSummary {
   streetIndex: 0 | 1 | 2 | 3;
   node: StreetNode;
   cells: readonly MatrixCellDiff[];
+  preflopTotalCombos: number;
+  activeCombosExact: number;
+  ghostCombosExact: number;
+  blockedBoardCombosExact: number;
   totalActiveCombos: number;
+  totalGhostCombos: number;
+  totalBlockedByBoardCombos: number;
   deckCombos: number;
   rangePct: number;
   prevActiveCombos: number;
@@ -145,6 +175,26 @@ export const MATRIX_HANDS: readonly MatrixHandDescriptor[] = (() => {
   return out;
 })();
 
+/** Arrondi de Hamilton (plus fort reste) : garantit que la somme des entiers fait strictement 100. */
+export function hamiltonRoundPercent(values: readonly number[]): number[] {
+  const safe = values.map((v) => (Number.isFinite(v) && v > 0 ? v : 0));
+  const total = safe.reduce((acc, v) => acc + v, 0);
+  if (total <= 0) return safe.map(() => 0);
+
+  const exact = safe.map((v) => (v / total) * 100);
+  const floors = exact.map((x) => Math.floor(x));
+  let remainderPoints = 100 - floors.reduce((acc, f) => acc + f, 0);
+
+  const order = exact
+    .map((x, idx) => ({ idx, rem: x - floors[idx] }))
+    .sort((a, b) => (b.rem !== a.rem ? b.rem - a.rem : a.idx - b.idx));
+
+  for (let i = 0; i < remainderPoints && i < order.length; i++) {
+    floors[order[i].idx] += 1;
+  }
+  return floors;
+}
+
 /** Nombre total de combos possibles restants dans le paquet compte tenu du board. */
 export function deckCombosRemaining(boardCount: number): number {
   const remainingCards = Math.max(2, 52 - boardCount);
@@ -189,7 +239,163 @@ function normalizeCard(card: string): string {
   return `${card[0].toUpperCase()}${card[1].toLowerCase()}`;
 }
 
-/** Calcule le card removal exact d'une classe de main face aux cartes connues du board. */
+/** Masque binaire 52 cartes SMI-safe (2×26 bits strictement < 2^26, zéro BigInt/allocation). */
+export interface CardMask52 {
+  lo: number; // cartes 0..25
+  hi: number; // cartes 26..51
+}
+
+export interface ComboEntry {
+  id: number;
+  cellIndex: number;
+  hand: string;
+  c1: string;
+  c2: string;
+  bit1: number;
+  bit2: number;
+  lo: number;
+  hi: number;
+}
+
+export function cardToBitIndex(card: string): number {
+  if (!card || card.length < 2) return -1;
+  const rIdx = RANKS.indexOf(card[0].toUpperCase());
+  const sIdx = SUITS.indexOf(card[1].toLowerCase() as (typeof SUITS)[number]);
+  if (rIdx < 0 || sIdx < 0) return -1;
+  return rIdx * 4 + sIdx;
+}
+
+export function addCardBitToMask52(mask: CardMask52, bitIndex: number): CardMask52 {
+  if (bitIndex < 0 || bitIndex > 51) return mask;
+  if (bitIndex < 26) {
+    return { lo: mask.lo | (1 << bitIndex), hi: mask.hi };
+  }
+  return { lo: mask.lo, hi: mask.hi | (1 << (bitIndex - 26)) };
+}
+
+export function addCardToMask52(mask: CardMask52, card: string): CardMask52 {
+  return addCardBitToMask52(mask, cardToBitIndex(card));
+}
+
+export function buildCardMask52(cards: readonly string[]): CardMask52 {
+  let lo = 0;
+  let hi = 0;
+  for (let i = 0; i < cards.length; i++) {
+    const bit = cardToBitIndex(cards[i]);
+    if (bit >= 0 && bit < 26) lo |= 1 << bit;
+    else if (bit >= 26 && bit <= 51) hi |= 1 << (bit - 26);
+  }
+  return { lo, hi };
+}
+
+export function isComboUnblocked(combo: ComboEntry, deadMask: CardMask52): boolean {
+  return (combo.lo & deadMask.lo) === 0 && (combo.hi & deadMask.hi) === 0;
+}
+
+/** Index statique précalculé des 1 326 combinaisons Hold'em + lookup par cellule 13×13. */
+export const COMBO_INDEX: readonly ComboEntry[] = (() => {
+  const entries: ComboEntry[] = [];
+  let nextId = 0;
+  for (let cellIndex = 0; cellIndex < MATRIX_HANDS.length; cellIndex++) {
+    const desc = MATRIX_HANDS[cellIndex];
+    const concrete = enumerateConcreteCombos(desc.hand);
+    for (let k = 0; k < concrete.length; k++) {
+      const [c1, c2] = concrete[k];
+      const bit1 = cardToBitIndex(c1);
+      const bit2 = cardToBitIndex(c2);
+      const mask = addCardBitToMask52(addCardBitToMask52({ lo: 0, hi: 0 }, bit1), bit2);
+      entries.push({
+        id: nextId++,
+        cellIndex,
+        hand: desc.hand,
+        c1,
+        c2,
+        bit1,
+        bit2,
+        lo: mask.lo,
+        hi: mask.hi,
+      });
+    }
+  }
+  return entries;
+})();
+
+const COMBOS_BY_HAND = new Map<string, ComboEntry[]>();
+for (const entry of COMBO_INDEX) {
+  const list = COMBOS_BY_HAND.get(entry.hand);
+  if (list) list.push(entry);
+  else COMBOS_BY_HAND.set(entry.hand, [entry]);
+}
+
+/** Construit un Float32Array contigu de longueur 1 326 à partir d'un range de rue. */
+export function buildFloat32ComboWeights(range: Record<string, HandStreetEntry>): Float32Array {
+  const weights = new Float32Array(COMBO_INDEX.length);
+  for (let i = 0; i < COMBO_INDEX.length; i++) {
+    weights[i] = range[COMBO_INDEX[i].hand]?.freq ?? 0;
+  }
+  return weights;
+}
+
+export interface CellProjectionTotals {
+  activeByCell: Float32Array;
+  ghostByCell: Float32Array;
+  blockedByCell: Float32Array;
+  preflopByCell: Float32Array;
+  totalActiveExact: number;
+  totalGhostExact: number;
+  totalBlockedExact: number;
+  totalPreflopExact: number;
+}
+
+/** Projection rapide O(1326) sans allocation de chaînes vers les 169 cellules 13×13. */
+export function projectFloat32ToCells(
+  activeWeights: Float32Array,
+  preflopWeights: Float32Array,
+  deadMask: CardMask52
+): CellProjectionTotals {
+  const activeByCell = new Float32Array(169);
+  const ghostByCell = new Float32Array(169);
+  const blockedByCell = new Float32Array(169);
+  const preflopByCell = new Float32Array(169);
+  let totalActiveExact = 0;
+  let totalGhostExact = 0;
+  let totalBlockedExact = 0;
+  let totalPreflopExact = 0;
+
+  for (let i = 0; i < COMBO_INDEX.length; i++) {
+    const entry = COMBO_INDEX[i];
+    const pf = preflopWeights[i];
+    if (pf <= 0) continue;
+    const cellIdx = entry.cellIndex;
+    preflopByCell[cellIdx] += pf;
+    totalPreflopExact += pf;
+
+    if ((entry.lo & deadMask.lo) === 0 && (entry.hi & deadMask.hi) === 0) {
+      const act = Math.min(pf, activeWeights[i]);
+      const ghost = pf - act;
+      activeByCell[cellIdx] += act;
+      ghostByCell[cellIdx] += ghost;
+      totalActiveExact += act;
+      totalGhostExact += ghost;
+    } else {
+      blockedByCell[cellIdx] += pf;
+      totalBlockedExact += pf;
+    }
+  }
+
+  return {
+    activeByCell,
+    ghostByCell,
+    blockedByCell,
+    preflopByCell,
+    totalActiveExact,
+    totalGhostExact,
+    totalBlockedExact,
+    totalPreflopExact,
+  };
+}
+
+/** Calcule le card removal exact d'une classe de main en O(6/4/12) via CardMask52 SMI-safe. */
 export function countUnblockedCombos(
   handClass: string,
   board: readonly string[]
@@ -199,25 +405,64 @@ export function countUnblockedCombos(
   blocked: number;
   blockingCards: string[];
 } {
-  const concrete = enumerateConcreteCombos(handClass);
-  const boardNorm = board.map(normalizeCard);
-  const boardSet = new Set(boardNorm);
-  let remaining = 0;
-  const blockersUsed = new Set<string>();
+  const list = COMBOS_BY_HAND.get(handClass);
+  const concrete = list ?? enumerateConcreteCombos(handClass);
+  const base = concrete.length;
 
-  for (const [c1, c2] of concrete) {
-    const hit1 = boardSet.has(c1);
-    const hit2 = boardSet.has(c2);
-    if (hit1) blockersUsed.add(c1);
-    if (hit2) blockersUsed.add(c2);
-    if (!hit1 && !hit2) remaining += 1;
+  if (board.length === 0) {
+    return { base, remaining: base, blocked: 0, blockingCards: [] };
+  }
+
+  const deadMask = buildCardMask52(board);
+  if (!list) {
+    let remaining = 0;
+    const blockers = new Set<string>();
+    const boardNorm = board.map(normalizeCard);
+    for (const [c1, c2] of concrete as readonly [string, string][]) {
+      const m = buildCardMask52([c1, c2]);
+      if ((m.lo & deadMask.lo) === 0 && (m.hi & deadMask.hi) === 0) remaining += 1;
+      else {
+        if (boardNorm.includes(c1)) blockers.add(c1);
+        if (boardNorm.includes(c2)) blockers.add(c2);
+      }
+    }
+    return {
+      base,
+      remaining,
+      blocked: base - remaining,
+      blockingCards: boardNorm.filter((c) => blockers.has(c)),
+    };
+  }
+
+  let remaining = 0;
+  let usedLo = 0;
+  let usedHi = 0;
+  for (let i = 0; i < list.length; i++) {
+    const combo = list[i];
+    if ((combo.lo & deadMask.lo) === 0 && (combo.hi & deadMask.hi) === 0) {
+      remaining += 1;
+    } else {
+      usedLo |= combo.lo & deadMask.lo;
+      usedHi |= combo.hi & deadMask.hi;
+    }
+  }
+
+  const blockingCards: string[] = [];
+  for (let i = 0; i < board.length; i++) {
+    const norm = normalizeCard(board[i]);
+    const bit = cardToBitIndex(norm);
+    if (bit >= 0 && bit < 26 && (usedLo & (1 << bit)) !== 0) {
+      blockingCards.push(norm);
+    } else if (bit >= 26 && (usedHi & (1 << (bit - 26))) !== 0) {
+      blockingCards.push(norm);
+    }
   }
 
   return {
-    base: concrete.length,
+    base,
     remaining,
-    blocked: concrete.length - remaining,
-    blockingCards: boardNorm.filter((c) => blockersUsed.has(c)),
+    blocked: base - remaining,
+    blockingCards,
   };
 }
 
@@ -543,6 +788,8 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
     subtitle: 'Visualisez la polarisation progressive du range BTN et le card removal exact de K♣ et A♥',
     format: 'Cash Game 6-Max • 100bb',
     actorLabel: 'Hero (BTN — Agresseur IP)',
+    provenanceKind: 'heuristic',
+    riverBetPctPot: 75,
     provenance: {
       origin: 'heuristic',
       tool: 'Kill Tilt / Shishi — Entonnoir Triple Barrel',
@@ -595,11 +842,27 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         activeCombos: SHISHI_RIVER_BARREL,
       },
     ]),
+    sismographe: {
+      maskedStreetIndex: 2,
+      focusDrawerId: 'mid_pairs',
+      provenance: 'heuristic',
+      prompt:
+        'Au Turn K♣ (la matrice est masquée), quel bloc logique bascule en calque fantôme ou freine en check face au 2nd Barrel 75 % ?',
+      options: [
+        'Les paires intermédiaires (77/88/QQ–TT/6x) sans équité contre un Roi',
+        'Les brelans et overpaires (99, 66, 33, AA)',
+        'Les Kx (AK, KQ, KJ) qui viennent de toucher Top Paire',
+      ],
+      correctIndex: 0,
+      explanation:
+        'Sur le Turn K♣, BTN polarise son 2nd Barrel sur Kx / sets / AA + tirages forts (QJ, JT, 87, 75). Les paires intermédiaires et 6x basculent en check/fantôme.',
+    },
     quizQuestions: [
       {
         id: 'shishi_q1_kj_removal',
         streetIndex: 2,
         focusHand: 'KJs',
+        provenance: 'computed',
         prompt:
           'Au Turn K♣ (board 9♠ 6♦ 3♣ K♣), combien de combos exacts de KJs (et de KJ total KJs+KJo) restent disponibles dans le paquet ?',
         options: [
@@ -615,6 +878,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'shishi_q2_flop_ghost',
         streetIndex: 1,
         focusHand: '44',
+        provenance: 'heuristic',
         prompt:
           'Sur le Flop 9♠ 6♦ 3♣, pourquoi les petites paires comme 44 et 22 passent-elles en calque fantôme (éliminées du range de C-Bet) ?',
         options: [
@@ -630,6 +894,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'shishi_q3_river_ak',
         streetIndex: 3,
         focusHand: 'AKo',
+        provenance: 'computed',
         prompt:
           'À la River A♥ (9♠ 6♦ 3♣ K♣ A♥), combien de combos exacts de AK (AKs + AKo) restent possibles après le card removal de K♣ et A♥ ?',
         options: [
@@ -649,6 +914,8 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
     subtitle: 'Observez comment la range large de BB (~46 %) se resserre rue par rue jusqu’à la river',
     format: 'Cash Game 6-Max • 100bb',
     actorLabel: 'Hero (BB — Défenseur OOP)',
+    provenanceKind: 'heuristic',
+    riverBetPctPot: 75,
     provenance: {
       origin: 'heuristic',
       tool: 'Kill Tilt — Hand Reading Entonnoir BB',
@@ -701,11 +968,27 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         activeCombos: BB_DEF_RIVER,
       },
     ]),
+    sismographe: {
+      maskedStreetIndex: 2,
+      focusDrawerId: 'air',
+      provenance: 'heuristic',
+      prompt:
+        'Sur le Turn 2♠ face au 2nd Barrel CO, quel bloc de la défense BB sort en calque fantôme ?',
+      options: [
+        'Les petites paires sous le 9 (55–88) et les connecteurs ratés sans pique',
+        'Les Top Paires Qx (KQ, QJ, QT)',
+        'Les brelans 99 et 44',
+      ],
+      correctIndex: 0,
+      explanation:
+        'Sur Turn 2♠, BB abandonne ses paires faibles (55–88) et 4x faibles pour ne conserver que Qx, 9x et tirages quinte/pique.',
+    },
     quizQuestions: [
       {
         id: 'bb_q1_qjs',
         streetIndex: 3,
         focusHand: 'QJs',
+        provenance: 'computed',
         prompt:
           'À la River J♠ (Q♥ 9♠ 4♦ 2♠ J♠), pourquoi QJs tombe-t-elle à 2 combos restants au lieu de 4 ?',
         options: [
@@ -721,6 +1004,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'bb_q2_55',
         streetIndex: 2,
         focusHand: '55',
+        provenance: 'heuristic',
         prompt:
           'Pourquoi 55 passe-t-il en calque fantôme dès le Turn 2♠ face au 2nd barrel du CO ?',
         options: [
@@ -736,6 +1020,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'bb_q3_kts',
         streetIndex: 3,
         focusHand: 'KTs',
+        provenance: 'computed',
         prompt:
           'Sur la River J♠, quelle famille vient de compléter une quinte max (K-Q-J-T-9) dans le range de défense BB ?',
         options: ['KTs et KTo (quinte à l’As/Roi sur Q-J-T-9)', 'A4s uniquement', '66 et 55'],
@@ -751,6 +1036,8 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
     subtitle: 'Suivez la compression d’un range polarisé en pot 3-Bet jusqu’à la mise à tapis river',
     format: 'Cash Game 6-Max • 100bb',
     actorLabel: 'Hero (BTN — 3-Bettor IP)',
+    provenanceKind: 'heuristic',
+    riverBetPctPot: 75,
     provenance: {
       origin: 'heuristic',
       tool: 'Kill Tilt — Pot 3-Bet SPR bas',
@@ -803,11 +1090,27 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         activeCombos: THREEBET_RIVER,
       },
     ]),
+    sismographe: {
+      maskedStreetIndex: 2,
+      focusDrawerId: 'mid_pairs',
+      provenance: 'heuristic',
+      prompt:
+        'Sur Turn T♥ (board A♣ 8♦ 4♣ T♥), quel bloc logique freine en contrôle de pot et passe partiellement en fantôme ?',
+      options: [
+        'Les pocket pairs sous l’As (KK, QQ, JJ, 99)',
+        'Les Top Paires Ax (AK, AQ, AJ)',
+        'Les brelans AA et 88',
+      ],
+      correctIndex: 0,
+      explanation:
+        'Sur un tableau A-high, KK/QQ/JJ n’ont plus 3 rues de value : elles basculent en check pour contrôler le pot tandis que Ax+ et trèfles continuent.',
+    },
     quizQuestions: [
       {
         id: 'tb_q1_ac_aa',
         streetIndex: 1,
         focusHand: 'AA',
+        provenance: 'computed',
         prompt:
           'Dès le Flop A♣ 8♦ 4♣, combien de combos exacts de brelan d’As (AA) restent possibles avec A♣ sur le board ?',
         options: ['3 combos (A♠A♥, A♠A♦, A♥A♦)', '6 combos', '1 combo'],
@@ -819,6 +1122,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'tb_q2_kk_turn',
         streetIndex: 2,
         focusHand: 'KK',
+        provenance: 'heuristic',
         prompt:
           'Sur le Turn T♥ (A♣ 8♦ 4♣ T♥), pourquoi KK/QQ ralentissent-elles (50 % puis check river) ?',
         options: [
@@ -834,6 +1138,7 @@ export const EVOLUTIONARY_FUNNEL_SCENARIOS: readonly EvolutionaryFunnelScenario[
         id: 'tb_q3_ak_combos',
         streetIndex: 1,
         focusHand: 'AKo',
+        provenance: 'computed',
         prompt:
           'Avec A♣ sur le Flop A♣ 8♦ 4♣, combien de combos d’AKo restent-ils ?',
         options: ['9 combos (3 As × 4 Rois − 3 assortis)', '12 combos', '6 combos'],
@@ -867,7 +1172,10 @@ export function computeStreetMatrixDiff(
   const prevDeckCombos = prevNode ? deckCombosRemaining(prevNode.board.length) : deckCombos;
   void prevDeckCombos;
 
-  let totalActiveCombos = 0;
+  let preflopTotalCombos = 0;
+  let activeCombosExact = 0;
+  let ghostCombosExact = 0;
+  let blockedBoardCombosExact = 0;
   let prevActiveCombos = 0;
   let eliminatedByActionCombos = 0;
   let eliminatedByCardRemovalCombos = 0;
@@ -890,7 +1198,10 @@ export function computeStreetMatrixDiff(
       ? countUnblockedCombos(desc.hand, prevNode.board)
       : removalCurrent;
 
+    const preCellTotal = removalCurrent.base * freqPreflop;
     const activeCombos = removalCurrent.remaining * freqCurrent;
+    const ghostCellCombos = removalCurrent.remaining * Math.max(0, freqPreflop - freqCurrent);
+    const blockedCellCombos = removalCurrent.blocked * freqPreflop;
     const prevCellCombos = prevNode ? removalPrev.remaining * freqPrev : activeCombos;
 
     let status: CellDiffStatus = 'never_in_range';
@@ -902,7 +1213,10 @@ export function computeStreetMatrixDiff(
       status = 'eliminated_earlier';
     }
 
-    totalActiveCombos += activeCombos;
+    preflopTotalCombos += preCellTotal;
+    activeCombosExact += activeCombos;
+    ghostCombosExact += ghostCellCombos;
+    blockedBoardCombosExact += blockedCellCombos;
     prevActiveCombos += prevCellCombos;
 
     if (streetIndex > 0) {
@@ -939,26 +1253,36 @@ export function computeStreetMatrixDiff(
   });
 
   const round1 = (v: number) => Math.round(v * 10) / 10;
-  const totalSafe = Math.max(0.0001, totalActiveCombos);
+  const [pairsPct, suitedPct, offsuitPct] = hamiltonRoundPercent([
+    pairsCombos,
+    suitedCombos,
+    offsuitCombos,
+  ]);
 
   return {
     streetIndex,
     node: currentNode,
     cells,
-    totalActiveCombos: round1(totalActiveCombos),
+    preflopTotalCombos,
+    activeCombosExact,
+    ghostCombosExact,
+    blockedBoardCombosExact,
+    totalActiveCombos: round1(activeCombosExact),
+    totalGhostCombos: round1(ghostCombosExact),
+    totalBlockedByBoardCombos: round1(blockedBoardCombosExact),
     deckCombos,
-    rangePct: Math.round((totalActiveCombos / deckCombos) * 1000) / 10,
+    rangePct: Math.round((activeCombosExact / deckCombos) * 1000) / 10,
     prevActiveCombos: round1(prevActiveCombos),
-    deltaCombosFromPrev: streetIndex === 0 ? 0 : round1(totalActiveCombos - prevActiveCombos),
+    deltaCombosFromPrev: streetIndex === 0 ? 0 : round1(activeCombosExact - prevActiveCombos),
     eliminatedByActionCombos: round1(eliminatedByActionCombos),
     eliminatedByCardRemovalCombos: round1(eliminatedByCardRemovalCombos),
     composition: {
       pairsCombos: round1(pairsCombos),
       suitedCombos: round1(suitedCombos),
       offsuitCombos: round1(offsuitCombos),
-      pairsPct: totalActiveCombos > 0 ? Math.round((pairsCombos / totalSafe) * 1000) / 10 : 0,
-      suitedPct: totalActiveCombos > 0 ? Math.round((suitedCombos / totalSafe) * 1000) / 10 : 0,
-      offsuitPct: totalActiveCombos > 0 ? Math.round((offsuitCombos / totalSafe) * 1000) / 10 : 0,
+      pairsPct,
+      suitedPct,
+      offsuitPct,
     },
   };
 }
@@ -1030,5 +1354,572 @@ export function inspectHandFunnelHistory(
     handType: desc.handType,
     history,
     familyAtStreet,
+  };
+}
+
+
+// ============================================================================
+// LOT 1 & 2 — PALM-FUNNEL : TIROIRS (SCALPEL), BLOQUEURS & ARBITRE RIVER
+// ============================================================================
+
+export interface DrawerDefinition {
+  id: FunnelDrawerId;
+  label: string;
+  shortDesc: string;
+}
+
+export const DRAWER_DEFINITIONS: readonly DrawerDefinition[] = [
+  { id: 'sets_overpairs', label: 'Brelans / Overpaires', shortDesc: 'Sets, DP et grosses overpaires' },
+  { id: 'top_pairs', label: 'Top Paires', shortDesc: 'TP avec la plus haute carte du board' },
+  { id: 'mid_pairs', label: 'Paires intermédiaires', shortDesc: '2e / 3e paire et pocket pairs moyennes' },
+  { id: 'draws', label: 'Tirages (Flush / Quinte)', shortDesc: 'OESD, gutshots et tirages couleur' },
+  { id: 'overcards_bd', label: 'Overcards & Backdoors', shortDesc: 'Broadways et Ax/Kx au-dessus du flop' },
+  { id: 'air', label: 'Air pur / Petites PP', shortDesc: 'Mains sans connexion ni équité forte' },
+] as const;
+
+export const DRAWER_STEP_FREQS: readonly DrawerStepFreq[] = [0, 0.25, 0.5, 0.75, 1] as const;
+
+export function drawerFreqLabel(freq: DrawerStepFreq): string {
+  if (freq === 0) return 'Jamais (0%)';
+  if (freq === 0.25) return 'Rare (25%)';
+  if (freq === 0.5) return 'Moitié (50%)';
+  if (freq === 0.75) return 'Majoritaire (75%)';
+  return 'Toujours (100%)';
+}
+
+function rankOrderIdx(rank: string): number {
+  const idx = RANKS.indexOf(rank.toUpperCase());
+  return idx >= 0 ? idx : 12;
+}
+
+function hasStraightWithBoard(r1: string, r2: string, boardRanks: readonly string[]): boolean {
+  const vals = new Set<number>();
+  const addRankVal = (r: string) => {
+    const i = RANKS.indexOf(r.toUpperCase());
+    if (i < 0) return;
+    const v = 14 - i;
+    vals.add(v);
+    if (v === 14) vals.add(1);
+  };
+  addRankVal(r1);
+  addRankVal(r2);
+  boardRanks.forEach(addRankVal);
+
+  const sorted = Array.from(vals).sort((a, b) => a - b);
+  let run = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) {
+      run += 1;
+      if (run >= 5) return true;
+    } else {
+      run = 1;
+    }
+  }
+  return false;
+}
+
+/** Classe déterministement une main 13×13 dans son tiroir logique selon la texture du tableau. */
+export function classifyHandToDrawer(hand: string, board: readonly string[]): FunnelDrawerId {
+  if (!board.length) {
+    if (hand.length === 2) {
+      return rankOrderIdx(hand[0]) <= 3 ? 'sets_overpairs' : 'mid_pairs';
+    }
+    return rankOrderIdx(hand[0]) <= 4 ? 'overcards_bd' : 'draws';
+  }
+
+  const boardRanks = board
+    .map((c) => c[0]?.toUpperCase() ?? '')
+    .filter(Boolean)
+    .sort((a, b) => rankOrderIdx(a) - rankOrderIdx(b));
+  const uniqueBoardRanks = Array.from(new Set(boardRanks));
+  const topRank = uniqueBoardRanks[0] ?? 'A';
+  const secondRank = uniqueBoardRanks[1] ?? topRank;
+
+  const r1 = hand[0]?.toUpperCase() ?? 'A';
+  const r2 = hand[1]?.toUpperCase() ?? 'K';
+  const isPair = hand.length === 2 || r1 === r2;
+  const isSuited = hand.length === 3 && hand[2]?.toLowerCase() === 's';
+
+  if (isPair) {
+    if (uniqueBoardRanks.includes(r1) || rankOrderIdx(r1) < rankOrderIdx(topRank)) {
+      return 'sets_overpairs';
+    }
+    if (rankOrderIdx(r1) < rankOrderIdx(secondRank)) {
+      return 'mid_pairs';
+    }
+    return 'air';
+  }
+
+  const hitR1 = uniqueBoardRanks.includes(r1);
+  const hitR2 = uniqueBoardRanks.includes(r2);
+  if (hitR1 && hitR2) return 'sets_overpairs';
+  if (r1 === topRank || r2 === topRank) return 'top_pairs';
+  if (hitR1 || hitR2) return 'mid_pairs';
+
+  if (hasStraightWithBoard(r1, r2, uniqueBoardRanks)) {
+    return 'sets_overpairs';
+  }
+
+  const gap = Math.abs(rankOrderIdx(r1) - rankOrderIdx(r2));
+  const topIdx = rankOrderIdx(topRank);
+  const r1Idx = rankOrderIdx(r1);
+  const r2Idx = rankOrderIdx(r2);
+
+  // Connecteurs ou broadways non-Ax sous la top card du board -> tirages quinte/flush
+  if (gap <= 3 && (r1Idx >= topIdx || isSuited) && r2Idx <= 10) {
+    return 'draws';
+  }
+  if (r1Idx < topIdx || (r1 === 'A' && isSuited)) {
+    return 'overcards_bd';
+  }
+  return isSuited ? 'draws' : 'air';
+}
+
+export interface StreetDrawerSpec {
+  id: FunnelDrawerId;
+  label: string;
+  shortDesc: string;
+  hands: readonly string[];
+  incomingCombos: number;
+  referenceActiveCombos: number;
+  referenceFreq: DrawerStepFreq;
+  isMajorDrawer: boolean;
+}
+
+function snapToStepFreq(ratio: number): DrawerStepFreq {
+  let best: DrawerStepFreq = 0;
+  let bestDist = Infinity;
+  for (const step of DRAWER_STEP_FREQS) {
+    const d = Math.abs(ratio - step);
+    if (d < bestDist) {
+      bestDist = d;
+      best = step;
+    }
+  }
+  return best;
+}
+
+/** Regroupe les mains entrantes d'une rue en tiroirs logiques pour le mode Scalpel (sans clic 169×). */
+export function computeDrawersForStreet(
+  scenario: EvolutionaryFunnelScenario,
+  streetIndex: 0 | 1 | 2 | 3
+): readonly StreetDrawerSpec[] {
+  const prevNode = streetIndex > 0 ? scenario.streets[streetIndex - 1] : scenario.streets[0];
+  const currNode = scenario.streets[streetIndex];
+
+  const grouped = new Map<
+    FunnelDrawerId,
+    { hands: string[]; incoming: number; refActive: number }
+  >();
+  for (const def of DRAWER_DEFINITIONS) {
+    grouped.set(def.id, { hands: [], incoming: 0, refActive: 0 });
+  }
+
+  for (const desc of MATRIX_HANDS) {
+    const prevFreq = prevNode.activeCombos[desc.hand]?.freq ?? 0;
+    if (prevFreq <= 0) continue;
+    const removal = countUnblockedCombos(desc.hand, currNode.board);
+    if (removal.remaining <= 0) continue;
+    const currFreq = currNode.activeCombos[desc.hand]?.freq ?? 0;
+    const incomingCombos = removal.remaining * prevFreq;
+    const refCombos = removal.remaining * currFreq;
+    const drawerId = classifyHandToDrawer(desc.hand, currNode.board);
+    const bucket = grouped.get(drawerId)!;
+    bucket.hands.push(desc.hand);
+    bucket.incoming += incomingCombos;
+    bucket.refActive += refCombos;
+  }
+
+  let totalRefActive = 0;
+  for (const b of grouped.values()) totalRefActive += b.refActive;
+
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+
+  return DRAWER_DEFINITIONS.map((def) => {
+    const b = grouped.get(def.id)!;
+    const ratio = b.incoming > 0 ? b.refActive / b.incoming : 0;
+    return {
+      id: def.id,
+      label: def.label,
+      shortDesc: def.shortDesc,
+      hands: b.hands,
+      incomingCombos: round1(b.incoming),
+      referenceActiveCombos: round1(b.refActive),
+      referenceFreq: snapToStepFreq(ratio),
+      isMajorDrawer: totalRefActive > 0 && b.refActive >= 0.15 * totalRefActive,
+    };
+  }).filter((d) => d.incomingCombos > 0);
+}
+
+export interface ScalpelDrawerDetail {
+  id: FunnelDrawerId;
+  label: string;
+  incomingCombos: number;
+  userFreq: DrawerStepFreq;
+  userCombos: number;
+  referenceFreq: DrawerStepFreq;
+  referenceCombos: number;
+  isMajorDrawer: boolean;
+}
+
+export interface ScalpelEvaluationResult {
+  cells: readonly MatrixCellDiff[];
+  drawers: readonly ScalpelDrawerDetail[];
+  userTotalCombos: number;
+  refTotalCombos: number;
+  overlapScore: number; // 0..1
+  overlapPct: number; // 0..100
+  missedMajorDrawer: boolean;
+  minorDrawerImbalance: boolean;
+}
+
+/** Applique les fréquences par tiroirs sur la matrice 13×13 et calcule le recouvrement pondéré par combos. */
+export function evaluateScalpelPruning(
+  scenario: EvolutionaryFunnelScenario,
+  streetIndex: 0 | 1 | 2 | 3,
+  userDrawerFreqs: Partial<Record<FunnelDrawerId, DrawerStepFreq>>
+): ScalpelEvaluationResult {
+  const preNode = scenario.streets[0];
+  const prevNode = streetIndex > 0 ? scenario.streets[streetIndex - 1] : scenario.streets[0];
+  const currNode = scenario.streets[streetIndex];
+  const drawerSpecs = computeDrawersForStreet(scenario, streetIndex);
+  const specMap = new Map(drawerSpecs.map((d) => [d.id, d]));
+
+  const cells: MatrixCellDiff[] = MATRIX_HANDS.map((desc) => {
+    const preEntry = preNode.activeCombos[desc.hand];
+    const prevEntry = prevNode.activeCombos[desc.hand];
+    const freqPreflop = preEntry?.freq ?? 0;
+    const freqPrev = prevEntry?.freq ?? 0;
+    const removal = countUnblockedCombos(desc.hand, currNode.board);
+    const drawerId = classifyHandToDrawer(desc.hand, currNode.board);
+    const selectedFreq: DrawerStepFreq = userDrawerFreqs[drawerId] ?? 0;
+    const effectiveFreq = Math.min(freqPrev, selectedFreq);
+    const activeCombos = removal.remaining * effectiveFreq;
+
+    let status: CellDiffStatus = 'never_in_range';
+    if (effectiveFreq > 0 && removal.remaining > 0) {
+      status = 'active';
+    } else if (streetIndex > 0 && freqPrev > 0) {
+      status = 'eliminated_prev';
+    } else if (freqPreflop > 0) {
+      status = 'eliminated_earlier';
+    }
+
+    return {
+      hand: desc.hand,
+      row: desc.row,
+      col: desc.col,
+      handType: desc.handType,
+      status,
+      action: effectiveFreq > 0 ? currNode.action : null,
+      preflopAction: preEntry?.action ?? null,
+      freqCurrent: effectiveFreq,
+      freqPrev,
+      freqPreflop,
+      baseCombos: removal.base,
+      unblockedCombos: removal.remaining,
+      blockedByBoard: removal.blocked,
+      blockingCards: removal.blockingCards,
+      activeCombos,
+      prevActiveCombos: removal.remaining * freqPrev,
+    };
+  });
+
+  let userTotalCombos = 0;
+  let refTotalCombos = 0;
+  let l1Diff = 0;
+  let maxUnion = 0;
+  let missedMajorDrawer = false;
+  let minorDrawerImbalance = false;
+
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+
+  const drawers: ScalpelDrawerDetail[] = drawerSpecs.map((spec) => {
+    const uFreq: DrawerStepFreq = userDrawerFreqs[spec.id] ?? 0;
+    const uCombos = spec.incomingCombos * uFreq;
+    const rCombos = spec.referenceActiveCombos;
+
+    userTotalCombos += uCombos;
+    refTotalCombos += rCombos;
+    l1Diff += Math.abs(uCombos - rCombos);
+    maxUnion += Math.max(uCombos, rCombos);
+
+    if (spec.isMajorDrawer && uFreq === 0) {
+      missedMajorDrawer = true;
+    }
+    if (Math.abs(uFreq - spec.referenceFreq) >= 0.25) {
+      minorDrawerImbalance = true;
+    }
+
+    return {
+      id: spec.id,
+      label: spec.label,
+      incomingCombos: spec.incomingCombos,
+      userFreq: uFreq,
+      userCombos: round1(uCombos),
+      referenceFreq: spec.referenceFreq,
+      referenceCombos: rCombos,
+      isMajorDrawer: spec.isMajorDrawer,
+    };
+  });
+
+  void specMap;
+  const overlapScore =
+    maxUnion > 0 ? Math.max(0, Math.min(1, 1 - l1Diff / maxUnion)) : 1;
+
+  return {
+    cells,
+    drawers,
+    userTotalCombos: round1(userTotalCombos),
+    refTotalCombos: round1(refTotalCombos),
+    overlapScore,
+    overlapPct: Math.round(overlapScore * 100),
+    missedMajorDrawer,
+    minorDrawerImbalance,
+  };
+}
+
+/** Compte exactement les combos restants d'une classe ('KJs', 'AA') ou d'une famille ('AK' = AKs+AKo). */
+export function countFamilyUnblockedCombos(
+  targetFamily: string,
+  deadCards: readonly string[]
+): { base: number; remaining: number; blocked: number } {
+  if (targetFamily.length === 2 && targetFamily[0] !== targetFamily[1]) {
+    const suited = countUnblockedCombos(`${targetFamily}s`, deadCards);
+    const offsuit = countUnblockedCombos(`${targetFamily}o`, deadCards);
+    return {
+      base: suited.base + offsuit.base,
+      remaining: suited.remaining + offsuit.remaining,
+      blocked: suited.blocked + offsuit.blocked,
+    };
+  }
+  const single = countUnblockedCombos(targetFamily, deadCards);
+  return { base: single.base, remaining: single.remaining, blocked: single.blocked };
+}
+
+export interface BlockerDrillSpec {
+  id: string;
+  board: readonly string[];
+  heroCards: readonly string[];
+  targetFamily: string;
+  prompt: string;
+  correctCombos: number;
+  options: readonly number[];
+  explanation: string;
+  provenance: 'computed';
+}
+
+function buildDrillOptions(correct: number, base: number): number[] {
+  const set = new Set<number>([correct]);
+  const deltas = [-3, 3, -4, 4, -2, 2, -1, 1];
+  for (const d of deltas) {
+    if (set.size >= 4) break;
+    const cand = correct + d;
+    if (cand >= 0 && cand <= base) set.add(cand);
+  }
+  for (let v = 0; v <= base && set.size < 4; v++) {
+    set.add(v);
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+/** Génère la salve de 10 micro-drills chronométrés pour Mode 3 — L'Œil du Bloqueur (`computed`). */
+export function buildBlockerDrills(): readonly BlockerDrillSpec[] {
+  const templates: {
+    id: string;
+    board: readonly string[];
+    heroCards: readonly string[];
+    targetFamily: string;
+    prompt: string;
+    why: string;
+  }[] = [
+    {
+      id: 'blk_01_ak_turn_kc',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: [],
+      targetFamily: 'AK',
+      prompt: 'Sur le Turn K♣ (9♠ 6♦ 3♣ K♣), combien reste-t-il de combos d’AK chez Vilain ?',
+      why: 'K♣ retire 1 Roi du paquet : 4 As × 3 Rois = 12 combos d’AK (3 AKs + 9 AKo).',
+    },
+    {
+      id: 'blk_02_ak_kc_hero_kqs',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: ['Kd', 'Qs'],
+      targetFamily: 'AK',
+      prompt: 'Sur Turn K♣ avec Hero tenant K♦ Q♠, combien de combos d’AK restent possibles ?',
+      why: 'Deux Rois sont morts (K♣ et K♦) : 4 As × 2 Rois restants = 8 combos d’AK.',
+    },
+    {
+      id: 'blk_03_ak_kc_hero_a5s',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: ['As', '5s'],
+      targetFamily: 'AK',
+      prompt: 'Sur Turn K♣ avec votre bloqueur A♠ 5♠, combien reste-t-il de combos d’AK ?',
+      why: 'A♠ et K♣ sont morts : 3 As × 3 Rois = 9 combos d’AK au lieu de 16.',
+    },
+    {
+      id: 'blk_04_kjs_turn_kc',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: [],
+      targetFamily: 'KJs',
+      prompt: 'Sur Turn K♣ (9♠ 6♦ 3♣ K♣), combien reste-t-il de combos exacts de KJs ?',
+      why: 'K♣J♣ est impossible : il ne reste que K♠J♠, K♥J♥ et K♦J♦ (3 combos).',
+    },
+    {
+      id: 'blk_05_aa_river_ah',
+      board: ['9s', '6d', '3c', 'Kc', 'Ah'],
+      heroCards: [],
+      targetFamily: 'AA',
+      prompt: 'À la River A♥ (9♠ 6♦ 3♣ K♣ A♥), combien de combos de brelan d’As (AA) existent ?',
+      why: 'Avec A♥ au tableau, il reste 3 As : C(3,2) = 3 combos de AA.',
+    },
+    {
+      id: 'blk_06_aa_river_ah_hero_as5s',
+      board: ['9s', '6d', '3c', 'Kc', 'Ah'],
+      heroCards: ['As', '5s'],
+      targetFamily: 'AA',
+      prompt: 'River A♥ et vous détenez A♠ 5♠ : combien de combos d’AA restent chez Vilain ?',
+      why: 'Deux As sont morts (A♥ et A♠) : il ne reste qu’un seul combo (A♦A♣).',
+    },
+    {
+      id: 'blk_07_ak_river_ah_kc',
+      board: ['9s', '6d', '3c', 'Kc', 'Ah'],
+      heroCards: ['Qd', 'Jh'],
+      targetFamily: 'AK',
+      prompt: 'River 9♠ 6♦ 3♣ K♣ A♥ (Hero Q♦ J♥) : combien de combos d’AK restent au total ?',
+      why: '3 As × 3 Rois restants = 9 combos d’AK (2 AKs + 7 AKo).',
+    },
+    {
+      id: 'blk_08_kq_flop_kc_hero_kdqs',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: ['Kd', 'Qs'],
+      targetFamily: 'KQ',
+      prompt: 'Turn K♣ et vous avez K♦ Q♠ : combien de combos de KQ restent dans sa range ?',
+      why: '2 Rois morts (K♣, K♦) et 1 Dame morte (Q♠) → 2 Rois × 3 Dames = 6 combos de KQ.',
+    },
+    {
+      id: 'blk_09_qq_q94_hero_qs9h',
+      board: ['Qh', '9s', '4d'],
+      heroCards: ['Qs', '9h'],
+      targetFamily: 'QQ',
+      prompt: 'Sur Q♥ 9♠ 4♦ avec Q♠ 9♥ en main, combien reste-t-il de combos de brelan de Dames (QQ) ?',
+      why: 'Deux Dames sont connues (Q♥, Q♠) → 1 seul combo de QQ (Q♦Q♣).',
+    },
+    {
+      id: 'blk_10_kj_turn_kc_hero_jd9d',
+      board: ['9s', '6d', '3c', 'Kc'],
+      heroCards: ['Jd', '9d'],
+      targetFamily: 'KJ',
+      prompt: 'Turn K♣ avec Hero J♦ 9♦ : combien de combos de KJ (KJs + KJo) restent chez Vilain ?',
+      why: '3 Rois restants × 3 Valets restants = 9 combos de KJ.',
+    },
+  ];
+
+  return templates.map((t) => {
+    const dead = [...t.board, ...t.heroCards];
+    const counted = countFamilyUnblockedCombos(t.targetFamily, dead);
+    return {
+      id: t.id,
+      board: t.board,
+      heroCards: t.heroCards,
+      targetFamily: t.targetFamily,
+      prompt: t.prompt,
+      correctCombos: counted.remaining,
+      options: buildDrillOptions(counted.remaining, counted.base),
+      explanation: `${t.why} (Calcul exact : ${counted.remaining}/${counted.base} combos non bloqués).`,
+      provenance: 'computed',
+    };
+  });
+}
+
+export interface RiverArbitratorAnalysis {
+  scenarioId: string;
+  riverBoard: readonly string[];
+  betPctPot: number;
+  potOddsPct: number;
+  valueCombos: number;
+  bluffCombos: number;
+  totalRiverCombos: number;
+  valueSharePct: number;
+  bluffSharePct: number;
+  optimalDecision: 'call' | 'fold';
+  evCallPotUnits: number;
+  explanation: string;
+  provenance: 'computed';
+}
+
+function classifyRiverComboRole(hand: string, riverBoard: readonly string[]): 'value' | 'bluff' {
+  const boardRanks = Array.from(
+    new Set(riverBoard.map((c) => c[0]?.toUpperCase() ?? '').filter(Boolean))
+  ).sort((a, b) => rankOrderIdx(a) - rankOrderIdx(b));
+  const r1 = hand[0]?.toUpperCase() ?? 'A';
+  const r2 = hand[1]?.toUpperCase() ?? 'K';
+
+  if (hand.length === 2 || r1 === r2) {
+    if (boardRanks.includes(r1) || rankOrderIdx(r1) <= rankOrderIdx(boardRanks[1] ?? 'A')) {
+      return 'value';
+    }
+    return 'bluff';
+  }
+  if (boardRanks.includes(r1) || boardRanks.includes(r2)) {
+    return 'value';
+  }
+  if (hasStraightWithBoard(r1, r2, boardRanks)) {
+    return 'value';
+  }
+  return 'bluff';
+}
+
+/** Mode 4 — L'Arbitre River : bilan Value/Bluff en fréquences naturelles, cote du pot et EV exacte. */
+export function computeRiverArbitrator(
+  scenario: EvolutionaryFunnelScenario
+): RiverArbitratorAnalysis {
+  const riverDiff = computeStreetMatrixDiff(scenario, 3);
+  const riverBoard = riverDiff.node.board;
+
+  let valueExact = 0;
+  let bluffExact = 0;
+  for (const cell of riverDiff.cells) {
+    if (cell.activeCombos <= 0) continue;
+    const role = classifyRiverComboRole(cell.hand, riverBoard);
+    if (role === 'value') valueExact += cell.activeCombos;
+    else bluffExact += cell.activeCombos;
+  }
+
+  const totalExact = valueExact + bluffExact;
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+  const [valueSharePct, bluffSharePct] = hamiltonRoundPercent([valueExact, bluffExact]);
+
+  const betPctPot = scenario.riverBetPctPot;
+  const betFrac = betPctPot / 100;
+  const potOddsPct = Math.round((betFrac / (1 + 2 * betFrac)) * 1000) / 10;
+  const rawBluffEq = totalExact > 0 ? bluffExact / totalExact : 0;
+  const evCallPotUnits =
+    Math.round((rawBluffEq * (1 + 2 * betFrac) - betFrac) * 1000) / 1000;
+  const optimalDecision: 'call' | 'fold' =
+    rawBluffEq * 100 > potOddsPct ? 'call' : 'fold';
+
+  return {
+    scenarioId: scenario.id,
+    riverBoard,
+    betPctPot,
+    potOddsPct,
+    valueCombos: round1(valueExact),
+    bluffCombos: round1(bluffExact),
+    totalRiverCombos: round1(totalExact),
+    valueSharePct,
+    bluffSharePct,
+    optimalDecision,
+    evCallPotUnits,
+    explanation: `Face à une mise de ${betPctPot} % du pot, la cote demande ${potOddsPct.toFixed(
+      1
+    )} % d’équité (bluffs adverses). Avec ${round1(valueExact)} combos de Value (${valueSharePct} %) et ${round1(
+      bluffExact
+    )} combos de Bluffs manqués (${bluffSharePct} %), ${
+      optimalDecision === 'call'
+        ? `le bluff-catcher doit Payer (+${evCallPotUnits.toFixed(2)} pot d’EV).`
+        : `il faut Folder disciplinément (${evCallPotUnits.toFixed(2)} pot d’EV).`
+    }`,
+    provenance: 'computed',
   };
 }

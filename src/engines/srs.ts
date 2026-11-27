@@ -1,3 +1,5 @@
+import { createEmptyCard, fsrs, Rating, type Card } from 'ts-fsrs';
+
 export type Grade = 1 | 2 | 3 | 4; // Again, Hard, Good, Easy (= Rating de ts-fsrs)
 
 export interface Attempt {
@@ -108,4 +110,102 @@ export function buildWarmup(c: Candidate[], budget = 300): Candidate[] {
     out.push(...picked.splice(i < 0 ? 0 : i, 1));
   }
   return out;
+}
+
+export interface FunnelAttemptInput {
+  overlapScore: number; // 0..1
+  ms: number;
+  limitMs: number;
+  usedHint: boolean;
+  missedMajorDrawer: boolean;
+  minorDrawerImbalance: boolean;
+}
+
+/** Barème PALM-Funnel FSRS (Lots 3) : Grade 1 (Again) à 4 (Easy). */
+export function gradeFunnelAttempt(input: FunnelAttemptInput): Grade {
+  if (input.missedMajorDrawer || input.overlapScore < 0.65 || input.ms > input.limitMs) {
+    return 1;
+  }
+  if (
+    input.usedHint ||
+    input.ms > 0.7 * input.limitMs ||
+    input.minorDrawerImbalance ||
+    input.overlapScore < 0.85
+  ) {
+    return 2;
+  }
+  if (input.ms < 0.35 * input.limitMs && input.overlapScore > 0.9) {
+    return 4;
+  }
+  return 3;
+}
+
+const funnelScheduler = fsrs({ enable_fuzz: false });
+
+function toTsFsrsRating(grade: Grade): Rating.Again | Rating.Hard | Rating.Good | Rating.Easy {
+  if (grade === 1) return Rating.Again;
+  if (grade === 2) return Rating.Hard;
+  if (grade === 4) return Rating.Easy;
+  return Rating.Good;
+}
+
+export function createFunnelFsrsCard(now: Date = new Date()): Card {
+  return createEmptyCard(now);
+}
+
+export function getFunnelCardRetrievability(card: Card, now: Date = new Date()): number {
+  if (card.reps === 0) return 0;
+  return funnelScheduler.get_retrievability(card, now, false);
+}
+
+export function reviewFunnelFsrsCard(
+  card: Card,
+  grade: Grade,
+  now: Date = new Date()
+): { card: Card; retrievability: number; nextDueIso: string } {
+  const result = funnelScheduler.next(card, now, toTsFsrsRating(grade));
+  const nextCard = result.card;
+  return {
+    card: nextCard,
+    retrievability: getFunnelCardRetrievability(nextCard, now),
+    nextDueIso: nextCard.due.toISOString(),
+  };
+}
+
+export interface FunnelWarmupCandidate extends Candidate {
+  source: 'palm_funnel';
+  scenarioId: string;
+  hand: string;
+  spotLabel: string;
+  retrievability: number;
+}
+
+/**
+ * Injecte dans le Daily Warm-up de 5 min les spots Entonnoir ayant une faible Retrievability (< 85%)
+ * ou dont l'échéance FSRS est arrivée.
+ */
+export function buildFunnelWarmupCandidates(
+  records: readonly { scenarioId: string; title: string; focusHand: string; card: Card }[],
+  now: Date = new Date()
+): FunnelWarmupCandidate[] {
+  const out: FunnelWarmupCandidate[] = [];
+  for (const rec of records) {
+    const r = getFunnelCardRetrievability(rec.card, now);
+    const isDue = rec.card.due.getTime() <= now.getTime();
+    if (r < 0.85 || isDue) {
+      out.push({
+        id: `funnel-${rec.scenarioId}`,
+        family: `funnel_${rec.scenarioId}`,
+        kind: rec.card.lapses > 0 || r < 0.7 ? 'leak' : 'due',
+        priority: Math.round((1 - Math.min(1, r)) * 100) + (isDue ? 20 : 0),
+        seconds: 45,
+        source: 'palm_funnel',
+        scenarioId: rec.scenarioId,
+        hand: rec.focusHand,
+        spotLabel: rec.title,
+        retrievability: r,
+      });
+    }
+  }
+  return out.sort((a, b) => b.priority - a.priority);
 }
